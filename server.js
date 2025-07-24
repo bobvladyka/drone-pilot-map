@@ -165,41 +165,47 @@ app.post("/update", (req, res) => {
     travel,
     licenses,
     specialization,
-    volunteer
+    volunteer,
+    lat,
+    lng
   } = req.body;
 
   db.run(
     `UPDATE pilots SET 
-      name = ?, 
-      phone = ?, 
-      website = ?, 
-      street = ?, 
-      city = ?, 
-      zip = ?, 
-      region = ?, 
-      drones = ?, 
-      note = ?, 
-      travel = ?, 
-      licenses = ?, 
-      specialization = ?, 
-      volunteer = ? 
-    WHERE email = ?`,
-    [
-      name || "",
-      phone || "",
-      website || "",
-      street || "",
-      city || "",
-      zip || "",
-      region || "",
-      drones || "",
-      note || "",
-      travel || "",
-      licenses || "",
-      specialization || "",
-      volunteer === "ANO" ? "ANO" : "NE",
-      email
-    ],
+  name = ?, 
+  phone = ?, 
+  website = ?, 
+  street = ?, 
+  city = ?, 
+  zip = ?, 
+  region = ?, 
+  lat = ?, 
+  lng = ?, 
+  drones = ?, 
+  note = ?, 
+  travel = ?, 
+  licenses = ?, 
+  specialization = ?, 
+  volunteer = ? 
+WHERE email = ?`,
+   [
+  name || "",
+  phone || "",
+  website || "",
+  street || "",
+  city || "",
+  zip || "",
+  region || "",
+  lat || "",
+  lng || "",
+  drones || "",
+  note || "",
+  travel || "",
+  licenses || "",
+  specialization || "",
+  volunteer === "ANO" ? "ANO" : "NE",
+  email
+],
     function (err) {
       if (err) {
         console.error(err);

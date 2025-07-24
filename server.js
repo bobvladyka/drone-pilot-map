@@ -200,21 +200,7 @@ app.post("/update", (req, res) => {
       volunteer === "ANO" ? "ANO" : "NE",
       email
     ],
-    const location = [street, city, zip, region].filter(Boolean).join(', ');
-  let lat = null, lon = null;
-
-  try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
-      headers: { 'User-Agent': 'DronMapApp/1.0' }
-    });
-    const data = await response.json();
-    if (data.length > 0) {
-      lat = parseFloat(data[0].lat);
-      lon = parseFloat(data[0].lon);
-    }
-  } catch (err) {
-    console.error("Chyba při geokódování:", err);
-  }
+    
     function (err) {
       if (err) {
         console.error(err);

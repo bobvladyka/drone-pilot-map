@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Můj účet</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+</head>
+<body>
+  <h1>Účet pilota</h1>
+  <form id="account-form">
+    <input type="hidden" id="id" name="id">
+
+    <label>Jméno:</label>
+    <input type="text" id="name" name="name" required>
+
+    <label>E-mail:</label>
+    <input type="email" id="email" name="email" required readonly>
+
+    <label>Telefon:</label>
+    <input type="tel" id="phone" name="phone">
+
+    <label>Web:</label>
+    <input type="url" id="website" name="website">
+
+    <label>Ulice:</label>
+    <input type="text" id="street" name="street">
+
+    <label>Město:</label>
+    <input type="text" id="city" name="city">
+
+    <label>PSČ:</label>
+    <input type="text" id="zip" name="zip">
+
+    <label for="region">Kraj:</label>
+<select id="region" name="region">
+  <option value="">– Vyber kraj –</option>
+  <option value="Hlavní město Praha">Hlavní město Praha</option>
+  <option value="Středočeský kraj">Středočeský kraj</option>
+  <option value="Jihočeský kraj">Jihočeský kraj</option>
+  <option value="Plzeňský kraj">Plzeňský kraj</option>
+  <option value="Karlovarský kraj">Karlovarský kraj</option>
+  <option value="Ústecký kraj">Ústecký kraj</option>
+  <option value="Liberecký kraj">Liberecký kraj</option>
+  <option value="Královéhradecký kraj">Královéhradecký kraj</option>
+  <option value="Pardubický kraj">Pardubický kraj</option>
+  <option value="Kraj Vysočina">Kraj Vysočina</option>
+  <option value="Jihomoravský kraj">Jihomoravský kraj</option>
+  <option value="Olomoucký kraj">Olomoucký kraj</option>
+  <option value="Zlínský kraj">Zlínský kraj</option>
+  <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
+</select>
+
+
+    <label>Povolení (licence):</label><br>
+    <input type="checkbox" name="licenses" value="OPEN A1/A3"> A1/A3<br>
+    <input type="checkbox" name="licenses" value="OPEN A2"> A2<br>
+    <input type="checkbox" name="licenses" value="LUC"> LUC<br>
+    <input type="checkbox" name="licenses" value="SPECIFIC"> SPECIFIC<br>
+
+    <label>Drony ve vlastnictví:</label>
+    <input type="text" id="drones" name="drones">
+
+    <label>Poznámka:</label>
+    <textarea id="note" name="note"></textarea>
+
+    <label>Ochota dojíždět:</label>
+    <select id="travel" name="travel">
+      <option value="">– Vyber –</option>
+      <option value="ANO">ANO</option>
+      <option value="NE">NE</option>
+    </select>
+
+    <label for="specialization">Specializace:</label>
+    <select id="specialization" name="specialization" multiple>
+      <option value="Foto/video">Foto/video</option>
+      <option value="Fotogrammetrie">Fotogrammetrie</option>
+      <option value="Senoseč">Senoseč</option>
+      <option value="Termální inspekce">Termální inspekce</option>
+      <option value="FPV průlety">FPV průlety</option>
+      <option value="Jiné">Jiné (více v poznámce)</option>
+    </select>
+
+    <label>
+      <input type="checkbox" id="volunteer" name="volunteer" value="ANO">
+      Dobrovolník
+    </label>
+
+    <button type="submit">💾 Uložit změny</button>
+    <p id="status" style="margin-top:10px;"></p>
+  </form>
+
+  <a href="/index.html">← Zpět na mapu</a>
+
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const email = params.get("email");
+    const status = document.getElementById("status");
+
+    // Načtení dat
+    fetch("/pilots")
+      .then(res => res.json())
+      .then(data => {
+        const pilot = data.find(p => p.email === email);
+        if (!pilot) {
+          status.textContent = "Pilot nenalezen.";
+          status.style.color = "red";
+          return;
+        }
+
+        // Naplnit formulář
+        document.getElementById("id").value = pilot.id || "";
+        document.getElementById("name").value = pilot.name || "";
+        document.getElementById("email").value = pilot.email || "";
+        document.getElementById("phone").value = pilot.phone || "";
+        document.getElementById("website").value = pilot.website || "";
+        document.getElementById("street").value = pilot.street || "";
+        document.getElementById("city").value = pilot.city || "";
+        document.getElementById("zip").value = pilot.zip || "";
+        document.getElementById("region").value = pilot.region || "";
+        document.getElementById("drones").value = pilot.drones || "";
+        document.getElementById("note").value = pilot.note || "";
+        document.getElementById("travel").value = pilot.travel || "";
+
+        const licenses = (pilot.licenses || "").split(",").map(s => s.trim());
+        document.querySelectorAll("input[name='licenses']").forEach(cb => {
+          cb.checked = licenses.includes(cb.value);
+        });
+
+        if (pilot.specialization) {
+          const specializations = pilot.specialization.split(',').map(s => s.trim());
+          [...document.getElementById("specialization").options].forEach(opt => {
+            opt.selected = specializations.includes(opt.value);
+          });
+        }
+
+        if (pilot.volunteer === "ANO") {
+          document.getElementById("volunteer").checked = true;
+        }
+      });
+
+    // Odeslání formuláře
+    document.getElementById("account-form").addEventListener("submit", async e => {
+      e.preventDefault();
+
+      const data = {
+        id: document.getElementById("id").value,
+        email: document.getElementById("email").value,
+        name: document.getElementById("name").value,
+        phone: document.getElementById("phone").value,
+        website: document.getElementById("website").value,
+        street: document.getElementById("street").value,
+        city: document.getElementById("city").value,
+        zip: document.getElementById("zip").value,
+        region: document.getElementById("region").value,
+        drones: document.getElementById("drones").value,
+        note: document.getElementById("note").value,
+        travel: document.getElementById("travel").value,
+        licenses: Array.from(document.querySelectorAll("input[name='licenses']:checked")).map(cb => cb.value).join(", "),
+        specialization: Array.from(document.getElementById("specialization").selectedOptions).map(o => o.value).join(", "),
+        volunteer: document.getElementById("volunteer").checked ? "ANO" : "NE"
+      };
+
+      const res = await fetch("/update", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      const text = await res.text();
+      status.textContent = text;
+      status.style.color = res.ok ? "green" : "red";
+    });
+  </script>
+</body>
+</html>

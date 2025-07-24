@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dronová mapa</title>
+
+  <link rel="stylesheet" href="style.css">
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+</head>
+<body>
+
+  <h1>Mapa pilotů dronů</h1>
+  <p id="user-status" style="font-weight: bold;"></p>
+
+  <div style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+  <button id="login-button" class="user-action"><span id="login-toggle">🧑‍✈️</span></button>
+  <span id="logged-info" style="font-weight: bold;"></span>
+  <button id="edit-profile-btn" style="display:none;" class="user-action">✏️ Upravit profil</button>
+</div>
+  
+
+  <div id="login-modal-backdrop"></div>
+
+<!-- Přihlašovací modal -->
+<div id="login-box" style="display: none;">
+  <h3>Přihlášení pilota</h3>
+  <form id="login-form" onsubmit="pilotLogin(event)">
+    <label for="email">E-mail:</label>
+    <input type="email" id="email" name="email" required />
+
+    <label for="password">Heslo:</label>
+    <input type="password" id="password" name="password" required />
+
+    <button type="submit">🔐 Přihlásit se</button>
+  </form>
+
+  <p id="login-status" style="margin-top: 10px;"></p>
+  <a href="/register.html" class="link">Nejsem ještě registrován – chci se zaregistrovat</a>
+  <a href="/forgot.html" class="link">Zapomenuté heslo?</a>
+</div>
+
+  <div id="map"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <script>
+    const map = L.map('map').setView([49.8, 15.5], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+    const pilotCircles = [];
+    fetch('/pilots')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(p => {
+          if (p.latitude != null && p.longitude != null) {
+            const circle = L.circle([p.latitude, p.longitude], {
+              radius: 2000,
+              color: 'green',
+              fillColor: '#4CAF50',
+              fillOpacity: 0.4,
+              weight: 1
+            })
+.bindPopup(() => {
+  let html = `
+    <div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">
+      <h3>🧑‍✈️ ${p.name}</h3>
+      <p>📧 <a href="mailto:${p.email}">${p.email}</a></p>
+      ${p.phone ? `<p>📞 <a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+  `;
+
+  if (localStorage.getItem("loggedEmail")) {
+    html += `
+      ${p.drones ? `<p><strong>🚁 Drony:</strong> ${p.drones}</p>` : ''}
+      ${p.note ? `<p><strong>📝 O mně:</strong> ${p.note}</p>` : ''}
+      ${p.travel ? `<p><strong>🧭 Dojíždění:</strong> ${p.travel}</p>` : ''}
+      ${p.licenses ? `<p><strong>🎓 Licence:</strong> ${p.licenses}</p>` : ''}
+      ${p.specialization ? `<p><strong>🧩 Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+   
+  }
+
+  html += `</div>`;
+  return html;
+});
+            markers.addLayer(circle);
+ pilotCircles.push(circle);
+          }
+        });
+        map.addLayer(markers);
+        if (markers.getBounds().isValid()) {
+          map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+        }
+      });
+map.on('zoomend', () => {
+  const zoom = map.getZoom();
+
+  pilotCircles.forEach(circle => {
+    // Výpočet poloměru (např. při zoom 7 je 2000 m, při zoom 14 je 100 m)
+    const maxZoom = 14;
+    const minZoom = 7;
+    const minRadius = 100;
+    const maxRadius = 2000;
+
+    // Linear interpolation
+    const ratio = (zoom - minZoom) / (maxZoom - minZoom);
+    const radius = Math.max(minRadius, maxRadius - (maxRadius - minRadius) * ratio);
+
+    circle.setRadius(radius);
+
+    // Úměrná průhlednost – čím blíže, tím méně výrazné
+    const opacity = 0.2 + 0.2 * (1 - ratio); // mezi 0.2 a 0.4
+    circle.setStyle({ fillOpacity: opacity });
+  });
+});
+    // LOGIN LOGIC
+   document.addEventListener("DOMContentLoaded", () => {
+  const loginBox = document.getElementById("login-box");
+  const toggle = document.getElementById("login-toggle");
+  const status = document.getElementById("user-status");
+  const loggedEmail = localStorage.getItem("loggedEmail");
+const editBtn = document.getElementById("edit-profile-btn");
+
+
+  if (loggedEmail) {
+    loginBox.style.display = "none";
+editBtn.style.display = "inline-block";
+
+    toggle.textContent = "🚪 Odhlásit";
+    status.textContent = "Přihlášen jako: " + loggedEmail;
+
+    toggle.addEventListener("click", () => {
+      localStorage.removeItem("loggedEmail");
+      window.location.reload();
+
+    });
+  } else {
+    toggle.addEventListener("click", () => {
+      loginBox.style.display = loginBox.style.display === "none" ? "block" : "none";
+    });
+  }
+if (loggedEmail && editBtn) {
+  editBtn.style.display = "inline-block";
+
+  editBtn.addEventListener("click", () => {
+    window.location.href = "/account.html?email=" + encodeURIComponent(loggedEmail);
+  });
+}
+
+  // Přihlašovací funkce
+  window.pilotLogin = function(event) {
+    event.preventDefault();
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const statusBox = document.getElementById("login-status");
+
+    fetch("/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Neplatný e-mail nebo heslo.");
+      return res.text();
+    })
+    .then(msg => {
+      localStorage.setItem("loggedEmail", email);
+      statusBox.style.color = "green";
+      statusBox.textContent = msg;
+      window.location.href = "/account.html?email=" + encodeURIComponent(email);
+    })
+    .catch(err => {
+      statusBox.style.color = "red";
+      statusBox.textContent = err.message;
+    });
+  };
+});
+  </script>
+
+
+</body>
+</html>

@@ -1,0 +1,85 @@
+
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registrace pilota</title>
+  <link rel="stylesheet" href="style.css">
+<link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <h1>Registrace nového pilota</h1>
+
+  <form action="/register" method="POST" class="box">
+    <label for="name">Jméno:</label>
+    <input type="text" id="name" name="name" required>
+
+    <label for="email">E-mail:</label>
+    <input type="email" id="email" name="email" required>
+
+    <label for="password">Heslo:</label>
+    <input type="password" id="password" name="password" required>
+
+    <label for="phone">Telefon:</label>
+    <input type="tel" id="phone" name="phone">
+
+    <label for="website">Web:</label>
+    <input type="url" id="website" name="website">
+
+    <label for="street">Ulice:</label>
+    <input type="text" id="street" name="street">
+
+    <label for="city">Město:</label>
+    <input type="text" id="city" name="city">
+
+    <label for="zip">PSČ:</label>
+    <input type="text" id="zip" name="zip">
+
+    <label for="region">Kraj:</label>
+    <select id="region" name="region">
+      <option value="">-- Vyberte kraj --</option>
+      <option value="Hlavní město Praha">Hlavní město Praha</option>
+      <option value="Středočeský kraj">Středočeský kraj</option>
+      <option value="Jihočeský kraj">Jihočeský kraj</option>
+      <option value="Plzeňský kraj">Plzeňský kraj</option>
+      <option value="Karlovarský kraj">Karlovarský kraj</option>
+      <option value="Ústecký kraj">Ústecký kraj</option>
+      <option value="Liberecký kraj">Liberecký kraj</option>
+      <option value="Královéhradecký kraj">Královéhradecký kraj</option>
+      <option value="Pardubický kraj">Pardubický kraj</option>
+      <option value="Vysočina">Vysočina</option>
+      <option value="Jihomoravský kraj">Jihomoravský kraj</option>
+      <option value="Olomoucký kraj">Olomoucký kraj</option>
+      <option value="Zlínský kraj">Zlínský kraj</option>
+      <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
+    </select>
+
+    <fieldset>
+      <legend>Povolení / licence:</legend>
+      <label><input type="checkbox" name="licenses" value="OPEN A1/A3"> OPEN A1/A3</label><br>
+      <label><input type="checkbox" name="licenses" value="OPEN A2"> OPEN A2</label><br>
+      <label><input type="checkbox" name="licenses" value="SPECIFIC"> SPECIFIC</label><br>
+      <label><input type="checkbox" name="licenses" value="LUC"> LUC</label><br>
+      <label><input type="checkbox" name="licenses" value="Jiné"> Jiné</label>
+    </fieldset>
+
+    <label for="drones">Drony ve vlastnictví:</label>
+    <input type="text" id="drones" name="drones">
+
+    <label for="note">Poznámka:</label>
+    <textarea id="note" name="note" rows="3"></textarea>
+
+    <label for="travel">Ochota dojíždět:</label>
+    <select id="travel" name="travel">
+      <option value="ANO">Ano</option>
+      <option value="NE">Ne</option>
+    </select>
+
+    <button type="submit">✅ Registrovat se</button>
+    <a href="/" class="link">← Zpět na mapu</a>
+  </form>
+
+</body>
+</html>

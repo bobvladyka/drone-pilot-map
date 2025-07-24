@@ -207,10 +207,11 @@ WHERE email = ?`,
   email
 ],
     function (err) {
-      if (err) {
-        console.error(err);
-        res.status(500).send("Chyba při ukládání dat.");
-      } else {
+    if (err) {
+  console.error("SQL CHYBA:", err.message); // <-- přidáno
+  res.status(500).send("Chyba při ukládání dat.");
+}
+      else {
         res.send("✅ Údaje byly úspěšně uloženy.");
       }
     }

@@ -13,6 +13,32 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 </head>
 <body>
+  <body>
+
+  <h1>🗺️ Mapa pilotů dronů</h1>
+  <p id="user-status" style="font-weight: bold;"></p>
+
+  <div style="display: flex; justify-content: flex-end; gap: 10px; align-items: center;">
+    <button id="login-button" class="user-action"><span id="login-toggle">🧑‍✈️</span></button>
+    <span id="logged-info" style="font-weight: bold;"></span>
+    <button id="edit-profile-btn" style="display:none;" class="user-action">✏️ Upravit profil</button>
+  </div>
+
+  <section style="margin: 20px 0; max-width: 800px;">
+    <p><strong>Hledáš pilota dronu ve svém okolí?</strong> Nebo sám létáš a chceš být vidět?</p>
+    <p>Tato mapa spojuje zákazníky a piloty. Najdi si spolehlivého pilota podle místa, vybavení nebo specializace – nebo se sám zaregistruj a získej nové příležitosti k létání i výdělku.</p>
+    <ul>
+      <li>✅ <strong>Rychlé spojení</strong> bez zbytečných formulářů</li>
+      <li>✅ <strong>Ověření piloti</strong> s profilem a kontaktem</li>
+      <li>✅ <strong>Možnost přivýdělku</strong> pro každého pilota</li>
+    </ul>
+    <p><strong>Začni kliknutím na pilota na mapě nebo se rovnou přihlas a přidej se!</strong></p>
+  </section>
+
+  <h2>📍 Piloti na mapě</h2>
+  <p>Na mapě níže vidíš všechny dostupné piloty. Klikni na ikonu a zobraz si jejich profil, vybavení a kontakt. Přihlášení uživatelé uvidí i další detaily jako specializaci, drony nebo rozsah dojíždění.</p>
+
+  <div id="login-modal-backdrop"></div>
 
   <h1>Mapa pilotů dronů</h1>
   <p id="user-status" style="font-weight: bold;"></p>
@@ -24,7 +50,7 @@
 </div>
   
 
-  <div id="login-modal-backdrop"></div>
+  
 
 <!-- Přihlašovací modal -->
 <div id="login-box" style="display: none;">

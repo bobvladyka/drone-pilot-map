@@ -165,7 +165,10 @@ app.post("/update", (req, res) => {
     travel,
     licenses,
     specialization,
-    volunteer
+    volunteer,
+lat,
+  lng
+
   } = req.body;
 
   db.run(
@@ -176,7 +179,9 @@ app.post("/update", (req, res) => {
       street = ?, 
       city = ?, 
       zip = ?, 
-      region = ?, 
+      region = ?,
+        lat = ?, 
+  lng = ?,
       drones = ?, 
       note = ?, 
       travel = ?, 
@@ -192,6 +197,8 @@ app.post("/update", (req, res) => {
       city || "",
       zip || "",
       region || "",
+      lat || "",
+  lng || "",
       drones || "",
       note || "",
       travel || "",

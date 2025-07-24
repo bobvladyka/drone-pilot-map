@@ -9,7 +9,7 @@
 </head>
 <body>
   <h1>Účet pilota</h1>
-  <form id="account-form">
+<form id="account-form" method="POST" action="/update" onsubmit="return handleSubmitWithLatLng(event)">
     <input type="hidden" id="id" name="id">
 
     <label>Jméno:</label>
@@ -51,6 +51,11 @@
   <option value="Zlínský kraj">Zlínský kraj</option>
   <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
 </select>
+
+    <input type="hidden" name="lat" id="lat">
+<input type="hidden" name="lng" id="lng">
+    <button type="button" onclick="updateLatLngFromAddress()">Přepočítat souřadnice</button>
+
 
 
     <label>Povolení (licence):</label><br>
@@ -173,5 +178,53 @@
       status.style.color = res.ok ? "green" : "red";
     });
   </script>
+
+  <script>
+async function updateLatLngFromAddress() {
+  const street = document.getElementById("street").value || "";
+  const city = document.getElementById("city").value || "";
+  const zip = document.getElementById("zip").value || "";
+  const region = document.getElementById("region").value || "";
+
+  const fullAddress = `${street}, ${zip} ${city}, ${region}, Česká republika`;
+
+  try {
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(fullAddress)}`,
+      { headers: { 'Accept-Language': 'cs' } }
+    );
+    const data = await response.json();
+
+    if (data.length > 0) {
+      const lat = data[0].lat;
+      const lng = data[0].lon;
+      document.getElementById("lat").value = lat;
+      document.getElementById("lng").value = lng;
+      console.log("Souřadnice nastaveny:", lat, lng);
+    } else {
+      alert("Adresa nebyla nalezena. Zkontrolujte správnost zadání.");
+    }
+  } catch (error) {
+    console.error("Chyba při geokódování:", error);
+    alert("Nepodařilo se zjistit souřadnice.");
+  }
+}
+</script>
+
+<script>
+async function handleSubmitWithLatLng(event) {
+  event.preventDefault(); // Zastaví odeslání formuláře
+
+  await updateLatLngFromAddress(); // Spočítá souřadnice
+
+  // Počkáme malinko, pak formulář odešleme ručně
+  setTimeout(() => {
+    document.getElementById("account-form").submit();
+  }, 300);
+  
+  return false;
+}
+</script>
+
 </body>
 </html>

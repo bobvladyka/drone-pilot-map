@@ -149,8 +149,9 @@ console.log(`📧 Heslo odeslané na ${email}: ${newPassword}`);
     });
   });
 });
-app.use(express.json());
-app.post("/update", (req, res) => {
+const fetch = require('node-fetch'); // Ujisti se, že máš nainstalovaný balíček `node-fetch`
+
+app.post("/update", async (req, res) => {
   const {
     email,
     name,
@@ -166,8 +167,24 @@ app.post("/update", (req, res) => {
     licenses,
     specialization,
     volunteer
-
   } = req.body;
+
+  const location = [street, city, zip, region].filter(Boolean).join(', ');
+
+  let lat = null, lon = null;
+
+  try {
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
+      headers: { 'User-Agent': 'DronMapApp/1.0' }
+    });
+    const data = await response.json();
+    if (data.length > 0) {
+      lat = parseFloat(data[0].lat);
+      lon = parseFloat(data[0].lon);
+    }
+  } catch (err) {
+    console.error("Chyba při geokódování adresy:", err);
+  }
 
   db.run(
     `UPDATE pilots SET 
@@ -183,7 +200,9 @@ app.post("/update", (req, res) => {
       travel = ?, 
       licenses = ?, 
       specialization = ?, 
-      volunteer = ? 
+      volunteer = ?, 
+      latitude = ?, 
+      longitude = ?
     WHERE email = ?`,
     [
       name || "",
@@ -199,19 +218,21 @@ app.post("/update", (req, res) => {
       licenses || "",
       specialization || "",
       volunteer === "ANO" ? "ANO" : "NE",
+      lat,
+      lon,
       email
     ],
-    
     function (err) {
       if (err) {
         console.error(err);
-        res.status(500).send("Chyba při ukládání dat.");
+        res.status(500).send("❌ Chyba při ukládání dat.");
       } else {
-        res.send("✅ Údaje byly úspěšně uloženy.");
+        res.send("✅ Údaje (včetně polohy) byly úspěšně aktualizovány.");
       }
     }
   );
 });
+
 
 
 

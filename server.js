@@ -249,4 +249,33 @@ app.post('/delete-selected', (req, res) => {
   fs.writeFileSync('pilots.json', JSON.stringify(pilots, null, 2));
   res.send(`Smazáno ${beforeCount - afterCount} pilotů.`);
 });
+
+app.post('/change-password', async (req, res) => {
+  const { email, oldPassword, newPassword } = req.body;
+
+  if (!email || !oldPassword || !newPassword) {
+    return res.status(400).send("Chybí některý z požadovaných údajů.");
+  }
+
+  db.get(`SELECT * FROM pilots WHERE email = ?`, [email], async (err, user) => {
+    if (err || !user) {
+      return res.status(404).send("Uživatel nenalezen.");
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
+    if (!isMatch) {
+      return res.status(401).send("Staré heslo není správné.");
+    }
+
+    const newHash = await bcrypt.hash(newPassword, 10);
+    db.run(`UPDATE pilots SET password_hash = ? WHERE email = ?`, [newHash, email], (err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send("Chyba při změně hesla.");
+      }
+      res.send("✅ Heslo bylo úspěšně změněno.");
+    });
+  });
+});
+
 app.listen(3000, () => console.log('Server běží na http://localhost:3000'));

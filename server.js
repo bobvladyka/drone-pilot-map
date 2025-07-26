@@ -1,48 +1,24 @@
-
+require('dotenv').config();
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
 const bcrypt = require('bcrypt');
 const nodemailer = require('nodemailer');
+const fetch = require('node-fetch');
+const { Pool } = require('pg');
+const path = require('path');
 
 const app = express();
-const db = new sqlite3.Database('pilots.db');
+const port = process.env.PORT || 3000;
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: {
+    rejectUnauthorized: false
+  }
+});
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.use(express.static('public'));
-
-// Vytvoření tabulky, pokud neexistuje
-db.run(`CREATE TABLE IF NOT EXISTS pilots (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  name TEXT,
-  location TEXT,
-  email TEXT,
-  phone TEXT,
-  note TEXT,
-  latitude REAL,
-  longitude REAL,
-  password_hash TEXT,
-  website TEXT,
-  city TEXT,
-  street TEXT,
-  zip TEXT,
-  region TEXT,
-  licenses TEXT,
-  drones TEXT,
-  travel TEXT
-)`);
-
-// Přihlášení
-app.post('/login', async (req, res) => {
-  const { email, password } = req.body;
-  db.get(`SELECT * FROM pilots WHERE email = ?`, [email], async (err, user) => {
-    if (err || !user) return res.status(401).send("Uživatel nenalezen.");
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) return res.status(401).send("Nesprávné heslo.");
-    res.send("Přihlášení úspěšné");
-  });
-});
 
 // Registrace
 app.post('/register', async (req, res) => {
@@ -57,99 +33,105 @@ app.post('/register', async (req, res) => {
   let lat = null, lon = null;
 
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
-      headers: { 'User-Agent': 'DronMapApp/1.0' }
-    });
-    const data = await response.json();
-    if (data.length > 0) {
-      lat = parseFloat(data[0].lat);
-      lon = parseFloat(data[0].lon);
-    }
-  } catch (err) {
-    console.error("Chyba při geokódování:", err);
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
+    headers: { 'User-Agent': 'DronMapApp/1.0' }
+  });
+  const data = await response.json();
+  if (data.length > 0) {
+    lat = parseFloat(data[0].lat);
+    lon = parseFloat(data[0].lon);
+  } else {
+    console.warn("❗Adresa se nepodařilo geokódovat:", location);
   }
+} catch (err) {
+  console.error("Chyba při geokódování:", err);
+}
 
   const licenseList = Array.isArray(licenses) ? licenses.join(', ') : (licenses || '');
 
-  db.run(
-    `INSERT INTO pilots (
-      name, email, phone, website,
-      city, street, zip, region,
-      licenses, drones, note, travel,
-      latitude, longitude, password_hash
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [name, email, phone, website, city, street, zip, region, licenseList, drones, note, travel, lat, lon, password_hash],
-    (err) => {
-      if (err) {
-        console.error("Chyba při registraci:", err);
-        res.status(500).send("Chyba při registraci");
-      } else {
-        res.redirect('/');
-      }
-    }
-  );
+  try {
+    await pool.query(
+      `INSERT INTO pilots (
+        name, email, phone, website,
+        city, street, zip, region,
+        licenses, drones, note, travel,
+        latitude, longitude, password_hash
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
+      [name, email, phone, website, city, street, zip, region, licenseList, drones, note, travel, lat, lon, password_hash]
+    );
+    res.redirect('/');
+  } catch (err) {
+    console.error("Chyba při registraci:", err);
+    res.status(500).send("Chyba při registraci");
+  }
+});
+
+// Přihlášení
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const result = await pool.query(`SELECT * FROM pilots WHERE email = $1`, [email]);
+    const user = result.rows[0];
+    if (!user) return res.status(401).send("Uživatel nenalezen.");
+
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    if (!isMatch) return res.status(401).send("Nesprávné heslo.");
+    res.send("Přihlášení úspěšné");
+  } catch (err) {
+    console.error("Chyba při přihlášení:", err);
+    res.status(500).send("Chyba na serveru");
+  }
 });
 
 // Vrácení všech pilotů
-app.get('/pilots', (req, res) => {
-  db.all(`SELECT * FROM pilots`, (err, rows) => {
-    if (err) return res.status(500).json([]);
-    res.json(rows);
-  });
+app.get('/pilots', async (req, res) => {
+  try {
+    const result = await pool.query(`SELECT * FROM pilots`);
+    res.json(result.rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json([]);
+  }
 });
 
-// Odstranění všech pilotů
-app.post('/delete-all', (req, res) => {
-  db.run(`DELETE FROM pilots`, (err) => {
-    if (err) return res.status(500).send("Chyba při mazání");
-    res.send("Všechny záznamy byly smazány.");
-  });
-});
-
-// 💌 Odeslání nového hesla pomocí Seznam.cz
+// Reset hesla
 const transporter = nodemailer.createTransport({
-    host: 'smtp.seznam.cz',
+  host: 'smtp.seznam.cz',
   port: 465,
   secure: true,
-auth: {
-  user: 'dronadmin@seznam.cz',
-  pass: 'letamsdrony12'
-}
+  auth: {
+    user: 'dronadmin@seznam.cz',
+    pass: 'letamsdrony12'
+  }
 });
 
 app.post('/reset-password', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).send("E-mail je povinný.");
 
-  db.get(`SELECT * FROM pilots WHERE email = ?`, [email], async (err, user) => {
-    if (err || !user) return res.status(404).send("Uživatel s tímto e-mailem nebyl nalezen.");
+  try {
+    const result = await pool.query(`SELECT * FROM pilots WHERE email = $1`, [email]);
+    const user = result.rows[0];
+    if (!user) return res.status(404).send("Uživatel s tímto e-mailem nebyl nalezen.");
 
     const newPassword = Math.random().toString(36).slice(-8);
     const hash = await bcrypt.hash(newPassword, 10);
 
-    db.run(`UPDATE pilots SET password_hash = ? WHERE email = ?`, [hash, email], async (err) => {
-      if (err) return res.status(500).send("Chyba při ukládání nového hesla.");
+    await pool.query(`UPDATE pilots SET password_hash = $1 WHERE email = $2`, [hash, email]);
 
-      try {
-        await transporter.sendMail({
-          from: '"Dronová mapa" <dronadmin@seznam.cz>',
-          to: email,
-          subject: "Nové heslo k účtu",
-          text: `Vaše nové heslo je: ${newPassword}
-
-
-Doporučujeme jej po přihlášení ihned změnit.`
-        });
-console.log(`📧 Heslo odeslané na ${email}: ${newPassword}`);
-        res.send("Nové heslo bylo odesláno na váš e-mail.");
-      } catch (e) {
-  console.error("❌ Chyba při odesílání e-mailu:", e);
-  res.status(500).send("E-mail se nepodařilo odeslat. Zkontrolujte konfiguraci.");
-}
+    await transporter.sendMail({
+      from: '"Dronová mapa" <dronadmin@seznam.cz>',
+      to: email,
+      subject: "Nové heslo k účtu",
+      text: `Vaše nové heslo je: ${newPassword}\n\nDoporučujeme jej po přihlášení ihned změnit.`
     });
-  });
+
+    res.send("Nové heslo bylo odesláno na váš e-mail.");
+  } catch (err) {
+    console.error("Chyba při resetování hesla:", err);
+    res.status(500).send("Chyba na serveru při změně hesla");
+  }
 });
-const fetch = require('node-fetch'); // Ujisti se, že máš nainstalovaný balíček `node-fetch`
 
 app.post("/update", async (req, res) => {
   const {
@@ -174,80 +156,91 @@ app.post("/update", async (req, res) => {
   let lat = null, lon = null;
 
   try {
-    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
-      headers: { 'User-Agent': 'DronMapApp/1.0' }
-    });
-    const data = await response.json();
-    if (data.length > 0) {
-      lat = parseFloat(data[0].lat);
-      lon = parseFloat(data[0].lon);
-    }
-  } catch (err) {
-    console.error("Chyba při geokódování adresy:", err);
+  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
+    headers: { 'User-Agent': 'DronMapApp/1.0' }
+  });
+  const data = await response.json();
+  if (data.length > 0) {
+    lat = parseFloat(data[0].lat);
+    lon = parseFloat(data[0].lon);
+  } else {
+    console.warn("❗Adresa se nepodařilo geokódovat:", location);
   }
+} catch (err) {
+  console.error("Chyba při geokódování:", err);
+}
 
-  db.run(
-    `UPDATE pilots SET 
-      name = ?, 
-      phone = ?, 
-      website = ?, 
-      street = ?, 
-      city = ?, 
-      zip = ?, 
-      region = ?,
-      drones = ?, 
-      note = ?, 
-      travel = ?, 
-      licenses = ?, 
-      specialization = ?, 
-      volunteer = ?, 
-      latitude = ?, 
-      longitude = ?
-    WHERE email = ?`,
-    [
-      name || "",
-      phone || "",
-      website || "",
-      street || "",
-      city || "",
-      zip || "",
-      region || "",
-      drones || "",
-      note || "",
-      travel || "",
-      licenses || "",
-      specialization || "",
-      volunteer === "ANO" ? "ANO" : "NE",
-      lat,
-      lon,
-      email
-    ],
-    function (err) {
-      if (err) {
-        console.error(err);
-        res.status(500).send("❌ Chyba při ukládání dat.");
-      } else {
-        res.send("✅ Údaje (včetně polohy) byly úspěšně aktualizovány.");
-      }
-    }
-  );
+  try {
+    await pool.query(
+      `UPDATE pilots SET 
+        name = $1, 
+        phone = $2, 
+        website = $3, 
+        street = $4, 
+        city = $5, 
+        zip = $6, 
+        region = $7,
+        drones = $8, 
+        note = $9, 
+        travel = $10, 
+        licenses = $11, 
+        specialization = $12, 
+        volunteer = $13, 
+        latitude = $14, 
+        longitude = $15
+      WHERE email = $16`,
+      [
+        name || "",
+        phone || "",
+        website || "",
+        street || "",
+        city || "",
+        zip || "",
+        region || "",
+        drones || "",
+        note || "",
+        travel || "",
+        licenses || "",
+        specialization || "",
+        volunteer === "ANO" ? "ANO" : "NE",
+        lat,
+        lon,
+        email
+      ]
+    );
+
+    res.send("✅ Údaje byly úspěšně aktualizovány.");
+  } catch (err) {
+    console.error("❌ Chyba při aktualizaci:", err);
+    res.status(500).send("Chyba při aktualizaci údajů.");
+  }
 });
 
+app.post('/delete-all', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM pilots');
+    res.send("✅ Všechny záznamy byly smazány.");
+  } catch (err) {
+    console.error("❌ Chyba při mazání:", err);
+    res.status(500).send("Chyba při mazání.");
+  }
+});
 
-
-
-app.post('/delete-selected', (req, res) => {
+app.post('/delete-selected', async (req, res) => {
   const ids = req.body.ids;
   if (!Array.isArray(ids)) {
     return res.status(400).send('Neplatný vstup – očekává se pole ID.');
   }
 
-  const beforeCount = pilots.length;
-  pilots = pilots.filter(p => !ids.includes(p.id));
-  const afterCount = pilots.length;
-
-  fs.writeFileSync('pilots.json', JSON.stringify(pilots, null, 2));
-  res.send(`Smazáno ${beforeCount - afterCount} pilotů.`);
+  try {
+    const placeholders = ids.map((_, i) => `$${i + 1}`).join(',');
+    const query = `DELETE FROM pilots WHERE id IN (${placeholders})`;
+    await pool.query(query, ids);
+    res.send(`✅ Smazáno ${ids.length} pilotů.`);
+  } catch (err) {
+    console.error("❌ Chyba při mazání:", err);
+    res.status(500).send("Chyba při mazání.");
+  }
 });
 
 app.post('/change-password', async (req, res) => {
@@ -257,25 +250,24 @@ app.post('/change-password', async (req, res) => {
     return res.status(400).send("Chybí některý z požadovaných údajů.");
   }
 
-  db.get(`SELECT * FROM pilots WHERE email = ?`, [email], async (err, user) => {
-    if (err || !user) {
-      return res.status(404).send("Uživatel nenalezen.");
-    }
+  try {
+    const result = await pool.query('SELECT * FROM pilots WHERE email = $1', [email]);
+    const user = result.rows[0];
+
+    if (!user) return res.status(404).send("Uživatel nenalezen.");
 
     const isMatch = await bcrypt.compare(oldPassword, user.password_hash);
-    if (!isMatch) {
-      return res.status(401).send("Staré heslo není správné.");
-    }
+    if (!isMatch) return res.status(401).send("Staré heslo není správné.");
 
     const newHash = await bcrypt.hash(newPassword, 10);
-    db.run(`UPDATE pilots SET password_hash = ? WHERE email = ?`, [newHash, email], (err) => {
-      if (err) {
-        console.error(err);
-        return res.status(500).send("Chyba při změně hesla.");
-      }
-      res.send("✅ Heslo bylo úspěšně změněno.");
-    });
-  });
+    await pool.query('UPDATE pilots SET password_hash = $1 WHERE email = $2', [newHash, email]);
+
+    res.send("✅ Heslo bylo úspěšně změněno.");
+  } catch (err) {
+    console.error("❌ Chyba při změně hesla:", err);
+    res.status(500).send("Chyba při změně hesla.");
+  }
 });
 
-app.listen(3000, () => console.log('Server běží na http://localhost:3000'));
+// Spuštění serveru
+app.listen(port, () => console.log(`Server běží na http://localhost:${port}`));

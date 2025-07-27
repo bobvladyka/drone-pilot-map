@@ -1,3 +1,3 @@
 User-agent: *
 Allow: /
-Sitemap: https://drone-pilot-map.onrender.com/sitemap.xml
+Sitemap: https://mapapilotu.cz/sitemap.xml

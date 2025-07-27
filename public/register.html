@@ -16,22 +16,27 @@
         <label for="name" class="form-label">Jméno:</label>
         <input type="text" id="name" name="name" class="form-control" required>
       </div>
+
       <div class="col-md-6">
         <label for="email" class="form-label">E-mail:</label>
         <input type="email" id="email" name="email" class="form-control" required>
       </div>
+
       <div class="col-md-6">
         <label for="password" class="form-label">Heslo:</label>
         <input type="password" id="password" name="password" class="form-control" required>
       </div>
+
+	<div class="col-md-6">
+  <label for="confirm_password" class="form-label">Potvrďte heslo:</label>
+  <input type="password" id="confirm_password" name="confirm_password" class="form-control" required>
+</div>
+
       <div class="col-md-6">
         <label for="phone" class="form-label">Telefon:</label>
         <input type="tel" id="phone" name="phone" class="form-control">
       </div>
-      <div class="col-md-6">
-        <label for="website" class="form-label">Web:</label>
-        <input type="url" id="website" name="website" class="form-control">
-      </div>
+      
       <div class="col-md-6">
         <label for="street" class="form-label">Ulice:</label>
         <input type="text" id="street" name="street" class="form-control">
@@ -64,45 +69,7 @@
           <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
         </select>
       </div>
-      <div class="col-12">
-        <label class="form-label">Povolení / licence:</label><br>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" name="licenses" value="OPEN A1/A3" id="a1a3">
-          <label class="form-check-label" for="a1a3">OPEN A1/A3</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" name="licenses" value="OPEN A2" id="a2">
-          <label class="form-check-label" for="a2">OPEN A2</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" name="licenses" value="SPECIFIC" id="specific">
-          <label class="form-check-label" for="specific">SPECIFIC</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" name="licenses" value="LUC" id="luc">
-          <label class="form-check-label" for="luc">LUC</label>
-        </div>
-        <div class="form-check form-check-inline">
-          <input class="form-check-input" type="checkbox" name="licenses" value="Jiné" id="other">
-          <label class="form-check-label" for="other">Jiné</label>
-        </div>
-      </div>
-      <div class="col-md-6">
-        <label for="drones" class="form-label">Drony ve vlastnictví:</label>
-        <input type="text" id="drones" name="drones" class="form-control">
-      </div>
-      <div class="col-md-6">
-        <label for="travel" class="form-label">Ochota dojíždět:</label>
-        <select id="travel" name="travel" class="form-select">
-          <option value="">-- Vyberte --</option>
-          <option value="ANO">Ano</option>
-          <option value="NE">Ne</option>
-        </select>
-      </div>
-      <div class="col-12">
-        <label for="note" class="form-label">Poznámka:</label>
-        <textarea id="note" name="note" rows="3" class="form-control"></textarea>
-      </div>
+      
       <div class="col-12">
         <button type="submit" class="btn btn-primary w-100">✅ Registrovat se</button>
         <div class="text-center mt-3">
@@ -111,5 +78,16 @@
       </div>
     </form>
   </div>
+
+<script>
+document.querySelector('form').addEventListener('submit', function (e) {
+  const pass = document.getElementById('password').value;
+  const confirm = document.getElementById('confirm_password').value;
+  if (pass !== confirm) {
+    e.preventDefault();
+    alert("Hesla se neshodují!");
+  }
+});
+</script>
 </body>
 </html>

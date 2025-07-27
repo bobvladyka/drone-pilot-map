@@ -5,6 +5,7 @@ const nodemailer = require('nodemailer');
 const fetch = require('node-fetch');
 const { Pool } = require('pg');
 const path = require('path');
+const prerender = require('prerender-node');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -15,6 +16,8 @@ const pool = new Pool({
     rejectUnauthorized: false
   }
 });
+
+app.use(prerender);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());

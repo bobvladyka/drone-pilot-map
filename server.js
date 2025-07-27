@@ -26,10 +26,11 @@ app.use(express.static('public'));
 // Registrace
 app.post('/register', async (req, res) => {
   const {
-    name, email, password, phone, website,
-    city, street, zip, region,
-    licenses, drones, note, travel
-  } = req.body;
+  name, email, password, phone,
+  street, city, zip, region
+} = req.body;
+	console.log("🔍 Request body:", req.body);
+
 
   const password_hash = await bcrypt.hash(password, 10);
   const location = [street, city, zip, region].filter(Boolean).join(', ');
@@ -44,24 +45,20 @@ app.post('/register', async (req, res) => {
     lat = parseFloat(data[0].lat);
     lon = parseFloat(data[0].lon);
   } else {
-    console.warn("❗Adresa se nepodařilo geokódovat:", location);
+    console.warn("❗Adresu se nepodařilo geokódovat:", location);
   }
 } catch (err) {
   console.error("Chyba při geokódování:", err);
 }
 
-  const licenseList = Array.isArray(licenses) ? licenses.join(', ') : (licenses || '');
 
   try {
     await pool.query(
-      `INSERT INTO pilots (
-        name, email, phone, website,
-        city, street, zip, region,
-        licenses, drones, note, travel,
-        latitude, longitude, password_hash
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)`,
-      [name, email, phone, website, city, street, zip, region, licenseList, drones, note, travel, lat, lon, password_hash]
-    );
+  `INSERT INTO pilots (
+    name, email, password_hash, phone, street, city, zip, region, latitude, longitude
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+  [name, email, password_hash, phone, street, city, zip, region, lat, lon]
+);
     res.redirect('/');
   } catch (err) {
     console.error("Chyba při registraci:", err);

@@ -131,6 +131,59 @@
   <!-- Skript -->
   <script>
     const map = L.map('map').setView([49.8, 15.5], 7);
+const fakeNames = [
+  "Rychlý Sysel",
+  "Létající Brambor",
+  "Dronislav Nebešťák",
+  "Turbo Rákosník",
+  "Bezpilotní Emil",
+  "Pískající Páv",
+  "Pilotka Haluz",
+  "František Vrtulník",
+  "Levý Joystick",
+  "Kapitán Stín",
+  "Dr. Rotor",
+  "Pan Točivý",
+  "Letuška Landová",
+  "Střemhlavý Franta",
+  "Nadzvukový Ježek",
+  "Létající Čenda",
+  "Rotorová Róza",
+  "Šumící Fanda",
+  "Bezpečný Béďa",
+  "Maják z Oblak",
+  "Droný Karel",
+  "Letec Šmatla",
+  "Startér Staník",
+  "Přistávací Pepa",
+  "Helikoptérník Honza",
+  "Navigátor Novák",
+  "Senzorová Soňa",
+  "Pán Mraků",
+  "Letící Lojza",
+  "Kamera Kamil",
+  "Rotor Ríša",
+  "Výškoměr Vašek",
+  "Vzdušný Vojta",
+  "Tichý Šumák",
+  "Drnčivý Dan",
+  "Mlha Milda",
+  "Optika Otakar",
+  "Ztracený Signál",
+  "Mistr Gimbal",
+  "Anténa Anička",
+  "Vrtulka Věrka",
+  "Letmo Lída",
+  "Flyboy Felix",
+  "Vzdušná Víla",
+  "Navigační Norbert",
+  "Modrá Letka",
+  "Křídlatý Karel",
+  "Polní Přízrak",
+  "Mapový Mirek",
+  "Kličkující Kuba"
+];
+
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap',
       maxZoom: 18
@@ -151,26 +204,38 @@
               weight: 1
             })
             .bindPopup(() => {
-              let html = `
-                <div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">
-                  <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
-${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
-              `;
+  const loggedIn = localStorage.getItem("loggedEmail");
 
-              if (localStorage.getItem("loggedEmail")) {
-                html += `
-                  ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
-${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-                `;
-              }
+  let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
 
-              html += `</div>`;
-              return html;
-            });
+  if (loggedIn) {
+    html += `
+      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+      <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+      ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+      ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+      ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  } else {
+    // Vyber náhodné jméno
+    const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+
+    html += `
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+      <p class="text-muted"><em>Přihlas se pro více informací o pilotovi.</em></p>
+    `;
+  }
+
+  html += `</div>`;
+  return html;
+});
+
             markers.addLayer(circle);
             pilotCircles.push(circle);
           }
@@ -206,7 +271,7 @@ ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializ
       if (loggedEmail) {
         loginBox.style.display = "none";
         editBtn.style.display = "inline-block";
-        toggle.textContent = "🚪 Odhlásit";
+        toggle.textContent = "Odhlásit";
         status.textContent = "Přihlášen jako: " + loggedEmail;
         toggle.addEventListener("click", () => {
           localStorage.removeItem("loggedEmail");

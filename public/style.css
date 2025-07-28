@@ -65,22 +65,23 @@ textarea:focus {
   outline: none;
 }
 
-button,
-.user-action {
-  margin-top: 16px;
+button:not(.pilot-login-btn):not(#login-button),
+.user-action:not(.pilot-login-btn):not(#login-button) {
+  margin-top: 0px;
   padding: 12px 24px;
   background: linear-gradient(to right, var(--primary), var(--accent));
   color: white;
   border: none;
   border-radius: var(--radius);
-  font-size: 16px;
+  font-size: 20px;
   font-weight: bold;
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: transform 0.2s ease, box-shadow 0.3s ease;
-  min-width: 150px;
+  min-width: 100px;
   text-align: center;
 }
+
 
 button:hover,
 .user-action:hover {
@@ -227,3 +228,23 @@ body.modal-open {
   cursor: pointer;
 }
 
+.pilot-login-btn {
+  background: linear-gradient(to right, var(--primary), var(--accent));
+  color: white;
+  font-weight: 500;
+  border: none;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+}
+
+.pilot-login-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  color: white;
+  text-decoration: none;
+}
+#login-toggle {
+  font-size: 18px;  /* místo 22px */
+  cursor: pointer;
+}

@@ -9,33 +9,48 @@
 
 <url>
   <loc>https://www.najdipilota.cz/</loc>
-  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
   <loc>https://www.najdipilota.cz/index.html</loc>
-  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://www.najdipilota.cz/o-projektu.html</loc>
-  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://www.najdipilota.cz/kontakt.html</loc>
-  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/inzerent.html</loc>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://www.najdipilota.cz/register.html</loc>
-  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
   <loc>https://www.najdipilota.cz/forgot.html</loc>
-  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
   <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/inzerent-register.html</loc>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/inzerent-forgot-password.html</loc>
+  <lastmod>2025-07-28T23:23:43+00:00</lastmod>
+  <priority>0.64</priority>
 </url>
 
 

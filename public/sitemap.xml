@@ -8,18 +8,33 @@
 
 
 <url>
-  <loc>https://mapapilotu.cz/</loc>
-  <lastmod>2025-07-27T07:45:40+00:00</lastmod>
+  <loc>https://www.najdipilota.cz/</loc>
+  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
   <priority>1.00</priority>
 </url>
 <url>
-  <loc>https://mapapilotu.cz/register.html</loc>
-  <lastmod>2025-07-27T07:45:40+00:00</lastmod>
+  <loc>https://www.najdipilota.cz/index.html</loc>
+  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 <url>
-  <loc>https://mapapilotu.cz/forgot.html</loc>
-  <lastmod>2025-07-27T07:45:40+00:00</lastmod>
+  <loc>https://www.najdipilota.cz/o-projektu.html</loc>
+  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/kontakt.html</loc>
+  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/register.html</loc>
+  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
+  <priority>0.80</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/forgot.html</loc>
+  <lastmod>2025-07-28T16:47:48+00:00</lastmod>
   <priority>0.80</priority>
 </url>
 

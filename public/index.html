@@ -32,15 +32,40 @@
 </head>
 <body>
 
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/index.html">📍 MapaPilotů.cz</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="/index.html">Mapa</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/o-projektu.html">O projektu</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/kontakt.html">Kontakt</a>
+        </li>
+      </ul>
+
+    </div>
+  </div>
+</nav>
+
   <div class="container py-4">
     <h1 class="text-center">🗺️ Mapa pilotů dronů</h1>
     <p id="user-status" class="text-center fw-bold mb-3"></p>
 
-    <div class="d-flex justify-content-end align-items-center gap-2 mb-4">
-      <button id="login-button" class="user-action"><span id="login-toggle">🧑‍✈️</span></button>
-      <span id="logged-info" class="fw-bold"></span>
-      <button id="edit-profile-btn" style="display:none;" class="user-action">✏️ Upravit profil</button>
-    </div>
+<div class="d-flex align-items-center gap-2">
+        <button id="login-button" class="btn btn-outline-secondary btn-sm user-action"><span id="login-toggle">Přihlásit se 🧑‍✈️</span></button>
+        <span id="logged-info" class="fw-bold small"></span>
+        <button id="edit-profile-btn" style="display:none;" class="btn btn-outline-secondary btn-sm user-action">✏️ Upravit</button>
+      </div>
+    
 
     <section class="mb-5">
       <p><strong>Hledáš pilota dronu ve svém okolí?</strong> Nebo sám létáš a chceš být vidět?</p>

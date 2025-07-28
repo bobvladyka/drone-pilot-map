@@ -82,7 +82,7 @@
 </h1>
     <p id="user-status" class="text-center fw-bold mb-3"></p>
 <!-- Tlačítka přihlášení -->
-<div class="d-flex flex-wrap align-items-center gap-2 justify-content-center">
+<div id="pilot-login-wrapper" class="d-flex flex-wrap align-items-center gap-2 justify-content-center" >
 
   <!-- Přihlásit se jako pilot -->
   <button id="login-button" class="btn btn-outline-secondary btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
@@ -96,15 +96,17 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-warning">
       <div class="modal-header bg-warning">
-        <h5 class="modal-title" id="inzerentModalLabel"><i class="bi bi-megaphone-fill me-2"></i>Pro inzerenty</h5>
+        <h5 class="modal-title" id="inzerentModalLabel">
+          <i class="bi bi-building me-2"></i>Pro firmy a inzerenty
+        </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
       </div>
       <div class="modal-body">
-        <p>Hledáš pilota pro zakázku? Tato platforma ti pomůže propojit se s ověřenými piloty podle lokality a specializace.</p>
+        <p>Hledáte pilota pro natáčení, inspekci nebo mapování? Vyberte si z ověřených pilotů podle regionu a specializace.</p>
       </div>
       <div class="modal-footer">
-        <a href="/kontakt.html" class="btn">
-          <i class="bi bi-envelope-fill me-1"></i> Mám zájem o spolupráci
+        <a href="/inzerent.html" class="btn btn-outline-warning">
+          <i class="bi bi-person-badge-fill me-1"></i> Přihlásit se jako inzerent
         </a>
       </div>
     </div>
@@ -251,7 +253,8 @@ const fakeNames = [
               weight: 1
             })
             .bindPopup(() => {
-  const loggedIn = localStorage.getItem("loggedEmail");
+  const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
+
 
   let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
 
@@ -370,5 +373,44 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
       };
     });
   </script>
+<script>
+  const advertiserEmail = localStorage.getItem("inzerentEmail");
+
+  if (advertiserEmail) {
+    const banner = document.createElement("div");
+    banner.className = "alert alert-warning text-center m-3 d-flex justify-content-center align-items-center";
+    banner.innerHTML = `
+      <div>
+        <strong>Přihlášen inzerent:</strong> ${advertiserEmail}
+      </div>
+    `;
+
+    const logoutBtn = document.createElement("button");
+    logoutBtn.className = "btn btn-sm btn-outline-dark ms-3";
+    logoutBtn.textContent = "Odhlásit se";
+    logoutBtn.onclick = () => {
+      localStorage.removeItem("inzerentEmail");
+      window.location.reload();
+    };
+
+    banner.appendChild(logoutBtn);
+    document.body.prepend(banner);
+  }
+</script>
+
+
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const inzerentEmail = localStorage.getItem("inzerentEmail");
+    const loginWrapper = document.getElementById("pilot-login-wrapper");
+
+    if (inzerentEmail && loginWrapper) {
+      loginWrapper.style.display = "none";
+    }
+  });
+</script>
+
+
 </body>
 </html>

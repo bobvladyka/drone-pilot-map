@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Dronová mapa pilotů v Česku – Najdi nebo se přidej</title>
+
+    <meta name="description" content="Hledáš pilota dronu nebo chceš být vidět? Dronová mapa spojuje piloty a zákazníky. Rychlé spojení, ověření uživatelé a možnost přivýdělku." />
+  <meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://www.najdipilota.cz/" />
+
+  <!-- Open Graph pro Facebook a další sítě -->
+  <meta property="og:title" content="Dronová mapa pilotů v Česku" />
+  <meta property="og:description" content="Spojujeme zákazníky s piloty dronů. Zobraz se na mapě nebo si najdi pilota ve svém okolí." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.najdipilota.cz/" />
+  <meta property="og:image" content="https://www.najdipilota.cz/og-image.jpg" />
+  <!-- Nahraď reálnou URL obrázku -->
+  <meta name="google-site-verification" content="yxzi02d6ahPBVtx31lx_Mwg07khOFlY_fWUFdkyrsUE" />
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Vlastní styl -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Leaflet a MarkerCluster -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Favicony -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+
+
+
+</head>
+<body>
+
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold d-flex align-items-center">
+  <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+  <span class="fs-4">NajdiPilota.cz | Sekce pro inzerenty</span>
+</a>
+        
+    
+  </div>
+</nav>
+
+  <div class="container py-4">
+    
+    <p id="user-status" class="text-center fw-bold mb-3"></p>
+
+  <span id="logged-info" class="fw-bold small"></span>
+ 
+</div>
+
+<div id="advertiser-banner" class="alert alert-warning text-center m-3 d-flex justify-content-center align-items-center" style="display: none;">
+  <div id="advertiser-text" class="me-3 fw-semibold"></div>
+  <button id="logout-btn" class="btn btn-sm gradient-yellow">Odhlásit se</button>
+</div>
+    
+
+    
+
+    <div id="map" class="mt-4"></div>
+  </div>
+
+  <!-- Leaflet & Cluster -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <!-- Skript -->
+  <script>
+    const map = L.map('map').setView([49.8, 15.5], 7);
+const fakeNames = [
+  "Rychlý Sysel",
+  "Létající Brambor",
+  "Dronislav Nebešťák",
+  "Turbo Rákosník",
+  "Bezpilotní Emil",
+  "Pískající Páv",
+  "Pilotka Haluz",
+  "František Vrtulník",
+  "Levý Joystick",
+  "Kapitán Stín",
+  "Dr. Rotor",
+  "Pan Točivý",
+  "Letuška Landová",
+  "Střemhlavý Franta",
+  "Nadzvukový Ježek",
+  "Létající Čenda",
+  "Rotorová Róza",
+  "Šumící Fanda",
+  "Bezpečný Béďa",
+  "Maják z Oblak",
+  "Droný Karel",
+  "Letec Šmatla",
+  "Startér Staník",
+  "Přistávací Pepa",
+  "Helikoptérník Honza",
+  "Navigátor Novák",
+  "Senzorová Soňa",
+  "Pán Mraků",
+  "Letící Lojza",
+  "Kamera Kamil",
+  "Rotor Ríša",
+  "Výškoměr Vašek",
+  "Vzdušný Vojta",
+  "Tichý Šumák",
+  "Drnčivý Dan",
+  "Mlha Milda",
+  "Optika Otakar",
+  "Ztracený Signál",
+  "Mistr Gimbal",
+  "Anténa Anička",
+  "Vrtulka Věrka",
+  "Letmo Lída",
+  "Flyboy Felix",
+  "Vzdušná Víla",
+  "Navigační Norbert",
+  "Modrá Letka",
+  "Křídlatý Karel",
+  "Polní Přízrak",
+  "Mapový Mirek",
+  "Kličkující Kuba"
+];
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap',
+      maxZoom: 18
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+    const pilotCircles = [];
+    fetch('/pilots')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(p => {
+          if (p.latitude != null && p.longitude != null) {
+            const circle = L.circle([p.latitude, p.longitude], {
+              radius: 2000,
+              color: 'green',
+              fillColor: '#4CAF50',
+              fillOpacity: 0.4,
+              weight: 1
+            })
+            .bindPopup(() => {
+  const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
+
+
+  let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
+
+  if (loggedIn) {
+    html += `
+      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+      <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+      ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+      ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+      ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  } else {
+    // Vyber náhodné jméno
+    const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+
+    html += `
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+      <p class="text-muted"><em>Přihlas se pro více informací o pilotovi.</em></p>
+    `;
+  }
+
+  html += `</div>`;
+  return html;
+});
+
+            markers.addLayer(circle);
+            pilotCircles.push(circle);
+          }
+        });
+        map.addLayer(markers);
+        if (markers.getBounds().isValid()) {
+          map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+        }
+      });
+
+    map.on('zoomend', () => {
+      const zoom = map.getZoom();
+      pilotCircles.forEach(circle => {
+        const maxZoom = 14;
+        const minZoom = 7;
+        const minRadius = 100;
+        const maxRadius = 2000;
+        const ratio = (zoom - minZoom) / (maxZoom - minZoom);
+        const radius = Math.max(minRadius, maxRadius - (maxRadius - minRadius) * ratio);
+        circle.setRadius(radius);
+        const opacity = 0.2 + 0.2 * (1 - ratio);
+        circle.setStyle({ fillOpacity: opacity });
+      });
+    });
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const loginBox = document.getElementById("login-box");
+      const toggle = document.getElementById("login-toggle");
+      const status = document.getElementById("user-status");
+      const loggedEmail = localStorage.getItem("loggedEmail");
+      const editBtn = document.getElementById("edit-profile-btn");
+
+const inzerentNavItem = document.getElementById("inzerent-nav-item");
+  if (!loggedEmail && inzerentNavItem) {
+    inzerentNavItem.style.display = "block";
+  }
+
+      if (loggedEmail) {
+        loginBox.style.display = "none";
+        editBtn.style.display = "inline-block";
+        toggle.textContent = "Odhlásit";
+        status.textContent = "Přihlášen jako: " + loggedEmail;
+        toggle.addEventListener("click", () => {
+          localStorage.removeItem("loggedEmail");
+          window.location.reload();
+        });
+      } else {
+        toggle.addEventListener("click", () => {
+          loginBox.style.display = loginBox.style.display === "none" ? "block" : "none";
+        });
+      }
+
+     
+
+      window.pilotLogin = function(event) {
+        event.preventDefault();
+        const email = document.getElementById("email").value;
+        const password = document.getElementById("password").value;
+        const statusBox = document.getElementById("login-status");
+
+        fetch("/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        })
+        .then(res => {
+          if (!res.ok) throw new Error("Neplatný e-mail nebo heslo.");
+          return res.text();
+        })
+        .then(msg => {
+          localStorage.setItem("loggedEmail", email);
+          statusBox.style.color = "green";
+          statusBox.textContent = msg;
+          window.location.href = "/account.html?email=" + encodeURIComponent(email);
+        })
+        .catch(err => {
+          statusBox.style.color = "red";
+          statusBox.textContent = err.message;
+        });
+      };
+    });
+  </script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const advertiserEmail = localStorage.getItem("inzerentEmail");
+    const banner = document.getElementById("advertiser-banner");
+
+    if (advertiserEmail && banner) {
+      document.getElementById("advertiser-text").innerHTML = `Přihlášen jako: <strong>${advertiserEmail}</strong>`;
+      banner.style.display = "flex";
+
+      const logoutBtn = document.getElementById("logout-btn");
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("inzerentEmail");
+        window.location.href = "/index.html";
+      });
+    }
+  });
+</script>
+
+</body>
+</html>

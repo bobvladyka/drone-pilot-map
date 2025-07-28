@@ -1,17 +1,18 @@
-
-/* === Moderní flat design styl inspirovaný Material UI === */
+/* === Styl pro Mapu pilotů – paleta Sky Grid === */
 
 :root {
-  --primary: #6C63FF; /* svěží fialová */
-  --primary-dark: #5344c6;
-  --secondary: #00C9FF; /* modrá pro přechod */
-  --background: linear-gradient(135deg, #e0e7ff, #f4f2ff);
-  --text: #222;
-  --accent: #f50057;
-  --border: #ccc;
+  --primary: #0077B6;            /* Modrá nebe – hlavní akcent */
+  --secondary: #495057;          /* Šedá grafitová – texty, nadpisy, ikony */
+  --background-light: #F8F9FA;   /* Mlha bílá – světlé pozadí */
+  --background-dark: #212529;    /* Antracit – tmavé pozadí, patičky */
+  --accent: #A9D6E5;             /* Ledově modrá – hover, selekce */
+  --neutral: #ADB5BD;            /* Ocelově šedá – rámečky, pasivní prvky */
+  --success: #38B000;            /* Signální zelená – stav OK */
+  --danger: #D62828;             /* Signal červená – chyba */
   --radius: 10px;
   --shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
   --font: 'Poppins', 'Segoe UI', sans-serif;
+
 }
 
 body {
@@ -19,22 +20,26 @@ body {
   margin: 0 auto;
   padding: 20px;
   max-width: 1000px;
-  background: var(--background);
-  color: var(--text);
+  background: var(--background-light);
+  color: var(--secondary);
 }
 
 h1 {
   font-size: 32px;
   margin-bottom: 24px;
   text-align: center;
-  color: var(--primary-dark);
+  color: var(--primary);
+}
+
+h2, h3 {
+  color: var(--secondary);
 }
 
 #map {
   height: 500px;
   width: 100%;
   border-radius: var(--radius);
-  border: 1px solid var(--border);
+  border: 1px solid var(--neutral);
   margin-bottom: 40px;
   box-shadow: var(--shadow);
 }
@@ -43,7 +48,7 @@ input,
 select,
 textarea {
   background: white;
-  border: 1px solid var(--border);
+  border: 1px solid var(--neutral);
   border-radius: var(--radius);
   padding: 12px;
   font-size: 16px;
@@ -60,10 +65,11 @@ textarea:focus {
   outline: none;
 }
 
-button {
+button,
+.user-action {
   margin-top: 16px;
   padding: 12px 24px;
-  background: linear-gradient(to right, var(--primary), var(--secondary));
+  background: linear-gradient(to right, var(--primary), var(--accent));
   color: white;
   border: none;
   border-radius: var(--radius);
@@ -72,12 +78,13 @@ button {
   cursor: pointer;
   box-shadow: var(--shadow);
   transition: transform 0.2s ease, box-shadow 0.3s ease;
-min-width: 150px;
+  min-width: 150px;
   text-align: center;
 }
 
-button:hover {
-  transform: translateY(-2px);
+button:hover,
+.user-action:hover {
+  transform: scale(1.05);
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
@@ -97,14 +104,20 @@ button:hover {
 
 #login-box {
   background: white;
-  border: 1px solid var(--border);
+  border: 1px solid var(--neutral);
   border-radius: var(--radius);
   box-shadow: var(--shadow);
-  padding: 20px;
+  padding: 24px;
   margin-top: 30px;
   max-width: 420px;
   margin-left: auto;
   margin-right: auto;
+  z-index: 1001;
+  display: none;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 #login-toggle {
@@ -115,9 +128,57 @@ button:hover {
 #user-status {
   font-weight: 600;
   font-size: 16px;
-  color: var(--primary-dark);
+  color: var(--primary);
 }
 
+#login-modal-backdrop {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(5px);
+  display: none;
+  z-index: 1000;
+}
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.leaflet-popup-content h3 {
+  font-size: 18px;
+  margin: 0;
+  color: var(--secondary);
+}
+
+.leaflet-popup-content p {
+  margin: 4px 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.leaflet-popup-content a {
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.pilot-card {
+  font-family: 'Segoe UI', sans-serif;
+  padding: 12px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 0 8px rgba(0,0,0,0.2);
+}
+
+.volunteer-border {
+  border: 2px solid var(--primary);
+  border-radius: 10px;
+  padding: 10px;
+  box-shadow: 0 0 8px rgba(0, 119, 182, 0.4);
+}
+
+/* Responsivita */
 @media (max-width: 768px) {
   body {
     padding: 10px;
@@ -130,93 +191,4 @@ button:hover {
   button {
     width: 100%;
   }
-}
-#login-modal-backdrop {
-  position: fixed;
-  top: 0; left: 0;
-  width: 100vw;
-  height: 100vh;
-  background-color: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(5px);
-  display: none;
-  z-index: 1000;
-}
-
-#login-box {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background: white;
-  padding: 24px;
-  border-radius: 12px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-  z-index: 1001;
-  width: 90%;
-  max-width: 400px;
-  display: none;
-}
-
-body.modal-open {
-  overflow: hidden;
-}
-
-.user-action {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  width: 220px;
-  height: 48px;
-  padding: 0 16px;
-
-  font-size: 16px;
-  font-weight: 600;
-  font-family: 'Segoe UI', sans-serif;
-
-  color: white;
-  background: linear-gradient(to right, #7b2ff7, #00c6ff);
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-
-  line-height: 1; /* důležité! */
-  vertical-align: middle;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.user-action:hover {
-  transform: scale(1.05);
-}
-
-.leaflet-popup-content h3 {
-  font-size: 18px;
-  margin: 0;
-  color: #333;
-}
-
-.leaflet-popup-content p {
-  margin: 4px 0;
-  font-size: 14px;
-  line-height: 1.4;
-}
-
-.leaflet-popup-content a {
-  color: #007BFF;
-  text-decoration: none;
-}
-.pilot-card {
-  font-family: 'Segoe UI', sans-serif;
-  padding: 12px;
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 0 8px rgba(0,0,0,0.2);
-}
-
-.volunteer-border {
-  border: 2px solid dodgerblue;
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0 0 8px rgba(30, 144, 255, 0.4);
 }

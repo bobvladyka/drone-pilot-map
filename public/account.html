@@ -95,9 +95,11 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Drony ve vlastnictví:</label>
-        <input type="text" id="drones" name="drones" class="form-control">
-      </div>
+  <label class="form-label">Dron / vybavení:</label>
+  <div id="drones"></div>
+  <button type="button" class="btn btn-success btn-sm mt-2" onclick="addDroneField()">➕ Přidat dron / vybavení</button>
+</div>
+
 
       <div class="col-md-6">
         <label class="form-label">Ochota dojíždět:</label>
@@ -148,6 +150,29 @@
     const email = params.get("email");
     const status = document.getElementById("status");
 
+function addDroneField(value = "") {
+  const container = document.getElementById("drones");
+  const inputGroup = document.createElement("div");
+  inputGroup.className = "input-group mb-2";
+
+  const input = document.createElement("input");
+  input.type = "text";
+  input.name = "drones[]";
+  input.className = "form-control";
+  input.value = value;
+
+  const removeBtn = document.createElement("button");
+  removeBtn.type = "button";
+  removeBtn.className = "btn btn-outline-danger";
+  removeBtn.innerHTML = "🗑️";
+  removeBtn.onclick = () => inputGroup.remove();
+
+  inputGroup.appendChild(input);
+  inputGroup.appendChild(removeBtn);
+  container.appendChild(inputGroup);
+}
+
+
     fetch("/pilots")
       .then(res => res.json())
       .then(data => {
@@ -167,7 +192,9 @@
         document.getElementById("city").value = pilot.city || "";
         document.getElementById("zip").value = pilot.zip || "";
         document.getElementById("region").value = pilot.region || "";
-        document.getElementById("drones").value = pilot.drones || "";
+        const dronesArray = (pilot.drones || "").split(",").map(d => d.trim()).filter(d => d);
+dronesArray.forEach(d => addDroneField(d));
+if (dronesArray.length === 0) addDroneField();
         document.getElementById("note").value = pilot.note || "";
         document.getElementById("travel").value = pilot.travel || "";
 
@@ -201,7 +228,7 @@
         city: document.getElementById("city").value,
         zip: document.getElementById("zip").value,
         region: document.getElementById("region").value,
-        drones: document.getElementById("drones").value,
+        drones: Array.from(document.getElementsByName("drones[]")).map(i => i.value.trim()).filter(v => v).join(", "),
         note: document.getElementById("note").value,
         travel: document.getElementById("travel").value,
         licenses: Array.from(document.querySelectorAll("input[name='licenses']:checked")).map(cb => cb.value).join(", "),
@@ -221,5 +248,6 @@
       status.classList.add(res.ok ? "text-success" : "text-danger");
     });
   </script>
+
 </body>
 </html>

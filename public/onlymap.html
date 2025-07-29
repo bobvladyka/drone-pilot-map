@@ -56,6 +56,35 @@
 </nav>
 
   <div class="container py-4">
+
+	<div class="row mb-3">
+  <div class="col-md-6">
+    <label for="filter-specialization" class="form-label fw-bold">Filtrovat podle specializace</label>
+   <select id="filter-specialization" class="form-select">
+  <option value="">Všechny specializace</option>
+</select>
+  </div>
+  <div class="col-md-6">
+    <label for="filter-region" class="form-label fw-bold">Filtrovat podle kraje</label>
+    <select id="filter-region" class="form-select">
+      <option value="">Všechny kraje</option>
+      <option value="Hlavní město Praha">Hlavní město Praha</option>
+      <option value="Středočeský kraj">Středočeský kraj</option>
+      <option value="Jihočeský kraj">Jihočeský kraj</option>
+      <option value="Plzeňský kraj">Plzeňský kraj</option>
+      <option value="Karlovarský kraj">Karlovarský kraj</option>
+      <option value="Ústecký kraj">Ústecký kraj</option>
+      <option value="Liberecký kraj">Liberecký kraj</option>
+      <option value="Královéhradecký kraj">Královéhradecký kraj</option>
+      <option value="Pardubický kraj">Pardubický kraj</option>
+      <option value="Vysočina">Vysočina</option>
+      <option value="Jihomoravský kraj">Jihomoravský kraj</option>
+      <option value="Olomoucký kraj">Olomoucký kraj</option>
+      <option value="Zlínský kraj">Zlínský kraj</option>
+      <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
+    </select>
+  </div>
+</div>
     
     <p id="user-status" class="text-center fw-bold mb-3"></p>
 
@@ -82,196 +111,121 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
   <!-- Skript -->
-  <script>
-    const map = L.map('map').setView([49.8, 15.5], 7);
-const fakeNames = [
-  "Rychlý Sysel",
-  "Létající Brambor",
-  "Dronislav Nebešťák",
-  "Turbo Rákosník",
-  "Bezpilotní Emil",
-  "Pískající Páv",
-  "Pilotka Haluz",
-  "František Vrtulník",
-  "Levý Joystick",
-  "Kapitán Stín",
-  "Dr. Rotor",
-  "Pan Točivý",
-  "Letuška Landová",
-  "Střemhlavý Franta",
-  "Nadzvukový Ježek",
-  "Létající Čenda",
-  "Rotorová Róza",
-  "Šumící Fanda",
-  "Bezpečný Béďa",
-  "Maják z Oblak",
-  "Droný Karel",
-  "Letec Šmatla",
-  "Startér Staník",
-  "Přistávací Pepa",
-  "Helikoptérník Honza",
-  "Navigátor Novák",
-  "Senzorová Soňa",
-  "Pán Mraků",
-  "Letící Lojza",
-  "Kamera Kamil",
-  "Rotor Ríša",
-  "Výškoměr Vašek",
-  "Vzdušný Vojta",
-  "Tichý Šumák",
-  "Drnčivý Dan",
-  "Mlha Milda",
-  "Optika Otakar",
-  "Ztracený Signál",
-  "Mistr Gimbal",
-  "Anténa Anička",
-  "Vrtulka Věrka",
-  "Letmo Lída",
-  "Flyboy Felix",
-  "Vzdušná Víla",
-  "Navigační Norbert",
-  "Modrá Letka",
-  "Křídlatý Karel",
-  "Polní Přízrak",
-  "Mapový Mirek",
-  "Kličkující Kuba"
-];
+ <script>
+  const map = L.map('map').setView([49.8, 15.5], 7);
+  const fakeNames = [
+    "Rychlý Sysel", "Létající Brambor", "Dronislav Nebešťák", "Turbo Rákosník", "Bezpilotní Emil", "Pískající Páv", "Pilotka Haluz", "František Vrtulník", "Levý Joystick", "Kapitán Stín", "Dr. Rotor", "Pan Točivý", "Letuška Landová", "Střemhlavý Franta", "Nadzvukový Ježek", "Létající Čenda", "Rotorová Róza", "Šumící Fanda", "Bezpečný Béďa", "Maják z Oblak", "Droný Karel", "Letec Šmatla", "Startér Staník", "Přistávací Pepa", "Helikoptérník Honza", "Navigátor Novák", "Senzorová Soňa", "Pán Mraků", "Letící Lojza", "Kamera Kamil", "Rotor Ríša", "Výškoměr Vašek", "Vzdušný Vojta", "Tichý Šumák", "Drnčivý Dan", "Mlha Milda", "Optika Otakar", "Ztracený Signál", "Mistr Gimbal", "Anténa Anička", "Vrtulka Věrka", "Letmo Lída", "Flyboy Felix", "Vzdušná Víla", "Navigační Norbert", "Modrá Letka", "Křídlatý Karel", "Polní Přízrak", "Mapový Mirek", "Kličkující Kuba"
+  ];
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-      attribution: '&copy; OpenStreetMap',
-      maxZoom: 18
-    }).addTo(map);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 18
+  }).addTo(map);
 
-    const markers = L.markerClusterGroup();
-    const pilotCircles = [];
-    fetch('/pilots')
-      .then(res => res.json())
-      .then(data => {
-        data.forEach(p => {
-          if (p.latitude != null && p.longitude != null) {
-            const circle = L.circle([p.latitude, p.longitude], {
-              radius: 2000,
-              color: 'green',
-              fillColor: '#4CAF50',
-              fillOpacity: 0.4,
-              weight: 1
-            })
-            .bindPopup(() => {
-  const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
+  const markers = L.markerClusterGroup();
+  const pilotCircles = [];
+  let allPilots = [];
 
+  function renderPilots(data) {
+    markers.clearLayers();
+    pilotCircles.length = 0;
 
-  let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
+    data.forEach(p => {
+      if (p.latitude != null && p.longitude != null) {
+        const circle = L.circle([p.latitude, p.longitude], {
+          radius: 2000,
+          color: 'green',
+          fillColor: '#4CAF50',
+          fillOpacity: 0.4,
+          weight: 1
+        }).bindPopup(() => {
+          const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
+          const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+          let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
 
-  if (loggedIn) {
-    html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-      <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
-      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
-      ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-      ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
-      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-      ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-    `;
-  } else {
-    // Vyber náhodné jméno
-    const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-
-    html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
-      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
-      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-      <p class="text-muted"><em>Přihlas se pro více informací o pilotovi.</em></p>
-    `;
-  }
-
-  html += `</div>`;
-  return html;
-});
-
-            markers.addLayer(circle);
-            pilotCircles.push(circle);
+          if (loggedIn) {
+            html += `
+              <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+              <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
+              ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+              ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+              ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+              ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+              ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+              ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+            `;
+          } else {
+            html += `
+              <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+              <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
+              ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
+              ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+              <p class="text-muted"><em>Přihlas se pro více informací o pilotovi.</em></p>
+            `;
           }
-        });
-        map.addLayer(markers);
-        if (markers.getBounds().isValid()) {
-          map.fitBounds(markers.getBounds(), { padding: [30, 30] });
-        }
-      });
 
-    map.on('zoomend', () => {
-      const zoom = map.getZoom();
-      pilotCircles.forEach(circle => {
-        const maxZoom = 14;
-        const minZoom = 7;
-        const minRadius = 100;
-        const maxRadius = 2000;
-        const ratio = (zoom - minZoom) / (maxZoom - minZoom);
-        const radius = Math.max(minRadius, maxRadius - (maxRadius - minRadius) * ratio);
-        circle.setRadius(radius);
-        const opacity = 0.2 + 0.2 * (1 - ratio);
-        circle.setStyle({ fillOpacity: opacity });
-      });
+          html += `</div>`;
+          return html;
+        });
+
+        markers.addLayer(circle);
+        pilotCircles.push(circle);
+      }
     });
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const loginBox = document.getElementById("login-box");
-      const toggle = document.getElementById("login-toggle");
-      const status = document.getElementById("user-status");
-      const loggedEmail = localStorage.getItem("loggedEmail");
-      const editBtn = document.getElementById("edit-profile-btn");
-
-const inzerentNavItem = document.getElementById("inzerent-nav-item");
-  if (!loggedEmail && inzerentNavItem) {
-    inzerentNavItem.style.display = "block";
+    map.addLayer(markers);
+    if (markers.getBounds().isValid()) {
+      map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+    }
   }
 
-      if (loggedEmail) {
-        loginBox.style.display = "none";
-        editBtn.style.display = "inline-block";
-        toggle.textContent = "Odhlásit";
-        status.textContent = "Přihlášen jako: " + loggedEmail;
-        toggle.addEventListener("click", () => {
-          localStorage.removeItem("loggedEmail");
-          window.location.reload();
-        });
-      } else {
-        toggle.addEventListener("click", () => {
-          loginBox.style.display = loginBox.style.display === "none" ? "block" : "none";
-        });
-      }
+function extractUniqueSpecializations(pilots) {
+  const specs = new Set();
+  pilots.forEach(p => {
+    if (p.specialization) {
+      p.specialization.split(",").forEach(spec => specs.add(spec.trim()));
+    }
+  });
+  return Array.from(specs).sort((a, b) => a.localeCompare(b));
+}
 
-     
+function populateSpecializationFilter(pilots) {
+  const select = document.getElementById("filter-specialization");
+  if (!select) return;
+  const uniqueSpecs = extractUniqueSpecializations(pilots);
+  select.innerHTML = '<option value="">Všechny specializace</option>' + 
+    uniqueSpecs.map(s => `<option value="${s}">${s}</option>`).join('');
+}
 
-      window.pilotLogin = function(event) {
-        event.preventDefault();
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const statusBox = document.getElementById("login-status");
 
-        fetch("/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password })
-        })
-        .then(res => {
-          if (!res.ok) throw new Error("Neplatný e-mail nebo heslo.");
-          return res.text();
-        })
-        .then(msg => {
-          localStorage.setItem("loggedEmail", email);
-          statusBox.style.color = "green";
-          statusBox.textContent = msg;
-          window.location.href = "/account.html?email=" + encodeURIComponent(email);
-        })
-        .catch(err => {
-          statusBox.style.color = "red";
-          statusBox.textContent = err.message;
-        });
-      };
+  fetch('/pilots')
+  .then(res => res.json())
+  .then(data => {
+    allPilots = data;
+    populateSpecializationFilter(allPilots); // ⬅️ Tady se doplní filtr
+    renderPilots(allPilots);
+  });
+
+
+  document.getElementById('filter-specialization').addEventListener('change', applyFilters);
+  document.getElementById('filter-region').addEventListener('change', applyFilters);
+
+  function applyFilters() {
+    const selectedSpec = document.getElementById('filter-specialization').value.toLowerCase();
+    const selectedRegion = document.getElementById('filter-region').value.toLowerCase();
+
+    const filtered = allPilots.filter(p => {
+      const spec = p.specialization?.toLowerCase() || '';
+      const region = p.region?.toLowerCase() || '';
+      return (
+        (!selectedSpec || spec.includes(selectedSpec)) &&
+        (!selectedRegion || region.includes(selectedRegion))
+      );
     });
-  </script>
+
+    renderPilots(filtered);
+  }
+</script>
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
@@ -288,6 +242,26 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
         window.location.href = "/index.html";
       });
     }
+  });
+</script>
+
+<script>
+  const SPECIALIZACE = [
+    "Foto/video",
+    "Fotogrammetrie",
+    "Senoseč",
+    "Termální inspekce",
+    "FPV průlety",
+    "Jiné (více v poznámce)"
+  ];
+
+  // Dynamicky vytvoří možnosti do selectu
+  document.addEventListener("DOMContentLoaded", () => {
+    const select = document.getElementById("filter-specialization");
+    if (!select) return;
+
+    select.innerHTML = '<option value="">Všechny specializace</option>' + 
+      SPECIALIZACE.map(s => `<option value="${s}">${s}</option>`).join('');
   });
 </script>
 

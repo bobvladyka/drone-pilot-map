@@ -170,13 +170,6 @@
     </div>
 
     <div id="map" class="mt-4"></div>
-///////
-<div class="text-center my-3">
-  <button id="fullscreen-btn" class="btn btn-outline-primary">
-    <i class="bi bi-arrows-fullscreen me-1"></i> Zvětšit mapu na celou obrazovku
-  </button>
-</div>
-///////
 
   </div>
 
@@ -420,24 +413,6 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
     }
   });
 </script>
-
-///////
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const mapEl = document.getElementById('map');
-    const fullscreenBtn = document.getElementById('fullscreen-btn');
-
-    fullscreenBtn.addEventListener('click', () => {
-      const isFullscreen = mapEl.classList.toggle('fullscreen');
-      document.body.classList.toggle('no-scroll', isFullscreen);
-      fullscreenBtn.innerHTML = isFullscreen
-        ? '<i class="bi bi-arrows-collapse me-1"></i> Zavřít celou obrazovku'
-        : '<i class="bi bi-arrows-fullscreen me-1"></i> Zvětšit mapu na celou obrazovku';
-      map.invalidateSize(); // přepočet velikosti mapy
-    });
-  });
-</script>
-///////
 
 </body>
 </html>

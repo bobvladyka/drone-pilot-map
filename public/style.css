@@ -283,16 +283,4 @@ body.modal-open {
   background-color: #1C84FF;
 }
 
-//////
-  #map.fullscreen {
-    position: fixed !important;
-    top: 0; left: 0; right: 0; bottom: 0;
-    z-index: 9999;
-    height: 100vh !important;
-    width: 100vw !important;
-  }
 
-  body.no-scroll {
-    overflow: hidden;
-  }
-/////

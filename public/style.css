@@ -68,8 +68,7 @@ textarea:focus {
 button:not(.pilot-login-btn):not(#login-button),
 .user-action:not(.pilot-login-btn):not(#login-button) {
   margin-top: 0px;
-  padding: 12px 24px;
-  background: linear-gradient(to right, var(--primary), var(--accent));
+  padding: 2px 4px 10px;
   color: white;
   border: none;
   border-radius: var(--radius);
@@ -77,7 +76,7 @@ button:not(.pilot-login-btn):not(#login-button),
   font-weight: bold;
   cursor: pointer;
   box-shadow: var(--shadow);
-  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  transition: transform17:10 31.07.2025 0.2s ease, box-shadow 0.3s ease;
   min-width: 100px;
   text-align: center;
 }

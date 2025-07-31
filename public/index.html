@@ -414,5 +414,78 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
   });
 </script>
 
+<footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+  <div class="container">
+    <div class="row gy-3 justify-content-between">
+      
+      <!-- Logo a popis -->
+      <div class="col-md-4">
+        <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+          <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+          <span class="fw-bold fs-5">NajdiPilota.cz</span>
+        </a>
+        <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+      </div>
+
+      <!-- Navigace -->
+      <div display="no" class="col-md-2">
+        <h6 class="fw-bold">Navigace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
+          <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+        </ul>
+      </div>
+
+      <!-- Právní -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Informace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+        </ul>
+      </div>
+
+      <!-- Kontakt -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Provozovatel</h6>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: _________<br>Praha, Česká republika</p>
+        <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+      </div>
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+      <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+      <div>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+        <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Vloží aktuální rok do copyrightu
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("year").textContent = new Date().getFullYear();
+  });
+</script>
+
+<script>
+  // Pokud není stránka určena pro inzerenta, odhlásíme ho
+  document.addEventListener("DOMContentLoaded", () => {
+    if (localStorage.getItem("inzerentEmail")) {
+      localStorage.removeItem("inzerentEmail");
+    }
+  });
+</script>
+
+
 </body>
 </html>

@@ -281,5 +281,20 @@ body.modal-open {
 .button-22:hover {
   background-color: #1C84FF;
 }
+.footer {
+  font-size: 14px;
+  background-color: var(--background-light);
+  color: var(--neutral);
+  border-top: 1px solid var(--neutral);
+}
 
+.footer a {
+  color: var(--secondary);
+  transition: color 0.2s ease;
+}
+
+.footer a:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
 

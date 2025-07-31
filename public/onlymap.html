@@ -37,7 +37,13 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/icons/site.webmanifest">
 <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+<style>
 
+html {
+  scroll-behavior: smooth;
+}
+
+</style>
 
 
 </head>
@@ -54,6 +60,12 @@
     
   </div>
 </nav>
+
+
+<div id="advertiser-banner" class="alert alert-warning text-center m-3 d-flex justify-content-center align-items-center" style="display: none;">
+  <div id="advertiser-text" class="me-3 fw-semibold"></div>
+  <button id="logout-btn" class="btn btn-sm gradient-yellow">Odhlásit se</button>
+</div>
 
   <div class="container py-4">
 
@@ -85,6 +97,13 @@
     </select>
   </div>
 </div>
+
+<div class="text-end mb-3">
+  <a href="#sekce-mapa" class="btn btn-outline-primary">
+    <i class="bi bi-map"></i> Vycentrovat mapu
+  </a>
+</div>
+
     
     <p id="user-status" class="text-center fw-bold mb-3"></p>
 
@@ -92,15 +111,15 @@
  
 </div>
 
-<div id="advertiser-banner" class="alert alert-warning text-center m-3 d-flex justify-content-center align-items-center" style="display: none;">
-  <div id="advertiser-text" class="me-3 fw-semibold"></div>
-  <button id="logout-btn" class="btn btn-sm gradient-yellow">Odhlásit se</button>
+    
+
+    
+
+    <div id="sekce-mapa" class="mt-4" style="height: 100vh;">
+  <div id="map" style="height: 100%; width: 100%;"></div>
 </div>
-    
 
-    
 
-    <div id="map" class="mt-4"></div>
   </div>
 
   <!-- Leaflet & Cluster -->
@@ -265,5 +284,67 @@ function populateSpecializationFilter(pilots) {
   });
 </script>
 
+<footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+  <div class="container">
+    <div class="row gy-3 justify-content-between">
+      
+      <!-- Logo a popis -->
+      <div class="col-md-4">
+        <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+          <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+          <span class="fw-bold fs-5">NajdiPilota.cz</span>
+        </a>
+        <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+      </div>
+
+      <!-- Navigace -->
+      <div display="no" class="col-md-2">
+        <h6 class="fw-bold">Navigace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/index.html?inzerent=1" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+          <li><a href="/o-projektu.html?inzerent=1" class="text-decoration-none text-muted">O projektu</a></li>
+          <li><a href="/kontakt.html?inzerent=1" class="text-decoration-none text-muted">Kontakt</a></li>
+        </ul>
+      </div>
+
+      <!-- Právní -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Informace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+        </ul>
+      </div>
+
+      <!-- Kontakt -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Provozovatel</h6>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: _________<br>Praha, Česká republika</p>
+        <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+      </div>
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+      <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+      <div>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+        <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Vloží aktuální rok do copyrightu
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("year").textContent = new Date().getFullYear();
+  });
+</script>
 </body>
 </html>

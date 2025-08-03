@@ -13,7 +13,8 @@ const port = process.env.PORT || 3000;
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false,
+    sslmode: 'require'
   }
 });
 
@@ -90,10 +91,22 @@ app.post('/login', async (req, res) => {
 // Vrácení všech pilotů
 app.get('/pilots', async (req, res) => {
   try {
-    const result = await pool.query(`SELECT * FROM pilots`);
+    const result = await pool.query(`
+      SELECT 
+        id, name, email, phone, 
+        street, city, zip, region,
+        latitude, longitude, 
+        password_hash, website,
+        note, licenses, drones,
+        travel, specialization,
+        volunteer, registrationnumber,
+        available
+      FROM pilots
+    `);
+    console.log('První záznam z DB:', result.rows[0]); // Debug
     res.json(result.rows);
   } catch (err) {
-    console.error(err);
+    console.error("Chyba při načítání pilotů:", err);
     res.status(500).json([]);
   }
 });
@@ -138,6 +151,8 @@ app.post('/reset-password', async (req, res) => {
 });
 
 app.post("/update", async (req, res) => {
+
+console.log("Přijatá data:", req.body);
   const {
     email,
     name,
@@ -152,7 +167,8 @@ app.post("/update", async (req, res) => {
     travel,
     licenses,
     specialization,
-    volunteer
+    volunteer,
+    registrationnumber
   } = req.body;
 
   const location = [street, city, zip, region].filter(Boolean).join(', ');
@@ -176,23 +192,24 @@ app.post("/update", async (req, res) => {
 
   try {
     await pool.query(
-      `UPDATE pilots SET 
-        name = $1, 
-        phone = $2, 
-        website = $3, 
-        street = $4, 
-        city = $5, 
-        zip = $6, 
-        region = $7,
-        drones = $8, 
-        note = $9, 
-        travel = $10, 
-        licenses = $11, 
-        specialization = $12, 
-        volunteer = $13, 
-        latitude = $14, 
-        longitude = $15
-      WHERE email = $16`,
+  `UPDATE pilots SET 
+    name = $1, 
+    phone = $2, 
+    website = $3, 
+    street = $4, 
+    city = $5, 
+    zip = $6, 
+    region = $7,
+    drones = $8, 
+    note = $9, 
+    travel = $10, 
+    licenses = $11, 
+    specialization = $12, 
+    volunteer = $13, 
+    latitude = $14, 
+    longitude = $15,
+    registrationnumber = $16  
+  WHERE email = $17`, 
       [
         name || "",
         phone || "",
@@ -209,15 +226,22 @@ app.post("/update", async (req, res) => {
         volunteer === "ANO" ? "ANO" : "NE",
         lat,
         lon,
+        registrationnumber || "",
         email
       ]
     );
 
     res.send("✅ Údaje byly úspěšně aktualizovány.");
   } catch (err) {
-    console.error("❌ Chyba při aktualizaci:", err);
-    res.status(500).send("Chyba při aktualizaci údajů.");
+    console.error("❌ ÚPLNÁ CHYBOVÁ ZPRÁVA:", err);
+    console.error("❌ STACK TRACE:", err.stack); // Detaily o místě chyby
+    res.status(500).json({
+      error: "Chyba při aktualizaci",
+      details: err.message, // Posíláme klientovi konkrétní chybovou zprávu
+      stack: process.env.NODE_ENV === "development" ? err.stack : undefined
+    });
   }
+
 });
 
 app.post('/delete-all', async (req, res) => {

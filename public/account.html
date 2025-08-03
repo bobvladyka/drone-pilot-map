@@ -30,9 +30,31 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Web:</label>
+        <label class="form-label">Web / Instagram / odkaz na portfolio:</label>
         <input type="url" id="website" name="website" class="form-control">
       </div>
+
+<div class="col-md-6">
+  <label class="form-label">
+    Registrační číslo provozovatele
+    <span 
+      data-bs-toggle="tooltip" 
+      data-bs-placement="top" 
+      title="Toto číslo se nikde nezobrazuje. Slouží pouze k identifikaci provozovatele, který tímto potvrzuje legální provoz dronu. Vyplňte pouze veřejnou část.">
+      ℹ️
+    </span> : 
+  </label>
+  <input type="text" 
+         id="registrationnumber" 
+         name="registrationnumber" 
+         class="form-control" 
+         pattern="CZE[a-z A-Z 0-9]{13}" 
+         maxlength="16" 
+         data-bs-toggle="tooltip"
+         title="Toto číslo se nikde nezobrazuje. Slouží pouze k identifikaci provozovatele, který tímto potvrzuje legální provoz dronu.">
+</div>
+
+
 
       <div class="col-md-4">
         <label class="form-label">Ulice:</label>
@@ -179,6 +201,7 @@ function addDroneField(value = "") {
       .then(res => res.json())
       .then(data => {
         const pilot = data.find(p => p.email === email);
+        console.log("Data pilota:", pilot);
         if (!pilot) {
           status.textContent = "Pilot nenalezen.";
           status.classList.add("text-danger");
@@ -190,6 +213,8 @@ function addDroneField(value = "") {
         document.getElementById("email").value = pilot.email || "";
         document.getElementById("phone").value = pilot.phone || "";
         document.getElementById("website").value = pilot.website || "";
+        console.log("Načtený pilot:", pilot); 
+        document.getElementById("registrationnumber").value = pilot.registrationnumber || "";
         document.getElementById("street").value = pilot.street || "";
         document.getElementById("city").value = pilot.city || "";
         document.getElementById("zip").value = pilot.zip || "";
@@ -220,12 +245,22 @@ if (dronesArray.length === 0) addDroneField();
     document.getElementById("account-form").addEventListener("submit", async e => {
       e.preventDefault();
 
+
+	const regNumberInput = document.getElementById("registrationnumber");
+  if (!regNumberInput.checkValidity()) {
+    // Zobrazí chybu, pokud je pole neplatné
+    regNumberInput.focus(); // Scrolluje na problémové pole
+    document.getElementById("status").textContent = "❌ Chyba: Zadejte platné registrační číslo (formát CZE + 10 znaků).";
+    document.getElementById("status").classList.add("text-danger");
+    return; // Zastaví odeslání
+  }
       const data = {
         id: document.getElementById("id").value,
         email: document.getElementById("email").value,
         name: document.getElementById("name").value,
         phone: document.getElementById("phone").value,
         website: document.getElementById("website").value,
+        registrationnumber: regNumberInput.value.trim(),
         street: document.getElementById("street").value,
         city: document.getElementById("city").value,
         zip: document.getElementById("zip").value,
@@ -237,7 +272,7 @@ if (dronesArray.length === 0) addDroneField();
         specialization: Array.from(document.getElementById("specialization").selectedOptions).map(o => o.value).join(", "),
         volunteer: document.getElementById("volunteer").checked ? "ANO" : "NE"
       };
-
+console.log("Odesílaná data:", data);
       const res = await fetch("/update", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -248,6 +283,8 @@ if (dronesArray.length === 0) addDroneField();
       status.textContent = text;
       status.classList.remove("text-danger", "text-success");
       status.classList.add(res.ok ? "text-success" : "text-danger");
+	status.classList.toggle("text-success", res.ok);
+  status.classList.toggle("text-danger", !res.ok);
     });
   </script>
 

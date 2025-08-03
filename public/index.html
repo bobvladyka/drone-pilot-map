@@ -264,6 +264,11 @@ const fakeNames = [
   if (loggedIn) {
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+	${p.registrationNumber && p.registrationNumber.startsWith("CZE") && p.registrationNumber.length === 13 
+  ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+  : ''}
+
+
       <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
       ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
       ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}

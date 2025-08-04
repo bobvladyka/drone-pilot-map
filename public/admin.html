@@ -263,32 +263,6 @@
     loadPilots();
   </script>
 
-<script>
-  // Kontrola přihlášení při načtení stránky
-  document.addEventListener('DOMContentLoaded', function() {
-    const token = localStorage.getItem('adminToken');
-    
-    if (!token) {
-      // Pokud není token, přesměruj na přihlášení
-      window.location.href = 'adminland.html';
-      return;
-    }
 
-    // Ověření tokenu na serveru (pokud potřebujete větší bezpečnost)
-    fetch('/verify-token', {
-      headers: { 'Authorization': `Bearer ${token}` }
-    })
-    .then(response => {
-      if (!response.ok) {
-        localStorage.removeItem('adminToken');
-        window.location.href = 'adminland.html';
-      }
-    })
-    .catch(() => {
-      localStorage.removeItem('adminToken');
-      window.location.href = 'adminland.html';
-    });
-  });
-</script>
 </body>
 </html>

@@ -338,4 +338,21 @@ button.accordion-button:not(.collapsed) {
   color: var(--secondary);
 }
 
+#status {
+  padding: 8px 12px;
+  border-radius: var(--radius);
+  font-weight: 500;
+}
+#drones .input-group {
+  align-items: center;
+}
+
+#drones .btn-outline-danger {
+  min-width: 40px;
+  padding: 6px 10px;
+  font-size: 18px;
+}
+#specialization {
+  min-height: 120px;
+}
 

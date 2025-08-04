@@ -172,10 +172,7 @@ console.log("Přijatá data:", req.body);
     available
   } = req.body;
 
-    if (!['ANO', 'NE'].includes(available)) {
-    console.error("Neplatná hodnota available:", available);
-    return res.status(400).send("Neplatná hodnota pro dostupnost");
-  }
+   
 
   const location = [street, city, zip, region].filter(Boolean).join(', ');
 

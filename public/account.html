@@ -9,8 +9,9 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
 </head>
 <body>
-  <div class="container py-5">
+  <div class="card shadow-sm p-4" style="border-radius: var(--radius); background-color: white;">
     <h1 class="text-center mb-4">🧑‍✈️ Účet pilota</h1>
+
     <form id="account-form" class="row g-3">
       <input type="hidden" id="id" name="id">
 
@@ -38,11 +39,12 @@
   <label class="form-label">
     Registrační číslo provozovatele
     <span 
-      data-bs-toggle="tooltip" 
-      data-bs-placement="top" 
-      title="Toto číslo se nikde nezobrazuje. Slouží pouze k identifikaci provozovatele, který tímto potvrzuje legální provoz dronu. Vyplňte pouze veřejnou část.">
-      ℹ️
-    </span> : 
+  data-bs-toggle="tooltip" 
+  data-bs-placement="top" 
+  title="Toto číslo se nikde nezobrazuje. Slouží pouze k identifikaci provozovatele, který tímto potvrzuje legální provoz dronu. Vyplňte pouze veřejnou část." 
+  style="cursor: help; font-size: 1rem; vertical-align: middle;">
+  ℹ️
+</span> : 
   </label>
   <input type="text" 
          id="registrationnumber" 
@@ -120,9 +122,10 @@
   <label class="form-label">Dron / vybavení:</label>
   <div id="drones"></div>
 
-  <button type="button" class="btn btn-outline-secondary btn-sm" onclick="addDroneField()">
+  <button type="button" class="btn-sm mt-2" onclick="addDroneField()">
   <span class="me-1">+</span> Přidat dron / vybavení
 </button>
+
 </div>
 
       <div class="col-md-6">
@@ -171,7 +174,7 @@
       <a href="/changepass.html">Změnit heslo</a>
 
       <div class="col-12">
-        <button type="submit" class="btn btn-success w-100">💾 Uložit změny</button>
+        <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
         <p id="status" class="mt-3 text-center fw-semibold"></p>
         <div class="text-center mt-3">
           <a href="/index.html" class="btn btn-link">← Zpět na mapu</a>

@@ -376,6 +376,43 @@ app.post('/inzerent-reset-password', async (req, res) => {
   }
 });
 
+// Admin login endpoint
+app.post('/admin-login', async (req, res) => {
+    const { username, password } = req.body;
+    
+    // Replace these with your actual admin credentials or database check
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'strongpassword123';
+    
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        // In a real app, use JWT or sessions
+        const token = generateSecureToken(); // Implement this function
+        res.json({ token });
+    } else {
+        res.status(401).json({ message: 'Neplatné přihlašovací údaje' });
+    }
+});
+
+// Admin route protection middleware
+function authenticateAdmin(req, res, next) {
+    const token = req.headers.authorization || localStorage.getItem('adminToken');
+    
+    if (token === process.env.ADMIN_TOKEN) { // Compare with your stored token
+        next();
+    } else {
+        res.status(403).send('Přístup odepřen');
+    }
+}
+
+// Protect your admin.html route
+app.get('/admin', authenticateAdmin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/admin'));
+});
+
+function generateSecureToken() {
+    return require('crypto').randomBytes(32).toString('hex');
+}
+
 
 
 // Spuštění serveru

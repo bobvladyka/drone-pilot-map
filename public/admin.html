@@ -3,41 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <title>Admin – Správa pilotů</title>
-
-<link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css">
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
-
-<thead>
-  <tr>
-    <th><input type="checkbox" onclick="toggleAll(this)"></th>
-    <th>Jméno</th>
-    <th>Město</th>
-    <th>Kraj</th>
-    <th>E-mail</th>
-    <th>Licence</th>
-    <th>Drony</th>
-    <th>Akce</th>
-  </tr>
-</thead>
+  <style>
+    .edit-btn {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 5px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    .edit-btn:hover {
+      background-color: #45a049;
+    }
+    #form-wrapper {
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 20px;
+      background: #f5f5f5;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+    #form-wrapper form {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+    }
+    #form-wrapper label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    #form-wrapper input,
+    #form-wrapper select,
+    #form-wrapper textarea {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+  </style>
 </head>
 <body>
   <h1>Admin – Správa pilotů</h1>
 
-  
   <button onclick="deleteAll()">🗑️ Smazat všechny záznamy</button>
-<button onclick="deleteSelected()">🗑️ Odstranit vybrané</button>
+  <button onclick="deleteSelected()">🗑️ Odstranit vybrané</button>
 
   <p id="status"></p>
 
   <table>
     <thead>
       <tr>
+        <th><input type="checkbox" onclick="toggleAll(this)"></th>
+        <th>ID</th>
         <th>Jméno</th>
         <th>Město</th>
         <th>Kraj</th>
         <th>E-mail</th>
-        <th>Licence</th>
-        <th>Drony</th>
+        <th>Dostupný</th>
+        <th>Viditelný</th>
+        <th>Platnost viditelnosti</th>
         <th>Akce</th>
       </tr>
     </thead>
@@ -48,17 +74,22 @@
     <h3>Úprava pilota</h3>
     <form onsubmit="submitForm(event)">
       <input type="hidden" id="id" />
+      
       <label>Jméno: <input id="name" required /></label>
-      <label>E-mail: <input id="email" required /></label>
+      <label>Lokace: <input id="location" /></label>
+      <label>E-mail: <input id="email" type="email" required /></label>
       <label>Telefon: <input id="phone" /></label>
-      <label>Web: <input id="website" /></label>
+      <label>Poznámka: <textarea id="note"></textarea></label>
+      <label>Zeměpisná šířka: <input id="latitude" type="number" step="0.000001" /></label>
+      <label>Zeměpisná délka: <input id="longitude" type="number" step="0.000001" /></label>
+      <label>Heslo (hash): <input id="password_hash" /></label>
+      <label>Web: <input id="website" type="url" /></label>
       <label>Město: <input id="city" /></label>
       <label>Ulice: <input id="street" /></label>
       <label>PSČ: <input id="zip" /></label>
       <label>Kraj: <input id="region" /></label>
       <label>Licence: <textarea id="licenses"></textarea></label>
       <label>Drony: <textarea id="drones"></textarea></label>
-      <label>Poznámka: <textarea id="note"></textarea></label>
       <label>Ochota dojíždět:
         <select id="travel">
           <option value="">-- Vyber --</option>
@@ -66,7 +97,45 @@
           <option value="NE">NE</option>
         </select>
       </label>
-      <button type="submit">💾 Uložit změny</button>
+      <label>Specializace: <input id="specialization" /></label>
+      <label>Dobrovolník:
+        <select id="volunteer">
+          <option value="">-- Vyber --</option>
+          <option value="ANO">ANO</option>
+          <option value="NE">NE</option>
+        </select>
+      </label>
+      <label>Registrační číslo: <input id="registrationnumber" /></label>
+      <label>Dostupný:
+        <select id="available">
+          <option value="">-- Vyber --</option>
+          <option value="ANO">ANO</option>
+          <option value="NE">NE</option>
+        </select>
+      </label>
+
+      <label>Viditelný na mapě:
+  <select id="visible" name="visible">
+    <option value="NE">NE</option>
+    <option value="ANO">ANO</option>
+  </select>
+</label>
+
+<label>Stav platby za viditelnost:
+  <select id="visible_payment" name="visible_payment">
+    <option value="NE">NE</option>
+    <option value="ANO">ANO</option>
+  </select>
+</label>
+
+<label>Platné do (datum):
+  <input type="date" id="visible_valid" name="visible_valid">
+</label>
+      
+      <div style="grid-column: 1 / -1;">
+        <button type="submit" class="edit-btn">💾 Uložit změny</button>
+        <button type="button" onclick="document.getElementById('form-wrapper').style.display='none'" style="margin-left:10px;">Zrušit</button>
+      </div>
     </form>
   </div>
 
@@ -81,26 +150,43 @@
           table.innerHTML = '';
           data.forEach(p => {
             const row = document.createElement('tr');
-row.innerHTML = `
-  <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
-  <td>${p.name}</td>
-  <td>${p.city || ''}</td>
-  <td>${p.region || ''}</td>
-  <td>${p.email}</td>
-  <td>${p.licenses || ''}</td>
-  <td>${p.drones || ''}</td>
-  <td><button onclick='edit(${JSON.stringify(p).replace(/'/g, "\\'")})'✏️</button></td>
-`;
+            row.innerHTML = `
+              <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
+              <td>${p.id}</td>
+              <td>${p.name || ''}</td>
+              <td>${p.city || ''}</td>
+              <td>${p.region || ''}</td>
+              <td>${p.email || ''}</td>
+              <td>${p.available || 'NE'}</td>
+              <td>${p.visible || 'NE'}</td>
+              <td>${p.visible_valid || '---'}</td>
+              <td>
+                <button class="edit-btn" onclick='edit(${JSON.stringify(p).replace(/'/g, "\\'")})'>
+                  Upravit
+                </button>
+              </td>
+            `;
             table.appendChild(row);
           });
         });
     }
 
+    
+
     function edit(p) {
       editingId = p.id;
-      const fields = ['id','name','email','phone','website','city','street','zip','region','licenses','drones','note','travel'];
+      const fields = [
+        'id', 'name', 'location', 'email', 'phone', 'note', 
+        'latitude', 'longitude', 'password_hash', 'website',
+        'city', 'street', 'zip', 'region', 'licenses', 'drones',
+        'travel', 'specialization', 'volunteer', 'registrationnumber', 'available', 'visible', 'visible_payment', 'visible_valid'
+      ];
+      
       fields.forEach(f => {
-        if (document.getElementById(f)) document.getElementById(f).value = p[f] || '';
+        const element = document.getElementById(f);
+        if (element) {
+          element.value = p[f] || '';
+        }
       });
       document.getElementById('form-wrapper').style.display = 'block';
     }
@@ -108,9 +194,20 @@ row.innerHTML = `
     function submitForm(e) {
       e.preventDefault();
       const data = {};
-      ['id','name','email','phone','website','city','street','zip','region','licenses','drones','note','travel'].forEach(id => {
-        data[id] = document.getElementById(id).value;
+      const fields = [
+        'id', 'name', 'location', 'email', 'phone', 'note', 
+        'latitude', 'longitude', 'password_hash', 'website',
+        'city', 'street', 'zip', 'region', 'licenses', 'drones',
+        'travel', 'specialization', 'volunteer', 'registrationnumber', 'available', 'visible', 'visible_payment', 'visible_valid' 
+      ];
+      
+      fields.forEach(id => {
+        const element = document.getElementById(id);
+        if (element) {
+          data[id] = element.value;
+        }
       });
+
       fetch('/update', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -133,35 +230,42 @@ row.innerHTML = `
           loadPilots();
         });
     }
-function toggleAll(master) {
-  const checkboxes = document.querySelectorAll('.row-checkbox');
-  checkboxes.forEach(cb => cb.checked = master.checked);
-}
-function deleteSelected() {
-  const selected = Array.from(document.querySelectorAll('.row-checkbox:checked'))
-    .map(cb => cb.value);
 
-  if (selected.length === 0) {
-    alert("Nevybrali jste žádné piloty.");
-    return;
-  }
+    function toggleAll(master) {
+      const checkboxes = document.querySelectorAll('.row-checkbox');
+      checkboxes.forEach(cb => cb.checked = master.checked);
+    }
 
-  if (!confirm(`Opravdu chcete smazat ${selected.length} vybraných pilotů?`)) return;
+    function deleteSelected() {
+      const selected = Array.from(document.querySelectorAll('.row-checkbox:checked'))
+        .map(cb => cb.value);
 
-  fetch('/delete-selected', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ ids: selected })
-  })
-    .then(res => res.text())
-    .then(msg => {
-      document.getElementById('status').textContent = msg;
-      loadPilots();
-    });
-}
+      if (selected.length === 0) {
+        alert("Nevybrali jste žádné piloty.");
+        return;
+      }
 
-    // Načti hned po otevření
+      if (!confirm(`Opravdu chcete smazat ${selected.length} vybraných pilotů?`)) return;
+
+      fetch('/delete-selected', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selected })
+      })
+        .then(res => res.text())
+        .then(msg => {
+          document.getElementById('status').textContent = msg;
+          loadPilots();
+        });
+    }
+
+
     loadPilots();
+  </script>
+</body>
+</html>
+
+    
   </script>
 </body>
 </html>

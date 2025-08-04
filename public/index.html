@@ -258,6 +258,7 @@ const fakeNames = [
             .bindPopup(() => {
   const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
   const isAvailable = p.available === "ANO";
+  const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
 
 
   let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
@@ -265,7 +266,7 @@ const fakeNames = [
   if (isAvailable && loggedIn) {
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-      ${p.registrationNumber && p.registrationNumber.startsWith("CZE") && p.registrationNumber.length === 13 
+      ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 13 
         ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
         : ''}
       <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
@@ -279,19 +280,20 @@ const fakeNames = [
   } else if (!isAvailable) {
     // Pilot is not available
     html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
       <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
     `;
   } else {
     // Pilot is available but user is not logged in - show fake info
-    const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+   
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
       <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
       ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-      <p class="text-muted"><em>Přihlas se pro více informací o pilotovi.</em></p>
+      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+      <p class="text-muted"><em>Přihlaste se pro více informací o pilotovi.</em></p>
     `;
   }
 

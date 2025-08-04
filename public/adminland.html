@@ -71,11 +71,14 @@
                 });
                 
                 if (response.ok) {
-                    // Save token and redirect
-                    const data = await response.json();
-                    localStorage.setItem('adminToken', data.token);
-                    window.location.href = '/admin.html';
-                } else {
+    const data = await response.json();
+    if (data.success) {
+        window.location.href = '/admin.html';
+    } else {
+        errorElement.textContent = data.message || 'Neplatné přihlašovací údaje';
+        errorElement.classList.remove('d-none');
+    }
+} else {
                     const error = await response.json();
                     errorElement.textContent = error.message || 'Neplatné přihlašovací údaje';
                     errorElement.classList.remove('d-none');

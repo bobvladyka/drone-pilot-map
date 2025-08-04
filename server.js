@@ -6,6 +6,7 @@ const fetch = require('node-fetch');
 const { Pool } = require('pg');
 const path = require('path');
 const prerender = require('prerender-node');
+const session = require('express-session');
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -19,10 +20,60 @@ const pool = new Pool({
 });
 
 app.use(prerender);
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
+// Session konfigurace
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'super_tajne_heslo',
+    resave: false,
+    saveUninitialized: false,
+    cookie: { secure: true } // true pokud jedeš na HTTPS
+}));
+
+// Admin route protection middleware
+function requireAdminLogin(req, res, next) {
+    if (req.session && req.session.isAdmin) {
+        return next();
+    }
+    return res.redirect('/adminland.html');
+}
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+app.use(prerender);
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
-app.use(express.static('public'));
+app.get('/admin.html', requireAdminLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
+// ADMIN LOGIN
+app.post('/admin-login', (req, res) => {
+    const { username, password } = req.body;
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'strongpassword123';
+
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        req.session.isAdmin = true;
+        return res.json({ success: true });
+    }
+    return res.status(401).json({ success: false, message: 'Neplatné přihlašovací údaje' });
+});
+
+// ADMIN LOGOUT
+app.get('/admin-logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/adminland.html');
+    });
+});
+
+// ADMIN HTML – chráněné
+app.get('/admin.html', requireAdminLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
+
 
 app.get("/", (req, res) => {
   res.send("Vše běží!");
@@ -309,7 +360,7 @@ if (!visible_payment) visible_payment = oldData.visible_payment;
 });
 
 
-app.post('/delete-all', async (req, res) => {
+app.post('/delete-all', requireAdminLogin, async (req, res) => {
   try {
     await pool.query('DELETE FROM pilots');
     res.send("✅ Všechny záznamy byly smazány.");
@@ -319,7 +370,7 @@ app.post('/delete-all', async (req, res) => {
   }
 });
 
-app.post('/delete-selected', async (req, res) => {
+app.post('/delete-selected',  requireAdminLogin, async (req, res) => {
   const ids = req.body.ids;
   if (!Array.isArray(ids)) {
     return res.status(400).send('Neplatný vstup – očekává se pole ID.');
@@ -425,40 +476,29 @@ app.post('/inzerent-reset-password', async (req, res) => {
 // Admin login endpoint
 app.post('/admin-login', async (req, res) => {
     const { username, password } = req.body;
-    
-    // Replace these with your actual admin credentials or database check
+
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
     const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'strongpassword123';
-    
+
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        // In a real app, use JWT or sessions
-        const token = generateSecureToken(); // Implement this function
-        res.json({ token });
-    } else {
-        res.status(401).json({ message: 'Neplatné přihlašovací údaje' });
+        req.session.isAdmin = true;
+        return res.json({ success: true });
     }
+    return res.status(401).json({ success: false, message: 'Neplatné přihlašovací údaje' });
 });
 
-// Admin route protection middleware
-function authenticateAdmin(req, res, next) {
-    const token = req.headers.authorization || localStorage.getItem('adminToken');
-    
-    if (token === process.env.ADMIN_TOKEN) { // Compare with your stored token
-        next();
-    } else {
-        res.status(403).send('Přístup odepřen');
-    }
-}
 
-// Protect your admin.html route
-app.get('/admin', authenticateAdmin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public/admin'));
+
+
+app.get('/admin.html', requireAdminLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
 
-function generateSecureToken() {
-    return require('crypto').randomBytes(32).toString('hex');
-}
-
+app.get('/admin-logout', (req, res) => {
+    req.session.destroy(() => {
+        res.redirect('/adminland.html');
+    });
+});
 
 // Spuštění serveru
 const PORT = process.env.PORT || 3000;

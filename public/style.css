@@ -360,4 +360,9 @@ button.accordion-button:not(.collapsed) {
   height: 38px; /* Stejná výška jako selecty */
   white-space: nowrap;
 }
-
+.text-success { color: green; font-weight: bold; }
+.text-warning { color: orange; font-weight: bold; }
+.text-danger { color: red; font-weight: bold; }
+.form-check .form-check-input {
+    margin-top: 0 !important;
+  }

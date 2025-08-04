@@ -32,7 +32,7 @@ app.get("/", (req, res) => {
 app.post('/register', async (req, res) => {
   const {
   name, email, password, phone,
-  street, city, zip, region
+  street, city, zip, region, ref
 } = req.body;
 	console.log("🔍 Request body:", req.body);
 
@@ -57,13 +57,41 @@ app.post('/register', async (req, res) => {
 }
 
 
-  try {
+   let visible_valid = new Date();
+  visible_valid.setMonth(visible_valid.getMonth() + 1);
+
+  if (ref) {
+    try {
+      const refResult = await pool.query(
+        `UPDATE pilots 
+         SET visible_valid = 
+           CASE 
+             WHEN visible_valid IS NULL THEN CURRENT_DATE + INTERVAL '1 month'
+             ELSE visible_valid + INTERVAL '1 month'
+           END
+         WHERE email = $1
+         RETURNING email`,
+        [ref]
+      );
+
+      if (refResult.rowCount > 0) {
+        console.log(`🎉 Připsán měsíc pilotovi, který pozval: ${ref}`);
+      }
+    } catch (err) {
+      console.warn("⚠️ Nepodařilo se připsat bonus referrerovi:", err);
+    }
+  }
+
+   try {
     await pool.query(
-  `INSERT INTO pilots (
-    name, email, password_hash, phone, street, city, zip, region, latitude, longitude
-  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
-  [name, email, password_hash, phone, street, city, zip, region, lat, lon]
-);
+      `INSERT INTO pilots (
+        name, email, password_hash, phone, street, city, zip, region,
+        latitude, longitude, visible_valid, ref_by_email
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+      [name, email, password_hash, phone, street, city, zip, region,
+       lat, lon, visible_valid, ref || null]
+    );
+
     res.redirect('/');
   } catch (err) {
     console.error("Chyba při registraci:", err);
@@ -100,7 +128,7 @@ app.get('/pilots', async (req, res) => {
         note, licenses, drones,
         travel, specialization,
         volunteer, registrationnumber,
-        available
+        available, visible, visible_payment, visible_valid
       FROM pilots
     `);
     console.log('První záznam z DB:', result.rows[0]); // Debug
@@ -154,23 +182,26 @@ app.post("/update", async (req, res) => {
 
 console.log("Přijatá data:", req.body);
   const {
-    email,
-    name,
-    phone,
-    website,
-    street,
-    city,
-    zip,
-    region,
-    drones,
-    note,
-    travel,
-    licenses,
-    specialization,
-    volunteer,
-    registrationnumber,
-    available
-  } = req.body;
+  email,
+  name,
+  phone,
+  website,
+  street,
+  city,
+  zip,
+  region,
+  drones,
+  note,
+  travel,
+  licenses,
+  specialization,
+  volunteer,
+  registrationnumber,
+  available,
+  visible,
+  visible_payment,
+  visible_valid
+} = req.body;
 
    
 
@@ -203,47 +234,53 @@ console.log("Přijatá data:", req.body);
     });
 
     const result = await pool.query(
-      `UPDATE pilots SET 
-        name = $1, 
-        phone = $2, 
-        website = $3, 
-        street = $4, 
-        city = $5, 
-        zip = $6, 
-        region = $7,
-        drones = $8, 
-        note = $9, 
-        travel = $10, 
-        licenses = $11, 
-        specialization = $12, 
-        volunteer = $13, 
-        latitude = $14, 
-        longitude = $15,
-        registrationnumber = $16,
-        available = $17
-        WHERE email = $18
-        RETURNING *`,
-      [
-        name || null,
-        phone || null,
-        website || null,
-        street || null,
-        city || null,
-        zip || null,
-        region || null,
-        drones || null,
-        note || null,
-        travel || null,
-        licenses || null,
-        specialization || null,
-        volunteer === "ANO" ? "ANO" : "NE",
-        lat,
-        lon,
-        registrationnumber || null,
-        available, // Přímé použití hodnoty z requestu
-        email
-      ]
-    );
+  `UPDATE pilots SET 
+    name = $1, 
+    phone = $2, 
+    website = $3, 
+    street = $4, 
+    city = $5, 
+    zip = $6, 
+    region = $7,
+    drones = $8, 
+    note = $9, 
+    travel = $10, 
+    licenses = $11, 
+    specialization = $12, 
+    volunteer = $13, 
+    latitude = $14, 
+    longitude = $15,
+    registrationnumber = $16,
+    available = $17,
+    visible = $18,
+    visible_payment = $19,
+    visible_valid = $20
+  WHERE email = $21
+  RETURNING *`,
+  [
+    name || null,
+    phone || null,
+    website || null,
+    street || null,
+    city || null,
+    zip || null,
+    region || null,
+    drones || null,
+    note || null,
+    travel || null,
+    licenses || null,
+    specialization || null,
+    volunteer === "ANO" ? "ANO" : "NE",
+    lat,
+    lon,
+    registrationnumber || null,
+    available,
+    visible,
+    visible_payment || null,
+    visible_valid || null,
+    email
+  ]
+);
 
   
 
@@ -259,6 +296,7 @@ console.log("Přijatá data:", req.body);
   }
 
 });
+
 
 app.post('/delete-all', async (req, res) => {
   try {
@@ -409,7 +447,6 @@ app.get('/admin', authenticateAdmin, (req, res) => {
 function generateSecureToken() {
     return require('crypto').randomBytes(32).toString('hex');
 }
-
 
 
 // Spuštění serveru

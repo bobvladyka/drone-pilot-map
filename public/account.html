@@ -58,6 +58,8 @@
 
 
 
+
+
       <div class="col-md-4">
         <label class="form-label">Ulice:</label>
         <input type="text" id="street" name="street" class="form-control">
@@ -174,6 +176,16 @@
       <a href="/changepass.html">Změnit heslo</a>
 
       <div class="col-12">
+        <div id="membership-status" class="alert alert-light border d-flex justify-content-between align-items-center" style="display: none;">
+  <span id="membership-text"></span>
+  <a href="/prodlouzit-clenstvi.html" class="btn btn-sm btn-outline-primary">Prodloužit členství</a>
+</div>
+<div class="alert alert-secondary mt-4">
+  📢 Pozvi kamaráda a získej měsíc členství zdarma!<br>
+  Tvůj odkaz: 
+  <code id="ref-link"></code>
+  
+</div>
         <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
         <p id="status" class="mt-3 text-center fw-semibold"></p>
         <div class="text-center mt-3">
@@ -184,8 +196,14 @@
   </div>
 
   <script>
-    const params = new URLSearchParams(window.location.search);
-    const email = params.get("email");
+    const storedEmail = localStorage.getItem("loggedEmail");
+const params = new URLSearchParams(window.location.search);
+const email = storedEmail || params.get("email");
+
+if (!email) {
+  // Pokud není e-mail ani v URL ani v localStorage, přesměruj na přihlášení
+  window.location.href = "/login.html";
+}
     const status = document.getElementById("status");
 
 function addDroneField(value = "") {
@@ -212,53 +230,81 @@ function addDroneField(value = "") {
 
 
     fetch("/pilots")
-      .then(res => res.json())
-      .then(data => {
-        const pilot = data.find(p => p.email === email);
-        console.log("Data pilota:", pilot);
-        if (!pilot) {
-          status.textContent = "Pilot nenalezen.";
-          status.classList.add("text-danger");
-          return;
+  .then(res => res.json())
+  .then(data => {
+    const pilot = data.find(p => p.email === email);
+    console.log("Data pilota:", pilot);
+    if (!pilot) {
+      status.textContent = "Pilot nenalezen.";
+      status.classList.add("text-danger");
+      return;
+    }
+
+    // 🟢 Zobrazení členství a odpočtu dní
+    if (pilot.visible_valid) {
+      const validDate = new Date(pilot.visible_valid);
+      const today = new Date();
+      const daysLeft = Math.ceil((validDate - today) / (1000 * 60 * 60 * 24));
+
+      const membershipBox = document.getElementById("membership-status");
+      const membershipText = document.getElementById("membership-text");
+
+      if (membershipBox && membershipText) {
+        membershipText.innerHTML = `<strong>Členství platné do:</strong> ${validDate.toLocaleDateString('cs-CZ')} (${daysLeft} dní)`;
+        membershipBox.style.display = "flex";
+        membershipBox.classList.remove("alert-success", "alert-warning", "alert-danger");
+
+        if (daysLeft <= 0) {
+          membershipBox.classList.add("alert-danger");
+        } else if (daysLeft <= 5) {
+          membershipBox.classList.add("alert-warning");
+        } else {
+          membershipBox.classList.add("alert-success");
         }
+      }
+    }
 
-        document.getElementById("id").value = pilot.id || "";
-        document.getElementById("name").value = pilot.name || "";
-        document.getElementById("email").value = pilot.email || "";
-        document.getElementById("phone").value = pilot.phone || "";
-        document.getElementById("website").value = pilot.website || "";
-        console.log("Načtený pilot:", pilot); 
-        document.getElementById("registrationnumber").value = pilot.registrationnumber || "";
-        document.getElementById("street").value = pilot.street || "";
-        document.getElementById("city").value = pilot.city || "";
-        document.getElementById("zip").value = pilot.zip || "";
-        document.getElementById("region").value = pilot.region || "";
-        const dronesArray = (pilot.drones || "").split(",").map(d => d.trim()).filter(d => d);
-dronesArray.forEach(d => addDroneField(d));
-if (dronesArray.length === 0) addDroneField();
-        document.getElementById("note").value = pilot.note || "";
-        document.getElementById("travel").value = pilot.travel || "";
+    // 📝 Načítání dat pilota do formuláře
+    document.getElementById("id").value = pilot.id || "";
+    document.getElementById("name").value = pilot.name || "";
+    document.getElementById("email").value = pilot.email || "";
+    document.getElementById("phone").value = pilot.phone || "";
+    document.getElementById("website").value = pilot.website || "";
 
-        const licenses = (pilot.licenses || "").split(",").map(s => s.trim());
-        document.querySelectorAll("input[name='licenses']").forEach(cb => {
-          cb.checked = licenses.includes(cb.value);
-        });
+    document.getElementById("registrationnumber").value = pilot.registrationnumber || "";
+    document.getElementById("street").value = pilot.street || "";
+    document.getElementById("city").value = pilot.city || "";
+    document.getElementById("zip").value = pilot.zip || "";
+    document.getElementById("region").value = pilot.region || "";
 
-        if (pilot.specialization) {
-          const specializations = pilot.specialization.split(',').map(s => s.trim());
-          [...document.getElementById("specialization").options].forEach(opt => {
-            opt.selected = specializations.includes(opt.value);
-          });
-        }
+    const dronesArray = (pilot.drones || "").split(",").map(d => d.trim()).filter(d => d);
+    dronesArray.forEach(d => addDroneField(d));
+    if (dronesArray.length === 0) addDroneField();
 
-        if (pilot.volunteer === "ANO") {
-          document.getElementById("volunteer").checked = true;
-        }
+    document.getElementById("note").value = pilot.note || "";
+    document.getElementById("travel").value = pilot.travel || "";
 
-        if (pilot.available === "ANO") {
-  document.getElementById("available").checked = true;
-}
+    const licenses = (pilot.licenses || "").split(",").map(s => s.trim());
+    document.querySelectorAll("input[name='licenses']").forEach(cb => {
+      cb.checked = licenses.includes(cb.value);
+    });
+
+    if (pilot.specialization) {
+      const specializations = pilot.specialization.split(',').map(s => s.trim());
+      [...document.getElementById("specialization").options].forEach(opt => {
+        opt.selected = specializations.includes(opt.value);
       });
+    }
+
+    if (pilot.volunteer === "ANO") {
+      document.getElementById("volunteer").checked = true;
+    }
+
+    if (pilot.available === "ANO") {
+      document.getElementById("available").checked = true;
+    }
+  });
+
 
     document.getElementById("account-form").addEventListener("submit", async e => {
       e.preventDefault();
@@ -307,6 +353,15 @@ console.log("Odesílaná data:", data);
   status.classList.toggle("text-danger", !res.ok);
     });
   </script>
+
+<script>
+  const refEmail = localStorage.getItem("loggedEmail");
+  if (refEmail) {
+    const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refEmail)}`;
+    document.getElementById("ref-link").textContent = refUrl;
+  }
+</script>
+
 
 </body>
 </html>

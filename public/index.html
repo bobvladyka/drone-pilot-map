@@ -168,7 +168,7 @@
       <a href="/register.html" class="link">Nejsem ještě registrován – chci se zaregistrovat</a>
       <a href="/forgot.html" class="link">Zapomenuté heslo?</a>
     </div>
-
+    
     <div id="map" class="mt-4"></div>
 
   </div>
@@ -247,7 +247,10 @@ const fakeNames = [
       .then(res => res.json())
       .then(data => {
         data.forEach(p => {
-          if (p.latitude != null && p.longitude != null) {
+  if (p.visible !== "ANO") return; // Skryj neviditelné piloty
+
+  if (p.latitude != null && p.longitude != null) {
+
             const circle = L.circle([p.latitude, p.longitude], {
               radius: 2000,
               color: p.available === "ANO" ? 'green' : 'gray',
@@ -350,6 +353,7 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
         editBtn.style.display = "inline-block";
         toggle.textContent = "Odhlásit";
         status.textContent = "Přihlášen jako: " + loggedEmail;
+        
         toggle.addEventListener("click", () => {
           localStorage.removeItem("loggedEmail");
           window.location.reload();

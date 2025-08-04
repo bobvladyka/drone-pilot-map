@@ -61,10 +61,8 @@
         <th>Město</th>
         <th>Kraj</th>
         <th>E-mail</th>
-        <th>Dostupný</th>
-        <th>Viditelný</th>
-        <th>Platnost viditelnosti</th>
-        <th>Akce</th>
+        <th>Available</th>
+        <th>Viditelný do</th>
       </tr>
     </thead>
     <tbody id="pilot-table"></tbody>
@@ -114,23 +112,23 @@
         </select>
       </label>
 
-      <label>Viditelný na mapě:
-  <select id="visible" name="visible">
-    <option value="NE">NE</option>
+<div class="mb-3">
+  <label class="form-label">Viditelnost:</label>
+  
+  <select id="visible" required>
     <option value="ANO">ANO</option>
+    <option value="NE">NE</option>
   </select>
 </label>
 
-<label>Stav platby za viditelnost:
-  <select id="visible_payment" name="visible_payment">
-    <option value="NE">NE</option>
-    <option value="ANO">ANO</option>
-  </select>
+<label>Datum platby: 
+  <input id="visible_payment" type="date" />
 </label>
 
-<label>Platné do (datum):
-  <input type="date" id="visible_valid" name="visible_valid">
+<label>Platné do: 
+  <input id="visible_valid" type="date" />
 </label>
+</div>
       
       <div style="grid-column: 1 / -1;">
         <button type="submit" class="edit-btn">💾 Uložit změny</button>
@@ -143,57 +141,111 @@
     let editingId = null;
 
     function loadPilots() {
-      fetch('/pilots')
-        .then(res => res.json())
-        .then(data => {
-          const table = document.getElementById('pilot-table');
-          table.innerHTML = '';
-          data.forEach(p => {
-            const row = document.createElement('tr');
-            row.innerHTML = `
-              <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
-              <td>${p.id}</td>
-              <td>${p.name || ''}</td>
-              <td>${p.city || ''}</td>
-              <td>${p.region || ''}</td>
-              <td>${p.email || ''}</td>
-              <td>${p.available || 'NE'}</td>
-              <td>${p.visible || 'NE'}</td>
-              <td>${p.visible_valid || '---'}</td>
-              <td>
-                <button class="edit-btn" onclick='edit(${JSON.stringify(p).replace(/'/g, "\\'")})'>
-                  Upravit
-                </button>
-              </td>
-            `;
-            table.appendChild(row);
-          });
-        });
-    }
+  fetch('/pilots')
+    .then(res => res.json())
+    .then(data => {
+      const table = document.getElementById('pilot-table');
+      table.innerHTML = '';
+      data.forEach(p => {
+	 // Přepni viditelnost pokud expirovala
+        if (p.visible_valid) {
+          const daysLeft = getDaysLeft(p.visible_valid);
+          if (daysLeft <= 0 && p.visible === 'ANO') {
+            fetch('/update', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: p.email,
+                visible: 'NE'
+              })
+            }).then(() => {
+              p.visible = 'NE';
+            });
+          }
+        }
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
+          <td>${p.id}</td>
+          <td>${p.name || ''}</td>
+          <td>${p.city || ''}</td>
+          <td>${p.region || ''}</td>
+          <td>${p.email || ''}</td>
+          <td>${p.available || 'NE'}</td>
+          <td class="${getVisibilityClass(p.visible_valid)}">
+  ${p.visible_valid ? `Viditelný do: ${getDaysLeft(p.visible_valid)} dní` : 'NE'}
+</td>
+          <td>
+            <button class="edit-btn" onclick='edit(${JSON.stringify(p).replace(/'/g, "\\'")})'>
+              Upravit
+            </button>
+          </td>
+        `;
+        table.appendChild(row);
+      });
+    });
+}
+
+// Pomocná funkce pro formátování data
+function formatDate(dateString) {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('cs-CZ');
+}
 
     
 
     function edit(p) {
-      editingId = p.id;
-      const fields = [
-        'id', 'name', 'location', 'email', 'phone', 'note', 
-        'latitude', 'longitude', 'password_hash', 'website',
-        'city', 'street', 'zip', 'region', 'licenses', 'drones',
-        'travel', 'specialization', 'volunteer', 'registrationnumber', 'available', 'visible', 'visible_payment', 'visible_valid'
-      ];
-      
-      fields.forEach(f => {
-        const element = document.getElementById(f);
-        if (element) {
-          element.value = p[f] || '';
-        }
-      });
-      document.getElementById('form-wrapper').style.display = 'block';
+  editingId = p.id;
+  const fields = [
+    'id', 'name', 'location', 'email', 'phone', 'note', 
+    'latitude', 'longitude', 'password_hash', 'website',
+    'city', 'street', 'zip', 'region', 'licenses', 'drones',
+    'travel', 'specialization', 'volunteer', 'registrationnumber', 'available', 
+    'visible', 'visible_payment', 'visible_valid'
+  ];
+
+  fields.forEach(f => {
+    const element = document.getElementById(f);
+    if (element) {
+      if (f === 'visible_payment' || f === 'visible_valid') {
+        element.value = p[f] ? new Date(p[f]).toISOString().split('T')[0] : '';
+      } else {
+        element.value = p[f] || '';
+      }
     }
+  });
+
+  document.getElementById('form-wrapper').style.display = 'block';
+}
+
+function getDaysLeft(validDateStr) {
+  const now = new Date();
+  const validDate = new Date(validDateStr);
+  const diff = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
+  return diff >= 0 ? diff : 0;
+}
+
+function getVisibilityClass(validDateStr) {
+  if (!validDateStr) return 'text-danger';
+
+  const daysLeft = getDaysLeft(validDateStr);
+  if (daysLeft <= 5) return 'text-danger'; // červená
+  if (daysLeft <= 10) return 'text-warning'; // žlutá
+  return 'text-success'; // zelená
+}
+
 
     function submitForm(e) {
       e.preventDefault();
       const data = {};
+       const paymentDate = document.getElementById('visible_payment').value;
+  const validDate = document.getElementById('visible_valid').value;
+
+      if (paymentDate && validDate && new Date(paymentDate) > new Date(validDate)) {
+    alert('Datum platby nemůže být později než datum platnosti');
+    return;
+  }
+
       const fields = [
         'id', 'name', 'location', 'email', 'phone', 'note', 
         'latitude', 'longitude', 'password_hash', 'website',
@@ -220,6 +272,9 @@
           loadPilots();
         });
     }
+
+
+
 
     function deleteAll() {
       if (!confirm("Opravdu chcete smazat všechny piloty?")) return;

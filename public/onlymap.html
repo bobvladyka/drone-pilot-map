@@ -196,8 +196,11 @@ html {
     markers.clearLayers();
     pilotCircles.length = 0;
 
-    data.forEach(p => {
-      if (p.latitude != null && p.longitude != null) {
+     data.forEach(p => {
+  if (p.visible !== "ANO") return; // Skryj neviditelné piloty
+
+  if (p.latitude != null && p.longitude != null) {
+
         const circle = L.circle([p.latitude, p.longitude], {
           radius: 2000,
           color: p.available === "ANO" ? 'green' : 'gray',

@@ -69,8 +69,11 @@
           <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
         </select>
       </div>
+
+     
       
       <div class="col-12">
+      <input type="hidden" id="ref" name="ref" />
         <button type="submit" class="btn btn-primary w-100">✅ Registrovat se</button>
         <div class="text-center mt-3">
           <a href="/" class="btn btn-link">← Zpět na mapu</a>
@@ -88,6 +91,25 @@ document.querySelector('form').addEventListener('submit', function (e) {
     alert("Hesla se neshodují!");
   }
 });
+</script>
+
+<script>
+  document.querySelector('form').addEventListener('submit', function (e) {
+    const pass = document.getElementById('password').value;
+    const confirm = document.getElementById('confirm_password').value;
+    if (pass !== confirm) {
+      e.preventDefault();
+      alert("Hesla se neshodují!");
+    }
+  });
+
+  // ➕ REF KÓD Z URL
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get("ref");
+  if (ref) {
+    document.getElementById("ref").value = ref;
+    console.log("🔗 Referral nalezen:", ref);
+  }
 </script>
 </body>
 </html>

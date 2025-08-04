@@ -153,18 +153,22 @@ html {
       if (p.latitude != null && p.longitude != null) {
         const circle = L.circle([p.latitude, p.longitude], {
           radius: 2000,
-          color: 'green',
-          fillColor: '#4CAF50',
+          color: p.available === "ANO" ? 'green' : 'gray',
+          fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
           fillOpacity: 0.4,
           weight: 1
         }).bindPopup(() => {
-          const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
-          const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+          const loggedIn = localStorage.getItem("inzerentEmail");
+          const isAvailable = p.available === "ANO";
           let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
 
-          if (loggedIn) {
+          if (isAvailable && loggedIn) {
+            // Pilot is available and advertiser is logged in - show full info
             html += `
               <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+              ${p.registrationnumber && p.registrationnumber.startsWith("CZE") 
+                ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+                : ''}
               <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
               ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
               ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
@@ -173,7 +177,16 @@ html {
               ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
               ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
             `;
+          } else if (!isAvailable) {
+            // Pilot is not available - show message
+            html += `
+              <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+              <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
+              ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+            `;
           } else {
+            // Pilot is available but user is not logged in - show fake info
+            const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
             html += `
               <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
               <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
@@ -197,6 +210,22 @@ html {
       map.fitBounds(markers.getBounds(), { padding: [30, 30] });
     }
   }
+
+map.on('zoomend', () => {
+      const zoom = map.getZoom();
+      pilotCircles.forEach(circle => {
+        const maxZoom = 14;
+        const minZoom = 7;
+        const minRadius = 100;
+        const maxRadius = 2000;
+        const ratio = (zoom - minZoom) / (maxZoom - minZoom);
+        const radius = Math.max(minRadius, maxRadius - (maxRadius - minRadius) * ratio);
+        circle.setRadius(radius);
+        const opacity = 0.2 + 0.2 * (1 - ratio);
+        circle.setStyle({ fillOpacity: opacity });
+      });
+    });
+
 
 function extractUniqueSpecializations(pilots) {
   const specs = new Set();

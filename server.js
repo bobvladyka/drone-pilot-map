@@ -181,7 +181,7 @@ app.post('/reset-password', async (req, res) => {
 app.post("/update", async (req, res) => {
 
 console.log("Přijatá data:", req.body);
-  const {
+  let {
   email,
   name,
   phone,
@@ -203,9 +203,20 @@ console.log("Přijatá data:", req.body);
   visible_valid
 } = req.body;
 
-   
+   console.log("🔹 UPDATE endpoint hit", req.body);
+if (visible === undefined || visible === null) {
+  const oldDataResult = await pool.query(
+  "SELECT visible, visible_valid, visible_payment FROM pilots WHERE email = $1",
+  [email]
+);
+const oldPilotData = oldDataResult.rows[0];
 
-  const location = [street, city, zip, region].filter(Boolean).join(', ');
+if (!visible) visible = oldData.visible;
+if (!visible_valid) visible_valid = oldData.visible_valid;
+if (!visible_payment) visible_payment = oldData.visible_payment;
+} else {
+  visible = visible ? "ANO" : "NE";
+}  const location = [street, city, zip, region].filter(Boolean).join(', ');
 
   let lat = null, lon = null;
 

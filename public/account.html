@@ -14,6 +14,8 @@
 
     <form id="account-form" class="row g-3">
       <input type="hidden" id="id" name="id">
+      
+
 
       <div class="col-md-6">
         <label class="form-label">Jméno:</label>
@@ -196,9 +198,12 @@
   </div>
 
   <script>
+
+let currentPilot = null;
     const storedEmail = localStorage.getItem("loggedEmail");
 const params = new URLSearchParams(window.location.search);
-const email = storedEmail || params.get("email");
+const email = params.get("email") || localStorage.getItem("loggedEmail");
+
 
 if (!email) {
   // Pokud není e-mail ani v URL ani v localStorage, přesměruj na přihlášení
@@ -232,7 +237,8 @@ function addDroneField(value = "") {
     fetch("/pilots")
   .then(res => res.json())
   .then(data => {
-    const pilot = data.find(p => p.email === email);
+     currentPilot = data.find(p => p.email === email);
+const pilot = currentPilot;
     console.log("Data pilota:", pilot);
     if (!pilot) {
       status.textContent = "Pilot nenalezen.";
@@ -335,7 +341,10 @@ function addDroneField(value = "") {
         licenses: Array.from(document.querySelectorAll("input[name='licenses']:checked")).map(cb => cb.value).join(", "),
         specialization: Array.from(document.getElementById("specialization").selectedOptions).map(o => o.value).join(", "),
         volunteer: document.getElementById("volunteer").checked ? "ANO" : "NE",
-        available: document.getElementById("available").value
+        available: document.getElementById("available").value,
+      visible: currentPilot?.visible,
+      visible_valid: currentPilot?.visible_valid,
+      visible_payment: currentPilot?.visible_payment
       };
 
 console.log("Odesílaná data:", data);

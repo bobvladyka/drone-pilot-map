@@ -67,19 +67,29 @@ html {
   <button id="logout-btn" class="btn btn-warning w-100">Odhlásit se</button>
 </div>
 
-  <div class="container py-4">
 
-	<div class="row mb-3">
-  <div class="col-md-6">
-    <label for="filter-specialization" class="form-label fw-bold">Filtrovat podle specializace</label>
-   <select id="filter-specialization" class="form-select">
-  <option value="">Všechny specializace</option>
-</select>
-  </div>
-  <div class="col-md-6">
-    <label for="filter-region" class="form-label fw-bold">Filtrovat podle kraje</label>
-    <select id="filter-region" class="form-select">
-      <option value="">Všechny kraje</option>
+	<div class="filter-section bg-light p-3 rounded-3 mb-4 shadow-sm">
+  <div class="row g-3">
+    <!-- Specializace -->
+    <div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-puzzle-fill me-2"></i>Specializace
+        </h6>
+        <select id="filter-specialization" class="form-select form-select-sm">
+          <option value="">Všechny specializace</option>
+        </select>
+      </div>
+    </div>
+
+  <!-- Kraj -->
+    <div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-geo-alt-fill me-2"></i>Kraj
+        </h6>
+        <select id="filter-region" class="form-select form-select-sm">
+          <option value="">Všechny kraje</option>
       <option value="Hlavní město Praha">Hlavní město Praha</option>
       <option value="Středočeský kraj">Středočeský kraj</option>
       <option value="Jihočeský kraj">Jihočeský kraj</option>
@@ -94,15 +104,52 @@ html {
       <option value="Olomoucký kraj">Olomoucký kraj</option>
       <option value="Zlínský kraj">Zlínský kraj</option>
       <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
-    </select>
+      </select>
+      </div>
+    </div>
+
+<!-- Dostupnost -->
+    <div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-check-circle-fill me-2"></i>Dostupnost
+        </h6>
+        <select id="filter-availability" class="form-select form-select-sm">
+          <option value="">Všichni piloti</option>
+          <option value="ANO">Dostupní piloti</option>
+          <option value="NE">Nedostupní piloti</option>
+        </select>
+      </div>
+    </div>
+
+<div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-heart-fill me-2"></i>Dobrovolníci
+        </h6>
+        <select id="filter-volunteer" class="form-select form-select-sm">
+          <option value="">Všichni piloti</option>
+          <option value="ANO">Pouze dobrovolníci</option>
+          <option value="NE">Pouze profesionálové</option>
+        </select>
+      </div>
+    </div>
+
+
+<!-- Akční tlačítka -->
+    <div class="col-md-6 d-flex flex-column justify-content-end">
+          <button id="reset-filters-btn" class="btn-sm btn-outline-secondary mb-2">
+  <i class="bi bi-x-circle me-1"></i> Vymazat filtry
+</button>
+           <button id="center-map-btn" class="btn btn-outline-primary">
+    <i class="bi bi-map"></i> Vycentrovat mapu
+  </button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="text-end mb-3">
-  <a href="#sekce-mapa" class="btn btn-outline-primary">
-    <i class="bi bi-map"></i> Vycentrovat mapu
-  </a>
-</div>
 
     
     <p id="user-status" class="text-center fw-bold mb-3"></p>
@@ -166,19 +213,26 @@ html {
   let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
 
   if (isAvailable && loggedIn) {
-    html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-      ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 13 
-        ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
-        : ''}
-      <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
-      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
-      ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-      ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
-      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-      ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-    `;
+  // Pro diagnostiku
+console.log('Registration number:', p.registrationnumber);
+console.log('Starts with CZE:', p.registrationnumber?.startsWith("CZE"));
+console.log('Length:', p.registrationnumber?.length);
+
+html += `
+  <div class="d-flex justify-content-between align-items-center">
+    <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+      : ''}
+  </div>
+  <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
+  ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+  ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+  ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+  ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+  ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+  ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+`;
   } else if (!isAvailable) {
     // Pilot is not available
     html += `
@@ -255,27 +309,50 @@ function populateSpecializationFilter(pilots) {
     allPilots = data;
     populateSpecializationFilter(allPilots); // ⬅️ Tady se doplní filtr
     renderPilots(allPilots);
+    applyFilters();
   });
 
 
   document.getElementById('filter-specialization').addEventListener('change', applyFilters);
-  document.getElementById('filter-region').addEventListener('change', applyFilters);
+document.getElementById('filter-region').addEventListener('change', applyFilters);
+document.getElementById('filter-availability').addEventListener('change', applyFilters);
+document.getElementById('filter-volunteer').addEventListener('change', applyFilters);
+document.getElementById('reset-filters-btn').addEventListener('click', resetFilters);
 
-  function applyFilters() {
-    const selectedSpec = document.getElementById('filter-specialization').value.toLowerCase();
-    const selectedRegion = document.getElementById('filter-region').value.toLowerCase();
 
-    const filtered = allPilots.filter(p => {
-      const spec = p.specialization?.toLowerCase() || '';
-      const region = p.region?.toLowerCase() || '';
-      return (
-        (!selectedSpec || spec.includes(selectedSpec)) &&
-        (!selectedRegion || region.includes(selectedRegion))
-      );
-    });
+document.getElementById('center-map-btn').addEventListener('click', function() {
+  document.getElementById('sekce-mapa').scrollIntoView({ behavior: 'smooth' });
+});
 
-    renderPilots(filtered);
-  }
+function resetFilters() {
+  document.getElementById('filter-specialization').value = '';
+  document.getElementById('filter-region').value = '';
+  document.getElementById('filter-availability').value = '';
+  document.getElementById('filter-volunteer').value = '';
+  
+  applyFilters();
+}
+
+function applyFilters() {
+  const selectedSpec = document.getElementById('filter-specialization').value.toLowerCase();
+  const selectedRegion = document.getElementById('filter-region').value.toLowerCase();
+  const selectedAvailability = document.getElementById('filter-availability').value;
+  const selectedVolunteer = document.getElementById('filter-volunteer').value;
+
+  const filtered = allPilots.filter(p => {
+    const spec = p.specialization?.toLowerCase() || '';
+    const region = p.region?.toLowerCase() || '';
+    
+    return (
+      (!selectedSpec || spec.includes(selectedSpec)) &&
+      (!selectedRegion || region.includes(selectedRegion)) &&
+      (!selectedAvailability || p.available === selectedAvailability) &&
+      (!selectedVolunteer || p.volunteer === selectedVolunteer)
+    );
+  });
+
+  renderPilots(filtered);
+}
 </script>
 
 <script>

@@ -356,3 +356,8 @@ button.accordion-button:not(.collapsed) {
   min-height: 120px;
 }
 
+#reset-filters {
+  height: 38px; /* Stejná výška jako selecty */
+  white-space: nowrap;
+}
+

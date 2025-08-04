@@ -134,6 +134,17 @@
         </select>
       </div>
 
+
+<div class="col-md-6">
+        <label class="form-label">Jsem k dispozici:</label>
+        <select id="available" name="available" class="form-select">
+          <option value="">– Vyber –</option>
+          <option value="ANO">ANO</option>
+          <option value="NE">NE</option>
+        </select>
+      </div>
+
+
       <div class="col-12">
         <label class="form-label">Specializace:</label>
         <select id="specialization" name="specialization" multiple class="form-select">
@@ -240,6 +251,10 @@ if (dronesArray.length === 0) addDroneField();
         if (pilot.volunteer === "ANO") {
           document.getElementById("volunteer").checked = true;
         }
+
+        if (pilot.available === "ANO") {
+  document.getElementById("available").checked = true;
+}
       });
 
     document.getElementById("account-form").addEventListener("submit", async e => {
@@ -270,8 +285,10 @@ if (dronesArray.length === 0) addDroneField();
         travel: document.getElementById("travel").value,
         licenses: Array.from(document.querySelectorAll("input[name='licenses']:checked")).map(cb => cb.value).join(", "),
         specialization: Array.from(document.getElementById("specialization").selectedOptions).map(o => o.value).join(", "),
-        volunteer: document.getElementById("volunteer").checked ? "ANO" : "NE"
+        volunteer: document.getElementById("volunteer").checked ? "ANO" : "NE",
+        available: document.getElementById("available").value
       };
+
 console.log("Odesílaná data:", data);
       const res = await fetch("/update", {
         method: "POST",

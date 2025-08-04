@@ -168,8 +168,14 @@ console.log("Přijatá data:", req.body);
     licenses,
     specialization,
     volunteer,
-    registrationnumber
+    registrationnumber,
+    available
   } = req.body;
+
+    if (!['ANO', 'NE'].includes(available)) {
+    console.error("Neplatná hodnota available:", available);
+    return res.status(400).send("Neplatná hodnota pro dostupnost");
+  }
 
   const location = [street, city, zip, region].filter(Boolean).join(', ');
 
@@ -191,45 +197,58 @@ console.log("Přijatá data:", req.body);
 }
 
   try {
-    await pool.query(
-  `UPDATE pilots SET 
-    name = $1, 
-    phone = $2, 
-    website = $3, 
-    street = $4, 
-    city = $5, 
-    zip = $6, 
-    region = $7,
-    drones = $8, 
-    note = $9, 
-    travel = $10, 
-    licenses = $11, 
-    specialization = $12, 
-    volunteer = $13, 
-    latitude = $14, 
-    longitude = $15,
-    registrationnumber = $16  
-  WHERE email = $17`, 
+    // DEBUG: Logování hodnot před odesláním do DB
+    console.log("Hodnoty pro update:", {
+      name, phone, website, street, city, zip, region,
+      drones, note, travel, licenses, specialization,
+      volunteer, lat, lon, registrationnumber, 
+      available // Toto by mělo být 'ANO' nebo 'NE'
+    });
+
+    const result = await pool.query(
+      `UPDATE pilots SET 
+        name = $1, 
+        phone = $2, 
+        website = $3, 
+        street = $4, 
+        city = $5, 
+        zip = $6, 
+        region = $7,
+        drones = $8, 
+        note = $9, 
+        travel = $10, 
+        licenses = $11, 
+        specialization = $12, 
+        volunteer = $13, 
+        latitude = $14, 
+        longitude = $15,
+        registrationnumber = $16,
+        available = $17
+        WHERE email = $18
+        RETURNING *`,
       [
-        name || "",
-        phone || "",
-        website || "",
-        street || "",
-        city || "",
-        zip || "",
-        region || "",
-        drones || "",
-        note || "",
-        travel || "",
-        licenses || "",
-        specialization || "",
+        name || null,
+        phone || null,
+        website || null,
+        street || null,
+        city || null,
+        zip || null,
+        region || null,
+        drones || null,
+        note || null,
+        travel || null,
+        licenses || null,
+        specialization || null,
         volunteer === "ANO" ? "ANO" : "NE",
         lat,
         lon,
-        registrationnumber || "",
+        registrationnumber || null,
+        available, // Přímé použití hodnoty z requestu
         email
       ]
     );
+
+  
 
     res.send("✅ Údaje byly úspěšně aktualizovány.");
   } catch (err) {

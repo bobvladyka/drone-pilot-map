@@ -69,7 +69,7 @@ button:not(.pilot-login-btn):not(#login-button),
 .user-action:not(.pilot-login-btn):not(#login-button) {
   margin-top: 0px;
   padding: 2px 4px 10px;
-  color: white;
+  color: #6c757d;
   border: none;
   border-radius: var(--radius);
   font-size: 20px;
@@ -324,4 +324,18 @@ body.modal-open {
   background-color: #f8d7da;
   color: #721c24;
 }
+
+.accordion-button {
+  color: var(--secondary);  /* Přepisuje bílou barvu z Bootstrapu */
+}
+
+.accordion-body {
+  color: var(--secondary);  /* Zajištění správné barvy obsahu odpovědi */
+}
+
+button.accordion-button:not(.collapsed) {
+  background-color: var(--background-light);
+  color: var(--secondary);
+}
+
 

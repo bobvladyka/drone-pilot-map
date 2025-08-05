@@ -272,13 +272,19 @@ if (visible === undefined || visible === null) {
 
     // 🔒 Restrikce pro Free účty
     if (oldPilotData.type_account === "Free") {
-      available = "ANO"; // vždy ANO
-      website = null;    // zakázat web
-      note = null;       // zakázat poznámku
-      if (specialization) {
-        specialization = specialization.split(",")[0]; // jen první specializace
-      }
-    }
+  available = "ANO"; // vždy ANO
+  website = null;    // zakázat web
+  note = null;       // zakázat poznámku
+  registrationnumber = null; // 🚫 zakázat registrační číslo
+
+  if (specialization) {
+    specialization = specialization.split(",")[0]; // jen první specializace
+  }
+
+  if (drones) {
+    drones = drones.split(",")[0]; // 🚫 jen první dron
+  }
+}
 
     // Převod visible na ANO/NE
     visible = visible ? "ANO" : "NE";
@@ -520,6 +526,26 @@ app.get('/admin-logout', (req, res) => {
         res.redirect('/adminland.html');
     });
 });
+
+app.post('/contact-pilot', async (req, res) => {
+  const { to, message } = req.body;
+  if (!to || !message) return res.status(400).send("Chybí e-mail nebo zpráva.");
+
+  try {
+    await transporter.sendMail({
+      from: '"Dronová mapa" <dronadmin@seznam.cz>',
+      to,
+      cc: 'dronadmin@seznam.cz', // kopie pro admina
+      subject: 'Zpráva od návštěvníka mapy',
+      text: message
+    });
+    res.send("✅ Zpráva byla úspěšně odeslána.");
+  } catch (err) {
+    console.error("Chyba při odesílání zprávy:", err);
+    res.status(500).send("❌ Nepodařilo se odeslat zprávu.");
+  }
+});
+
 
 // Spuštění serveru
 const PORT = process.env.PORT || 3000;

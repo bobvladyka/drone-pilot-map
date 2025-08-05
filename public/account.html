@@ -255,6 +255,18 @@ if (pilot.type_account === "Free") {
   document.getElementById("website").disabled = true;
   document.getElementById("note").disabled = true;
 
+  // 🚫 Uzamknout registrační číslo
+  document.getElementById("registrationnumber").disabled = true;
+
+  // 🚫 Ponechat jen 1 dron a zakázat přidávání
+  const addBtn = document.querySelector('button[onclick="addDroneField()"]');
+  if (addBtn) addBtn.remove();
+  // Odstranit nadbytečné drony (ponechat jen první)
+  const dronesContainer = document.getElementById("drones");
+  if (dronesContainer.children.length > 1) {
+    [...dronesContainer.children].slice(1).forEach(el => el.remove());
+  }
+
   const specializationSelect = document.getElementById("specialization");
   specializationSelect.addEventListener("change", function () {
     if (this.selectedOptions.length > 1) {

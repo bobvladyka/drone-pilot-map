@@ -266,28 +266,39 @@ const fakeNames = [
 
   let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
 
-  if (isAvailable && loggedIn) {
-  // Pro diagnostiku
-console.log('Registration number:', p.registrationnumber);
-console.log('Starts with CZE:', p.registrationnumber?.startsWith("CZE"));
-console.log('Length:', p.registrationnumber?.length);
-
-html += `
-  <div class="d-flex justify-content-between align-items-center">
-    <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
-      : ''}
-  </div>
-  <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
-  ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
-  ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-  ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
-  ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-  ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-  ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-`;
-  } else if (!isAvailable) {
+ if (isAvailable && loggedIn) {
+  if (p.type_account === "Free") {
+    html += `
+      <div class="d-flex justify-content-between align-items-center">
+        <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+        ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+          ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+          : ''}
+      </div>
+      <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2" onclick="contactPilot('${p.email}')">
+        ✉️ Napsat pilotovi
+      </button>
+      ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  } else {
+    html += `
+      <div class="d-flex justify-content-between align-items-center">
+        <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+        ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+          ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+          : ''}
+      </div>
+      <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+      ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+      ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+      ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  }
+} else if (!isAvailable) {
     // Pilot is not available
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
@@ -398,8 +409,43 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
         });
       };
     });
+
+function contactPilot(pilotEmail) {
+  document.getElementById("contactPilotEmail").value = pilotEmail;
+  document.getElementById("contactMessage").value = "";
+  const modal = new bootstrap.Modal(document.getElementById('contactPilotModal'));
+  modal.show();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("sendContactMessage").addEventListener("click", () => {
+    const pilotEmail = document.getElementById("contactPilotEmail").value;
+    const message = document.getElementById("contactMessage").value.trim();
+
+    if (!message) {
+      alert("Prosím napište zprávu.");
+      return;
+    }
+
+    fetch('/contact-pilot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ to: pilotEmail, message })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error("Nepodařilo se odeslat zprávu.");
+      return res.text();
+    })
+    .then(response => {
+      alert(response);
+      bootstrap.Modal.getInstance(document.getElementById('contactPilotModal')).hide();
+    })
+    .catch(err => alert("❌ Chyba: " + err.message));
+  });
+});
   </script>
 <script>
+
   const advertiserEmail = localStorage.getItem("inzerentEmail");
 
   if (advertiserEmail) {
@@ -436,6 +482,28 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
     }
   });
 </script>
+
+<div class="modal fade" id="contactPilotModal" tabindex="-1" aria-labelledby="contactPilotModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="contactPilotModalLabel">Napsat pilotovi</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3">
+          <label for="contactMessage" class="form-label">Vaše zpráva</label>
+          <textarea id="contactMessage" class="form-control" rows="5" placeholder="Napište zde svou zprávu..."></textarea>
+        </div>
+        <input type="hidden" id="contactPilotEmail">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
+        <button type="button" class="btn btn-primary" id="sendContactMessage">Odeslat</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
   <div class="container">

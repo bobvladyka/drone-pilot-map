@@ -135,13 +135,13 @@ app.post('/register', async (req, res) => {
 
    try {
     await pool.query(
-      `INSERT INTO pilots (
-        name, email, password_hash, phone, street, city, zip, region,
-        latitude, longitude, visible_valid, ref_by_email
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
-      [name, email, password_hash, phone, street, city, zip, region,
-       lat, lon, visible_valid, ref || null]
-    );
+  `INSERT INTO pilots (
+    name, email, password_hash, phone, street, city, zip, region,
+    latitude, longitude, visible_valid, ref_by_email, type_account
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
+  [name, email, password_hash, phone, street, city, zip, region,
+   lat, lon, visible_valid, ref || null, "Free"]
+);
 
     res.redirect('/');
   } catch (err) {
@@ -285,6 +285,28 @@ if (visible === undefined || visible === null) {
     drones = drones.split(",")[0]; // 🚫 jen první dron
   }
 }
+// 🔒 Omezení pro Basic účet
+if (oldPilotData.type_account === "Basic") {
+
+   if (!available) {
+    available = oldPilotData.available;
+  }
+
+  // Povolené: available, registrationnumber, phone, email, website(portfolio)
+  // Omezení: max 3 specializace, max 2 drony
+  if (specialization) {
+    specialization = specialization.split(",").slice(0, 3).join(","); // max 3
+  }
+  if (drones) {
+    drones = drones.split(",").slice(0, 2).join(","); // max 2
+  }
+}
+
+// 🛡️ Zajištění, že available má vždy ANO nebo NE
+if (available !== "ANO" && available !== "NE") {
+  available = "NE";
+}
+
 
     // Převod visible na ANO/NE
     visible = visible ? "ANO" : "NE";
@@ -545,6 +567,37 @@ app.post('/contact-pilot', async (req, res) => {
     res.status(500).send("❌ Nepodařilo se odeslat zprávu.");
   }
 });
+
+app.post("/update-membership", async (req, res) => {
+  const { email, membership_type } = req.body;
+
+  if (!email || !membership_type) {
+    return res.status(400).json({ success: false, message: "Chybí e-mail nebo typ členství." });
+  }
+
+  // Povolené hodnoty
+  const allowedTypes = ["Free", "Basic", "Premium"];
+  if (!allowedTypes.includes(membership_type)) {
+    return res.status(400).json({ success: false, message: "Neplatný typ členství." });
+  }
+
+  try {
+    const result = await pool.query(
+      `UPDATE pilots SET type_account = $1 WHERE email = $2 RETURNING type_account`,
+      [membership_type, email]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "Pilot nenalezen." });
+    }
+
+    res.json({ success: true, message: "Členství bylo aktualizováno.", type_account: result.rows[0].type_account });
+  } catch (err) {
+    console.error("❌ Chyba při aktualizaci členství:", err);
+    res.status(500).json({ success: false, message: "Chyba na serveru." });
+  }
+});
+
 
 
 // Spuštění serveru

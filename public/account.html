@@ -33,7 +33,7 @@
       </div>
 
       <div class="col-md-6">
-        <label class="form-label">Web / Instagram / odkaz na portfolio:</label>
+        <label class="form-label">Odkaz na portfolio ve formátu <i>https://...</i> :</label>
         <input type="url" id="website" name="website" class="form-control">
       </div>
 
@@ -126,7 +126,7 @@
   <label class="form-label">Dron / vybavení:</label>
   <div id="drones"></div>
 
-  <button type="button" class="btn-sm mt-2" onclick="addDroneField()">
+  <button type="button" id="add-drone-btn" class="btn-sm mt-2">
   <span class="me-1">+</span> Přidat dron / vybavení
 </button>
 
@@ -276,6 +276,27 @@ if (pilot.type_account === "Free") {
     }
   });
 }
+if (pilot.type_account === "Basic") {
+   // Max 2 drony
+  const addBtn = document.getElementById("add-drone-btn");
+  addBtn.addEventListener("click", () => {
+    const dronesContainer = document.getElementById("drones");
+    if (dronesContainer.children.length >= 2) {
+      alert("V Basic účtu lze přidat maximálně 2 drony.");
+      return; // ⛔ zastaví přidání
+    }
+    addDroneField();
+  });
+
+  // Max 3 specializace
+  const specializationSelect = document.getElementById("specialization");
+  specializationSelect.addEventListener("change", function () {
+    if (this.selectedOptions.length > 3) {
+      alert("V Basic účtu lze vybrat maximálně 3 specializace.");
+      this.selectedOptions[this.selectedOptions.length - 1].selected = false;
+    }
+  });
+}
 
     // 🟢 Zobrazení členství a odpočtu dní
     if (pilot.visible_valid) {
@@ -339,9 +360,7 @@ if (pilot.type_account === "Free") {
       document.getElementById("volunteer").checked = true;
     }
 
-    if (pilot.available === "ANO") {
-      document.getElementById("available").checked = true;
-    }
+    document.getElementById("available").value = pilot.available || "";
   });
 
 

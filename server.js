@@ -179,7 +179,7 @@ app.get('/pilots', async (req, res) => {
         note, licenses, drones,
         travel, specialization,
         volunteer, registrationnumber,
-        available, visible, visible_payment, visible_valid
+        available, visible, visible_payment, visible_valid, type_account
       FROM pilots
     `);
     console.log('První záznam z DB:', result.rows[0]); // Debug
@@ -254,13 +254,34 @@ console.log("Přijatá data:", req.body);
   visible_valid
 } = req.body;
 
-   console.log("🔹 UPDATE endpoint hit", req.body);
 if (visible === undefined || visible === null) {
   const oldDataResult = await pool.query(
-  "SELECT visible, visible_valid, visible_payment FROM pilots WHERE email = $1",
-  [email]
-);
-const oldPilotData = oldDataResult.rows[0];
+    "SELECT visible, visible_valid, visible_payment, type_account FROM pilots WHERE email = $1",
+    [email]
+  );
+  const oldPilotData = oldDataResult.rows[0];
+
+    if (!oldPilotData) {
+      return res.status(404).send("Pilot nenalezen.");
+    }
+
+    // Pokud nebyly poslány hodnoty viditelnosti, použij staré
+    if (visible === undefined || visible === null) visible = oldPilotData.visible;
+    if (!visible_valid) visible_valid = oldPilotData.visible_valid;
+    if (!visible_payment) visible_payment = oldPilotData.visible_payment;
+
+    // 🔒 Restrikce pro Free účty
+    if (oldPilotData.type_account === "Free") {
+      available = "ANO"; // vždy ANO
+      website = null;    // zakázat web
+      note = null;       // zakázat poznámku
+      if (specialization) {
+        specialization = specialization.split(",")[0]; // jen první specializace
+      }
+    }
+
+    // Převod visible na ANO/NE
+    visible = visible ? "ANO" : "NE";
 
 if (!visible) visible = oldData.visible;
 if (!visible_valid) visible_valid = oldData.visible_valid;

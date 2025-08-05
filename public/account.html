@@ -246,6 +246,25 @@ const pilot = currentPilot;
       return;
     }
 
+    // 🔒 Omezení pro Free účet
+if (pilot.type_account === "Free") {
+  const availableSelect = document.getElementById("available");
+  availableSelect.value = "ANO";      // přednastavit ANO
+  availableSelect.disabled = true;    // uzamknout
+
+  document.getElementById("website").disabled = true;
+  document.getElementById("note").disabled = true;
+
+  const specializationSelect = document.getElementById("specialization");
+  specializationSelect.addEventListener("change", function () {
+    if (this.selectedOptions.length > 1) {
+      alert("Ve Free účtu lze vybrat pouze jednu specializaci.");
+      const lastSelected = this.selectedOptions[this.selectedOptions.length - 1].value;
+      [...this.options].forEach(opt => opt.selected = (opt.value === lastSelected));
+    }
+  });
+}
+
     // 🟢 Zobrazení členství a odpočtu dní
     if (pilot.visible_valid) {
       const validDate = new Date(pilot.visible_valid);
@@ -268,6 +287,8 @@ const pilot = currentPilot;
           membershipBox.classList.add("alert-success");
         }
       }
+
+
     }
 
     // 📝 Načítání dat pilota do formuláře

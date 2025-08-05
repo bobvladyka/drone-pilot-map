@@ -264,23 +264,39 @@ const fakeNames = [
   const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
 
 
-  let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
+  let html = `<div class="pilot-card">`;
+
+
 
  if (isAvailable && loggedIn) {
   if (p.type_account === "Free") {
     html += `
-      <div class="d-flex justify-content-between align-items-center">
-        <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-        ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-          ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
-          : ''}
-      </div>
-      <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2" onclick="contactPilot('${p.email}')">
-        ✉️ Napsat pilotovi
-      </button>
-      ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-    `;
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60">`
+      : ''}
+  </div>
+`;
+
+// Tag dobrovolník přímo pod jménem
+if (p.volunteer === 'ANO') {
+  html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+}
+
+// Obsah profilu
+if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+
+// Tlačítko až úplně na konci
+html += `
+  <div class="mt-3">
+    <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
+      ✉️ Napsat pilotovi
+    </button>
+  </div>
+`;
+html += `</div>`;
   } else {
     html += `
       <div class="d-flex justify-content-between align-items-center">
@@ -498,8 +514,8 @@ document.addEventListener("DOMContentLoaded", () => {
         <input type="hidden" id="contactPilotEmail">
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Zavřít</button>
-        <button type="button" class="btn btn-primary" id="sendContactMessage">Odeslat</button>
+        <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" data-bs-dismiss="modal">Zavřít</button>
+        <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" id="sendContactMessage">Odeslat</button>
       </div>
     </div>
   </div>

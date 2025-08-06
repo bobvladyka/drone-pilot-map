@@ -185,16 +185,15 @@
   <a href="/prodlouzit-clenstvi.html" class="btn btn-sm btn-outline-primary">Prodloužit členství</a>
 </div>
 <div class="alert alert-secondary mt-4">
-  📢 Pozvi kamaráda a získej měsíc členství zdarma!<br>
+  📢 Pozvi kamaráda a získej na týden členství <b>zdarma!</b><br>
   Tvůj odkaz: 
   <code id="ref-link"></code>
-  
 </div>
-<div class="col-12 mt-4">
+  
+<div class="col-12 mt-4" id="gdpr-consent-section" style="display: none;">
   <h5>Souhlas se zveřejněním kontaktů</h5>
   <p class="text-muted">
-    Pokud souhlasíte, bude váš e‑mail a telefon viditelný pro ostatní uživatele podle vašeho tarifu.
-    Souhlas můžete kdykoli odvolat.
+    Pokud souhlasíte, váš e‑mail a telefon budou viditelné pro ostatní uživatele v souladu s vaším tarifem. Nastavení souhlasu GDPR je dostupné pouze pro uživatele s tarifem <b>Premium</b>. Ostatní uživatelé již souhlas udělili během registračního procesu.
   </p>
   <div class="form-check">
     <input class="form-check-input" type="checkbox" id="publicContactConsent">
@@ -202,11 +201,12 @@
       Souhlasím se zveřejněním mého e‑mailu a telefonu
     </label>
   </div>
+</div>  
+  <span id="consent-status" class="ms-2 text-muted"></span>
   <button type="button" class="btn btn-outline-primary mt-2" id="saveConsentBtn">Uložit souhlas</button>
 </div>
-
         <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
-        <p id="status" class="mt-3 text-center fw-semibold"></p>
+        
         <div class="text-center mt-3">
           <a href="/index.html" class="btn btn-link">← Zpět na mapu</a>
         </div>
@@ -260,6 +260,17 @@ function addDroneField(value = "") {
   currentPilot = pilot;
   console.log("Data pilota:", pilot);
 
+// 🚨 Handle GDPR consent section visibility
+    if (pilot.type_account !== "Premium") {
+      // Hide GDPR consent section for non-Premium accounts
+      document.getElementById("publicContactConsent").disabled = true;
+      document.getElementById("saveConsentBtn").disabled = true;
+    } else {
+      // Enable GDPR consent for Premium accounts
+      document.getElementById("publicContactConsent").disabled = false;
+      document.getElementById("saveConsentBtn").disabled = false;
+    }
+
   fetch('/get-my-consents?email=' + encodeURIComponent(pilot.email))
     .then(res => res.json())
     .then(data => {
@@ -298,6 +309,8 @@ if (pilot.type_account === "Free") {
   });
 }
 if (pilot.type_account === "Basic") {
+
+  
    // Max 2 drony
   const addBtn = document.getElementById("add-drone-btn");
   addBtn.addEventListener("click", () => {
@@ -309,15 +322,17 @@ if (pilot.type_account === "Basic") {
     addDroneField();
   });
 
-  // Max 3 specializace
+  // Max 2 specializace
   const specializationSelect = document.getElementById("specialization");
   specializationSelect.addEventListener("change", function () {
-    if (this.selectedOptions.length > 3) {
-      alert("V Basic účtu lze vybrat maximálně 3 specializace.");
+    if (this.selectedOptions.length > 2) {
+      alert("V Basic účtu lze vybrat maximálně 2 specializace.");
       this.selectedOptions[this.selectedOptions.length - 1].selected = false;
     }
+
   });
 }
+
 
 // Načíst stav souhlasu
 fetch('/get-my-consents')
@@ -329,25 +344,49 @@ fetch('/get-my-consents')
 // Uložit/odvolat souhlas
 document.getElementById('saveConsentBtn').addEventListener('click', () => {
   const consent = document.getElementById('publicContactConsent').checked;
+  const consentStatusElement = document.getElementById('consent-status');
+
+    // Date and time in UTC format
+  const consentDate = new Date();
+  consentDate.setHours(consentDate.getHours());  // Adjust to UTC+2
+  const formattedDate = consentDate.toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
+
+  // Store the consent in localStorage
+  localStorage.setItem('publicContactConsent', consent);
+  localStorage.setItem('consentDate', formattedDate);
 
   fetch('/save-consent', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      email: pilot.email, // ← přidané, aby backend našel userId i bez session
+      email: currentPilot.email, 
       consent_type: 'public_contact',
       consent_text: consent 
         ? 'Souhlasím se zveřejněním e-mailu a telefonu v mém profilu.' 
         : 'Odvolávám souhlas se zveřejněním e-mailu a telefonu v mém profilu.',
-      granted: consent
+      granted: consent,
+      timestamp: consent ? consentDate.toISOString() : null // Send timestamp if consented
     })
   })
   .then(res => {
     if (!res.ok) throw new Error('Chyba při ukládání souhlasu');
-    alert('Souhlas byl aktualizován.');
+    
+    // Update UI with the stored consent status and date
+    if (consent) {
+      consentStatusElement.textContent = `Udělil souhlas dne: ${formattedDate}`;
+      consentStatusElement.style.color = 'green';
+    } else {
+      consentStatusElement.textContent = 'Souhlas neudělen';
+      consentStatusElement.style.color = 'red';
+    }
   })
-  .catch(err => alert(err.message));
+  .catch(err => {
+    consentStatusElement.textContent = 'Chyba při ukládání souhlasu';
+    consentStatusElement.style.color = 'red';
+    alert(err.message);
+  });
 });
+
     // 🟢 Zobrazení členství a odpočtu dní
     if (pilot.visible_valid) {
       const validDate = new Date(pilot.visible_valid);
@@ -359,15 +398,30 @@ document.getElementById('saveConsentBtn').addEventListener('click', () => {
 
       if (membershipBox && membershipText) {
         membershipText.innerHTML = `<strong>Členství platné do:</strong> ${validDate.toLocaleDateString('cs-CZ')} (${daysLeft} dní)`;
+
+         // Add account type information
+    let accountTypeText = '';
+    if (pilot.type_account === "Free") {
+      accountTypeText = '<span style="color: lightgreen; font-weight: bold;">Free</span>';
+    } else if (pilot.type_account === "Basic") {
+      accountTypeText = '<span style="color: darkgreen; font-weight: bold;">Basic</span>';
+    } else if (pilot.type_account === "Premium") {
+      accountTypeText = '<span style="color: purple; font-weight: bold;">Premium</span>';
+    }
+
+    membershipText.innerHTML += `<br><strong>Typ účtu:</strong> ${accountTypeText}`;
         membershipBox.style.display = "flex";
         membershipBox.classList.remove("alert-success", "alert-warning", "alert-danger");
 
         if (daysLeft <= 0) {
-          membershipBox.classList.add("alert-danger");
-        } else if (daysLeft <= 5) {
-          membershipBox.classList.add("alert-warning");
-        } else {
-          membershipBox.classList.add("alert-success");
+      membershipBox.classList.add("alert-danger");
+      
+      // Popup alert when membership is expired or 0 days left
+      alert("Vaše členství vypršelo nebo je již neplatné. Buďto si můžete předplatit členství na stránce <a href='/prodlouzit-clenstvi.html'>Prodloužit členství</a> nebo pokračovat v režimu Free.");
+    } else if (daysLeft <= 5) {
+      membershipBox.classList.add("alert-warning");
+    } else {
+      membershipBox.classList.add("alert-success");
         }
       }
 
@@ -470,6 +524,16 @@ console.log("Odesílaná data:", data);
   if (refEmail) {
     const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refEmail)}`;
     document.getElementById("ref-link").textContent = refUrl;
+  }
+</script>
+
+<script>
+  // Assume type_account is dynamically set from your user data
+  const type_account = 'Premium'; // Replace this with the actual logic that fetches the user's account type
+
+  // Only display the GDPR consent section if the user has a Premium account
+  if (type_account === 'Premium') {
+    document.getElementById('gdpr-consent-section').style.display = 'block';
   }
 </script>
 

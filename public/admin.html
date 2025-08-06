@@ -294,7 +294,7 @@ function getVisibilityClass(validDateStr) {
     function deleteSelected() {
       const selected = Array.from(document.querySelectorAll('.row-checkbox:checked'))
         .map(cb => cb.value);
-
+      console.log('Selected IDs:', selected);  // Toto přidáme pro ladění
       if (selected.length === 0) {
         alert("Nevybrali jste žádné piloty.");
         return;

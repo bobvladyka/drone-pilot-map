@@ -106,72 +106,90 @@ app.post('/register', async (req, res) => {
     console.error("Chyba při geokódování:", err);
   }
 
-  let visible_valid = new Date();
-  visible_valid.setMonth(visible_valid.getMonth() + 1);
-
-  if (ref) {
-    try {
-      const refResult = await pool.query(
-        `UPDATE pilots 
-         SET visible_valid = 
-           CASE 
-             WHEN visible_valid IS NULL THEN CURRENT_DATE + INTERVAL '1 month'
-             ELSE visible_valid + INTERVAL '1 month'
-           END
-         WHERE email = $1
-         RETURNING email`,
-        [ref]
-      );
-
-      if (refResult.rowCount > 0) {
-        console.log(`🎉 Připsán měsíc pilotovi, který pozval: ${ref}`);
-      }
-    } catch (err) {
-      console.warn("⚠️ Nepodařilo se připsat bonus referrerovi:", err);
-    }
-  }
-
   try {
-    // 1️⃣ Vložíme nového pilota
-    const insertPilot = await pool.query(
-      `INSERT INTO pilots (
-        name, email, password_hash, phone, street, city, zip, region,
-        latitude, longitude, visible_valid, ref_by_email, type_account
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-      RETURNING id`,
-      [name, email, password_hash, phone, street, city, zip, region,
-       lat, lon, visible_valid, ref || null, "Free"]
+  let visible_valid = new Date();
+  visible_valid.setDay(visible_valid.getDay() + 7); // Nastaví platnost na 7 dní od registrace
+
+  const insertPilot = await pool.query(
+    `INSERT INTO pilots (
+      name, email, password_hash, phone, street, city, zip, region,
+      latitude, longitude, visible_valid, ref_by_email, type_account
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    RETURNING id`,
+    [name, email, password_hash, phone, street, city, zip, region,
+     lat, lon, visible_valid, ref || null, "Basic"]  // Nastavení typu účtu na "Basic"
+  );
+
+  // Pokud referrer existuje, přidáme bonus
+if (ref) {
+  try {
+    const refResult = await pool.query(
+      `WITH updated_account AS (
+         UPDATE pilots
+         SET 
+           type_account = 
+             CASE 
+               WHEN type_account IS NULL OR type_account = 'Free' THEN 'Basic'  -- Pokud je účet Free, změň ho na Basic
+               ELSE type_account
+             END,
+           visible_valid = 
+             CASE 
+               WHEN visible_valid IS NULL THEN CURRENT_DATE + INTERVAL '7 days'
+               WHEN type_account = 'Premium' THEN visible_valid + INTERVAL '7 days' -- Prodloužení pro Premium účet
+               ELSE visible_valid + INTERVAL '7 days'
+             END
+         WHERE email = $1
+         RETURNING email, type_account
+       )
+       SELECT * FROM updated_account`,
+      [ref]
     );
 
-    const newPilotId = insertPilot.rows[0].id;
-
-    // 2️⃣ Hned vložíme výchozí GDPR souhlas
-    await pool.query(
-      `INSERT INTO consents (
-        user_id, consent_type, consent_text, ip_address, user_agent
-      ) VALUES ($1, $2, $3, $4, $5)`,
-      [
-        newPilotId,
-        'gdpr_registration',
-        'Souhlasím se zpracováním osobních údajů za účelem zobrazení na Platformě NajdiPilota.cz a jejich předání zájemcům o mé služby dle Zásad zpracování osobních údajů.',
-        req.ip,
-        req.headers['user-agent']
-      ]
-    );
-
-    console.log(`✅ Pilot ${name} zaregistrován a GDPR souhlas uložen.`);
-    res.redirect('/');
-
+    if (refResult.rowCount > 0) {
+      const accountType = refResult.rows[0].type_account;
+      if (accountType === 'Premium') {
+        console.log(`🎉 Připsáno 7 dní na Premium účet pilotovi, který pozval: ${ref}`);
+      } else {
+        console.log(`🎉 Připsáno 7 dní na Basic účet pilotovi, který pozval: ${ref}`);
+      }
+    }
   } catch (err) {
-    console.error("Chyba při registraci:", err);
-    res.status(500).send("Chyba při registraci");
+    console.warn("⚠️ Nepodařilo se připsat bonus referrerovi:", err);
   }
+}
+
+
+  const newPilotId = insertPilot.rows[0].id;
+
+  // Hned vložíme výchozí GDPR souhlas
+  await pool.query(
+    `INSERT INTO consents (
+      user_id, consent_type, consent_text, ip_address, user_agent
+    ) VALUES ($1, $2, $3, $4, $5)`,
+    [
+      newPilotId,
+      'gdpr_registration',
+      'Souhlasím se zpracováním osobních údajů za účelem zobrazení na Platformě NajdiPilota.cz a jejich předání zájemcům o mé služby dle Zásad zpracování osobních údajů.',
+      req.ip,
+      req.headers['user-agent']
+    ]
+  );
+
+  console.log(`✅ Pilot ${name} zaregistrován a GDPR souhlas uložen.`);
+  res.redirect('/');
+
+} catch (err) {
+  console.error("Chyba při registraci:", err);
+  res.status(500).send("Chyba při registraci");
+}
+
 });
 
 
 // Přihlášení
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
+
   try {
     const result = await pool.query(`SELECT * FROM pilots WHERE email = $1`, [email]);
     const user = result.rows[0];
@@ -180,11 +198,25 @@ app.post('/login', async (req, res) => {
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(401).send("Nesprávné heslo.");
 
+    // Pokud uplynul měsíc, přepneme účet na Free
+    let newAccountType = user.type_account;
+    const currentDate = new Date();
+    if (user.visible_valid && new Date(user.visible_valid) <= currentDate) {
+      newAccountType = "Free";  // Po měsíci se přepne na Free
+      await pool.query(
+        `UPDATE pilots SET type_account = $1 WHERE email = $2`,
+        ["Free", email]
+      );
+      console.log(`Pilot ${email} byl přepnut na typ účtu Free.`);
+    }
+
     // Uložit do session
     req.session.userId = user.id;
     req.session.email = user.email;
+    req.session.typeAccount = newAccountType;
 
     res.send("Přihlášení úspěšné");
+
   } catch (err) {
     console.error("Chyba při přihlášení:", err);
     res.status(500).send("Chyba na serveru");
@@ -318,6 +350,7 @@ if (visible === undefined || visible === null) {
   website = null;    // zakázat web
   note = null;       // zakázat poznámku
   registrationnumber = null; // 🚫 zakázat registrační číslo
+  visible = "ANO"; 
 
   if (specialization) {
     specialization = specialization.split(",")[0]; // jen první specializace
@@ -351,7 +384,7 @@ if (available !== "ANO" && available !== "NE") {
 
 
     // Převod visible na ANO/NE
-    visible = visible ? "ANO" : "NE";
+    visible = "ANO";
 
 if (!visible) visible = oldData.visible;
 if (!visible_valid) visible_valid = oldData.visible_valid;
@@ -663,39 +696,23 @@ app.get('/get-my-pilot', async (req, res) => {
       return res.status(404).json({ error: 'Pilot nenalezen' });
     }
 
-    res.json(result.rows[0]);
+    const user = result.rows[0];
+    const currentDate = new Date();
+
+    // Pokud uplynul měsíc, přepneme účet na Free
+    if (user.visible_valid && new Date(user.visible_valid) <= currentDate) {
+      await pool.query(
+        `UPDATE pilots SET type_account = $1 WHERE id = $2`,
+        ["Free", userId]
+      );
+      console.log(`Pilot ${user.email} byl přepnut na typ účtu Free.`);
+      user.type_account = "Free";  // Aktualizujeme typ účtu v odpovědi
+    }
+
+    res.json(user);
   } catch (err) {
     console.error('Chyba při načítání pilota:', err);
     res.status(500).json({ error: 'Chyba na serveru' });
-  }
-});
-
-// --- Načtení souhlasu ---
-app.get('/get-my-consents', async (req, res) => {
-  const email = req.query.email;
-  let userId = req.session?.userId;
-
-  try {
-    if (!userId && email) {
-      const userRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
-      if (userRes.rowCount > 0) {
-        userId = userRes.rows[0].id;
-      }
-    }
-
-    if (!userId) {
-      return res.status(401).json({ error: 'Nepřihlášen' });
-    }
-
-    const result = await pool.query(
-      'SELECT 1 FROM consents WHERE user_id = $1 AND consent_type = $2 LIMIT 1',
-      [userId, 'public_contact']
-    );
-
-    res.json({ hasPublicConsent: result.rowCount > 0 });
-  } catch (err) {
-    console.error('Chyba při načítání souhlasu:', err);
-    res.status(500).json({ error: 'Chyba serveru' });
   }
 });
 
@@ -715,25 +732,63 @@ app.post('/save-consent', async (req, res) => {
     if (!userId) {
       return res.status(401).json({ error: 'Nepřihlášen' });
     }
+    
+     const timestamp = granted ? new Date() : null;
 
     if (granted) {
+      // Uložíme souhlas do databáze
       await pool.query(
-        `INSERT INTO consents (user_id, consent_type, consent_text, ip_address, user_agent)
-         VALUES ($1, $2, $3, $4, $5)
-         ON CONFLICT DO NOTHING`,
-        [userId, consent_type, consent_text, req.ip, req.headers['user-agent']]
+        `INSERT INTO consents (user_id, consent_type, consent_text, ip_address, user_agent, timestamp)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT (user_id, consent_type) DO UPDATE SET timestamp = EXCLUDED.timestamp`,
+        [userId, consent_type, consent_text, req.ip, req.headers['user-agent'], timestamp]
       );
     } else {
+      // Pokud souhlas není udělen, odstraníme záznam
       await pool.query(
         'DELETE FROM consents WHERE user_id = $1 AND consent_type = $2',
         [userId, consent_type]
       );
     }
 
-    res.status(200).json({ success: true, hasPublicConsent: granted });
+    res.status(200).json({ success: true, hasPublicConsent: granted, timestamp });
   } catch (err) {
     console.error('Chyba při ukládání souhlasu:', err);
     res.status(500).json({ error: 'Chyba při ukládání souhlasu', detail: err.message });
+  }
+});
+
+app.get('/get-consent-timestamp', async (req, res) => {
+  const { email } = req.query;
+  let userId = req.session?.userId;
+
+  try {
+    if (!userId && email) {
+      const userRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
+      if (userRes.rowCount > 0) {
+        userId = userRes.rows[0].id;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Nepřihlášen' });
+    }
+
+    // Načteme timestamp souhlasu
+    const result = await pool.query(
+      `SELECT timestamp FROM consents WHERE user_id = $1 AND consent_type = $2`,
+      [userId, 'public_contact'] // Nebo jiný typ souhlasu podle potřeby
+    );
+
+    if (result.rowCount > 0) {
+      const consentTimestamp = result.rows[0].timestamp;
+      res.status(200).json({ timestamp: consentTimestamp });
+    } else {
+      res.status(404).json({ error: 'Souhlas nebyl nalezen.' });
+    }
+  } catch (err) {
+    console.error('Chyba při načítání souhlasu:', err);
+    res.status(500).json({ error: 'Chyba při načítání souhlasu' });
   }
 });
 

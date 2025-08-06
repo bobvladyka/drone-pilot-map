@@ -251,13 +251,30 @@ const fakeNames = [
 
   if (p.latitude != null && p.longitude != null) {
 
-            const circle = L.circle([p.latitude, p.longitude], {
-              radius: 2000,
-              color: p.available === "ANO" ? 'green' : 'gray',
-              fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
-              fillOpacity: 0.4,
-              weight: 1
-            })
+            let circleOptions = {
+      radius: 2000, // Výchozí rádius
+      fillOpacity: 0.2, // Výchozí opacity pro Free
+      color: p.available === "ANO" ? 'green' : 'gray',
+      fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
+      weight: 1
+    };
+
+    // Změna pro různé typy účtů
+    if (p.type_account === "Free") {
+      circleOptions.color = 'lightgreen';
+      circleOptions.fillOpacity = 0.2;
+    } else if (p.type_account === "Basic") {
+      circleOptions.color = 'darkgreen';
+      circleOptions.fillOpacity = 0.5;
+    } else if (p.type_account === "Premium") {
+  circleOptions.color = 'purple';         // Barva obrysu
+  circleOptions.fillColor = 'purple';     // Barva výplně
+  circleOptions.fillOpacity = 0.8;        // Opacity výplně
+  circleOptions.radius = 10000;           // Dvojnásobně větší rádius než Free a Basic
+  circleOptions.weight = 3;               // Tloušťka linie (nastavena na 3)
+}
+
+            const circle = L.circle([p.latitude, p.longitude], circleOptions)
             .bindPopup(() => {
   const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
   const isAvailable = p.available === "ANO";
@@ -267,6 +284,7 @@ const fakeNames = [
 
   if (isAvailable && loggedIn) {
     if (p.type_account === "Free") {
+      // Free účet - omezené informace
       html += `
         <div class="d-flex justify-content-between align-items-center mb-1">
           <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
@@ -275,7 +293,6 @@ const fakeNames = [
             : ''}
         </div>
       `;
-
       if (p.volunteer === 'ANO') {
         html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
       }
@@ -290,7 +307,35 @@ const fakeNames = [
         </div>
       `;
       html += `</div>`;
-    } else {
+    } else if (p.type_account === "Basic") {
+  // Basic účet - více informací
+  html += `
+    <div class="d-flex justify-content-between align-items-center">
+      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+      ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+        ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+        : ''}
+    </div>
+  `;
+  
+
+  if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+  if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+  if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+  if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+
+  // Tlačítko pro napsání pilotovi
+  html += `
+    <div class="mt-3">
+      <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
+        ✉️ Napsat pilotovi
+      </button>
+    </div>
+  `;
+}
+ else if (p.type_account === "Premium") {
+      // Premium účet - všechny informace
       html += `
         <div class="d-flex justify-content-between align-items-center">
           <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
@@ -299,34 +344,33 @@ const fakeNames = [
             : ''}
         </div>
       `;
-
-      // Kontakty podle souhlasu
-      if (p.hasPublicConsent) {
-        if (p.email) html += `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>`;
-        if (p.phone) html += `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>`;
-      } else {
-        html += `
-          <button class="btn btn-warning w-100 mt-2" data-bs-toggle="modal" data-bs-target="#publicContactConsentModal">
-            Aktivovat zobrazení kontaktů
-          </button>
-        `;
+      if (p.volunteer === 'ANO') {
+        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
       }
+      // Kontakty pro Premium účty
+      if (p.email) html += `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>`;
+      if (p.phone) html += `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>`;
 
-      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-      if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+      html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
       if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
       if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
-      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
     }
   } else if (!isAvailable) {
+    // Pilot není k dispozici
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <br>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
     `;
   } else {
+    // Nepřihlášený uživatel
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <br>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
       ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
@@ -350,19 +394,33 @@ const fakeNames = [
       });
 
     map.on('zoomend', () => {
-      const zoom = map.getZoom();
-      pilotCircles.forEach(circle => {
-        const maxZoom = 14;
-        const minZoom = 7;
-        const minRadius = 100;
-        const maxRadius = 2000;
-        const ratio = (zoom - minZoom) / (maxZoom - minZoom);
-        const radius = Math.max(minRadius, maxRadius - (maxRadius - minRadius) * ratio);
-        circle.setRadius(radius);
-        const opacity = 0.2 + 0.2 * (1 - ratio);
-        circle.setStyle({ fillOpacity: opacity });
-      });
-    });
+  const zoom = map.getZoom();
+  pilotCircles.forEach(circle => {
+    const maxZoom = 14;
+    const minZoom = 7;
+    const minRadius = 100;
+    const maxRadius = 2000;
+
+    // Nastavení rádiusu pro různé typy účtů
+    let accountMinRadius = minRadius;
+    let accountMaxRadius = maxRadius;
+
+    if (circle.options.fillColor === 'darkgreen') { // Basic účet (tmavě zelený)
+      accountMinRadius = 100;   // Min rádius pro Basic
+      accountMaxRadius = 4000;  // Max rádius pro Basic
+    } else if (circle.options.fillColor === 'purple') { // Premium účet (fialový)
+      accountMinRadius = 100;  // Min rádius pro Premium
+      accountMaxRadius = 10000; // Max rádius pro Premium
+    }
+
+    const ratio = (zoom - minZoom) / (maxZoom - minZoom);
+    const radius = Math.max(accountMinRadius, accountMaxRadius - (accountMaxRadius - accountMinRadius) * ratio);
+    circle.setRadius(radius);
+
+    const opacity = 0.2 + 0.2 * (1 - ratio);
+    circle.setStyle({ fillOpacity: opacity });
+  });
+});
 
     document.addEventListener("DOMContentLoaded", () => {
       const loginBox = document.getElementById("login-box");

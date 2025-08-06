@@ -177,10 +177,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const infoBox = document.getElementById("membership-info");
     infoBox.innerHTML = `
-      Aktuálně využíváte <strong>${currentType}</strong> účet
-      ${validUntil ? `a zbývá vám ještě <strong>${daysLeft} dnů</strong>` : ""}.<br>
-      Každé prodloužení je o <strong>1 měsíc</strong>.
-    `;
+  Aktuálně využíváte <strong>${currentType}</strong> účet.
+  ${currentType !== "Free" && validUntil ? `Zbývá vám ještě <strong>${daysLeft} dnů</strong>.` : ""}
+  <br>Každé prodloužení je o <strong>1 měsíc</strong>.
+`;
+
     infoBox.style.display = "block";
 
     // Nastavit aktuální výběr

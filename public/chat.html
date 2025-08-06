@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>SendBird Chat</title>
+  <style>
+    #chat { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; }
+    #message { width: 70%; padding: 8px; }
+    #send { padding: 8px 15px; }
+  </style>
+</head>
+<body>
+  <div id="chat"></div>
+  <input type="text" id="message" placeholder="Type a message">
+  <button id="send">Send</button>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Implementace výše uvedeného kódu
+      
+      // Odesílání zpráv
+      document.getElementById('send').addEventListener('click', () => {
+        const message = document.getElementById('message').value;
+        if (message && channel) {
+          channel.sendUserMessage(message, (msg, error) => {
+            if (!error) document.getElementById('message').value = '';
+          });
+        }
+      });
+    });
+  </script>
+</body>
+</html>

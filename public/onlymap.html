@@ -176,6 +176,8 @@ html {
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
+
+
   <!-- Skript -->
  <script>
   const map = L.map('map').setView([49.8, 15.5], 7);
@@ -189,65 +191,136 @@ html {
   }).addTo(map);
 
   const markers = L.markerClusterGroup();
-  const pilotCircles = [];
-  let allPilots = [];
-
-  function renderPilots(data) {
-    markers.clearLayers();
-    pilotCircles.length = 0;
-
-     data.forEach(p => {
+    const pilotCircles = [];
+    fetch('/pilots')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(p => {
   if (p.visible !== "ANO") return; // Skryj neviditelné piloty
 
   if (p.latitude != null && p.longitude != null) {
 
-        const circle = L.circle([p.latitude, p.longitude], {
-          radius: 2000,
-          color: p.available === "ANO" ? 'green' : 'gray',
-          fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
-          fillOpacity: 0.4,
-          weight: 1
-        }).bindPopup(() => {
+            let circleOptions = {
+      radius: 2000, // Výchozí rádius
+      fillOpacity: 0.2, // Výchozí opacity pro Free
+      color: p.available === "ANO" ? 'green' : 'gray',
+      fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
+      weight: 1
+    };
+
+ // Změna pro různé typy účtů
+    if (p.type_account === "Free") {
+      circleOptions.color = 'lightgreen';
+      circleOptions.fillOpacity = 0.2;
+    } else if (p.type_account === "Basic") {
+      circleOptions.color = 'darkgreen';
+      circleOptions.fillOpacity = 0.5;
+    } else if (p.type_account === "Premium") {
+  circleOptions.color = 'purple';         // Barva obrysu
+  circleOptions.fillColor = 'purple';     // Barva výplně
+  circleOptions.fillOpacity = 0.8;        // Opacity výplně
+  circleOptions.radius = 10000;           // Dvojnásobně větší rádius než Free a Basic
+  circleOptions.weight = 3;               // Tloušťka linie (nastavena na 3)
+}
+
+            const circle = L.circle([p.latitude, p.longitude], circleOptions)
+
+        .bindPopup(() => {
   const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
   const isAvailable = p.available === "ANO";
   const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
 
-
-  let html = `<div class="pilot-card${p.volunteer === 'ANO' ? ' volunteer-border' : ''}">`;
+  let html = `<div class="pilot-card">`;
 
   if (isAvailable && loggedIn) {
-  // Pro diagnostiku
-console.log('Registration number:', p.registrationnumber);
-console.log('Starts with CZE:', p.registrationnumber?.startsWith("CZE"));
-console.log('Length:', p.registrationnumber?.length);
+    if (p.type_account === "Free") {
+      // Free účet - omezené informace
+      html += `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+          ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+            ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60">`
+            : ''}
+        </div>
+      `;
+      if (p.volunteer === 'ANO') {
+        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      }
+      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
 
-html += `
-  <div class="d-flex justify-content-between align-items-center">
-    <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
-      : ''}
-  </div>
-  <p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>
-  ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
-  ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-  ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
-  ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-  ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-  ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-`;
+      html += `
+        <div class="mt-3">
+          <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
+            ✉️ Napsat pilotovi
+          </button>
+        </div>
+      `;
+      html += `</div>`;
+    } else if (p.type_account === "Basic") {
+  // Basic účet - více informací
+  html += `
+    <div class="d-flex justify-content-between align-items-center">
+      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+      ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+        ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+        : ''}
+    </div>
+  `;
+  
+
+  if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+  if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+  if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+  if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+
+  // Tlačítko pro napsání pilotovi
+  html += `
+    <div class="mt-3">
+      <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
+        ✉️ Napsat pilotovi
+      </button>
+    </div>
+  `;
+}
+ else if (p.type_account === "Premium") {
+      // Premium účet - všechny informace
+      html += `
+        <div class="d-flex justify-content-between align-items-center">
+          <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+          ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+            ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
+            : ''}
+        </div>
+      `;
+      if (p.volunteer === 'ANO') {
+        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      }
+      // Kontakty pro Premium účty
+      if (p.email) html += `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>`;
+      if (p.phone) html += `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>`;
+
+      html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+      if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+    }
   } else if (!isAvailable) {
-    // Pilot is not available
+    // Pilot není k dispozici
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <br>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
     `;
   } else {
-    // Pilot is available but user is not logged in - show fake info
-   
+    // Nepřihlášený uživatel
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <br>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
       ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
@@ -258,33 +331,60 @@ html += `
 
   html += `</div>`;
   return html;
+})
+
+             markers.addLayer(circle);
+            pilotCircles.push(circle);
+          }
+        });
+        map.addLayer(markers);
+        if (markers.getBounds().isValid()) {
+          map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+        }
+      });
+
+    map.on('zoomend', () => {
+  const zoom = map.getZoom();
+  pilotCircles.forEach(circle => {
+    const maxZoom = 14;
+    const minZoom = 7;
+    const minRadius = 100;
+    const maxRadius = 2000;
+
+    // Nastavení rádiusu pro různé typy účtů
+    let accountMinRadius = minRadius;
+    let accountMaxRadius = maxRadius;
+
+    if (circle.options.fillColor === 'darkgreen') { // Basic účet (tmavě zelený)
+      accountMinRadius = 100;   // Min rádius pro Basic
+      accountMaxRadius = 4000;  // Max rádius pro Basic
+    } else if (circle.options.fillColor === 'purple') { // Premium účet (fialový)
+      accountMinRadius = 100;  // Min rádius pro Premium
+      accountMaxRadius = 10000; // Max rádius pro Premium
+    }
+
+    const ratio = (zoom - minZoom) / (maxZoom - minZoom);
+    const radius = Math.max(accountMinRadius, accountMaxRadius - (accountMaxRadius - accountMinRadius) * ratio);
+    circle.setRadius(radius);
+
+    const opacity = 0.2 + 0.2 * (1 - ratio);
+    circle.setStyle({ fillOpacity: opacity });
+  });
 });
 
-        markers.addLayer(circle);
-        pilotCircles.push(circle);
-      }
-    });
-
-    map.addLayer(markers);
-    if (markers.getBounds().isValid()) {
-      map.fitBounds(markers.getBounds(), { padding: [30, 30] });
-    }
+function contactPilot(pilotEmail) {
+  // Vytvoření URL pro přesměrování na chatovou stránku s unikátním kanálem
+  const inzerentEmail = localStorage.getItem('inzerentEmail');  // Získání e-mailu inzerenta
+  if (!inzerentEmail) {
+    alert("Musíte být přihlášen jako inzerent.");
+    return;
   }
 
-map.on('zoomend', () => {
-      const zoom = map.getZoom();
-      pilotCircles.forEach(circle => {
-        const maxZoom = 14;
-        const minZoom = 7;
-        const minRadius = 100;
-        const maxRadius = 2000;
-        const ratio = (zoom - minZoom) / (maxZoom - minZoom);
-        const radius = Math.max(minRadius, maxRadius - (maxRadius - minRadius) * ratio);
-        circle.setRadius(radius);
-        const opacity = 0.2 + 0.2 * (1 - ratio);
-        circle.setStyle({ fillOpacity: opacity });
-      });
-    });
+  const chatUrl = `/chat.html?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentEmail=${encodeURIComponent(inzerentEmail)}`;
+  
+  // Přesměrování na chatovou stránku
+  window.location.href = chatUrl;
+}
 
 
 function extractUniqueSpecializations(pilots) {
@@ -376,26 +476,6 @@ function applyFilters() {
   });
 </script>
 
-<script>
-  const SPECIALIZACE = [
-    "Foto/video",
-    "Fotogrammetrie",
-    "Senoseč",
-    "Termální inspekce",
-    "FPV průlety",
-    "Jiné (více v poznámce)"
-  ];
-
-  // Dynamicky vytvoří možnosti do selectu
-  document.addEventListener("DOMContentLoaded", () => {
-    const select = document.getElementById("filter-specialization");
-    if (!select) return;
-
-    select.innerHTML = '<option value="">Všechny specializace</option>' + 
-      SPECIALIZACE.map(s => `<option value="${s}">${s}</option>`).join('');
-  });
-</script>
-
 <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
   <div class="container">
     <div class="row gy-3 justify-content-between">
@@ -458,5 +538,7 @@ function applyFilters() {
     document.getElementById("year").textContent = new Date().getFullYear();
   });
 </script>
+
+
 </body>
 </html>

@@ -175,6 +175,8 @@
           <label class="form-check-label" for="volunteer">Dobrovolník</label>
         </div>
       </div>
+
+
       <a href="/changepass.html">Změnit heslo</a>
 
       <div class="col-12">
@@ -188,6 +190,21 @@
   <code id="ref-link"></code>
   
 </div>
+<div class="col-12 mt-4">
+  <h5>Souhlas se zveřejněním kontaktů</h5>
+  <p class="text-muted">
+    Pokud souhlasíte, bude váš e‑mail a telefon viditelný pro ostatní uživatele podle vašeho tarifu.
+    Souhlas můžete kdykoli odvolat.
+  </p>
+  <div class="form-check">
+    <input class="form-check-input" type="checkbox" id="publicContactConsent">
+    <label class="form-check-label" for="publicContactConsent">
+      Souhlasím se zveřejněním mého e‑mailu a telefonu
+    </label>
+  </div>
+  <button type="button" class="btn btn-outline-primary mt-2" id="saveConsentBtn">Uložit souhlas</button>
+</div>
+
         <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
         <p id="status" class="mt-3 text-center fw-semibold"></p>
         <div class="text-center mt-3">
@@ -234,17 +251,21 @@ function addDroneField(value = "") {
 }
 
 
-    fetch("/pilots")
-  .then(res => res.json())
-  .then(data => {
-     currentPilot = data.find(p => p.email === email);
-const pilot = currentPilot;
-    console.log("Data pilota:", pilot);
-    if (!pilot) {
-      status.textContent = "Pilot nenalezen.";
-      status.classList.add("text-danger");
-      return;
-    }
+   fetch("/get-my-pilot?email=" + encodeURIComponent(email))
+  .then(res => {
+    if (!res.ok) throw new Error("Nepřihlášen nebo pilot nenalezen");
+    return res.json();
+  })
+  .then(pilot => {
+  currentPilot = pilot;
+  console.log("Data pilota:", pilot);
+
+  fetch('/get-my-consents?email=' + encodeURIComponent(pilot.email))
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('publicContactConsent').checked = data.hasPublicConsent;
+    })
+    .catch(err => console.warn(err));
 
     // 🔒 Omezení pro Free účet
 if (pilot.type_account === "Free") {
@@ -298,6 +319,35 @@ if (pilot.type_account === "Basic") {
   });
 }
 
+// Načíst stav souhlasu
+fetch('/get-my-consents')
+  .then(res => res.json())
+  .then(data => {
+    document.getElementById('publicContactConsent').checked = data.hasPublicConsent;
+  });
+
+// Uložit/odvolat souhlas
+document.getElementById('saveConsentBtn').addEventListener('click', () => {
+  const consent = document.getElementById('publicContactConsent').checked;
+
+  fetch('/save-consent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      email: pilot.email, // ← přidané, aby backend našel userId i bez session
+      consent_type: 'public_contact',
+      consent_text: consent 
+        ? 'Souhlasím se zveřejněním e-mailu a telefonu v mém profilu.' 
+        : 'Odvolávám souhlas se zveřejněním e-mailu a telefonu v mém profilu.',
+      granted: consent
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('Chyba při ukládání souhlasu');
+    alert('Souhlas byl aktualizován.');
+  })
+  .catch(err => alert(err.message));
+});
     // 🟢 Zobrazení členství a odpočtu dní
     if (pilot.visible_valid) {
       const validDate = new Date(pilot.visible_valid);

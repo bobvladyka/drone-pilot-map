@@ -82,33 +82,31 @@ app.get("/", (req, res) => {
 // Registrace
 app.post('/register', async (req, res) => {
   const {
-  name, email, password, phone,
-  street, city, zip, region, ref
-} = req.body;
-	console.log("🔍 Request body:", req.body);
-
+    name, email, password, phone,
+    street, city, zip, region, ref
+  } = req.body;
+  console.log("🔍 Request body:", req.body);
 
   const password_hash = await bcrypt.hash(password, 10);
   const location = [street, city, zip, region].filter(Boolean).join(', ');
   let lat = null, lon = null;
 
   try {
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
-    headers: { 'User-Agent': 'DronMapApp/1.0' }
-  });
-  const data = await response.json();
-  if (data.length > 0) {
-    lat = parseFloat(data[0].lat);
-    lon = parseFloat(data[0].lon);
-  } else {
-    console.warn("❗Adresu se nepodařilo geokódovat:", location);
+    const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
+      headers: { 'User-Agent': 'DronMapApp/1.0' }
+    });
+    const data = await response.json();
+    if (data.length > 0) {
+      lat = parseFloat(data[0].lat);
+      lon = parseFloat(data[0].lon);
+    } else {
+      console.warn("❗Adresu se nepodařilo geokódovat:", location);
+    }
+  } catch (err) {
+    console.error("Chyba při geokódování:", err);
   }
-} catch (err) {
-  console.error("Chyba při geokódování:", err);
-}
 
-
-   let visible_valid = new Date();
+  let visible_valid = new Date();
   visible_valid.setMonth(visible_valid.getMonth() + 1);
 
   if (ref) {
@@ -133,22 +131,43 @@ app.post('/register', async (req, res) => {
     }
   }
 
-   try {
-    await pool.query(
-  `INSERT INTO pilots (
-    name, email, password_hash, phone, street, city, zip, region,
-    latitude, longitude, visible_valid, ref_by_email, type_account
-  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)`,
-  [name, email, password_hash, phone, street, city, zip, region,
-   lat, lon, visible_valid, ref || null, "Free"]
-);
+  try {
+    // 1️⃣ Vložíme nového pilota
+    const insertPilot = await pool.query(
+      `INSERT INTO pilots (
+        name, email, password_hash, phone, street, city, zip, region,
+        latitude, longitude, visible_valid, ref_by_email, type_account
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+      RETURNING id`,
+      [name, email, password_hash, phone, street, city, zip, region,
+       lat, lon, visible_valid, ref || null, "Free"]
+    );
 
+    const newPilotId = insertPilot.rows[0].id;
+
+    // 2️⃣ Hned vložíme výchozí GDPR souhlas
+    await pool.query(
+      `INSERT INTO consents (
+        user_id, consent_type, consent_text, ip_address, user_agent
+      ) VALUES ($1, $2, $3, $4, $5)`,
+      [
+        newPilotId,
+        'gdpr_registration',
+        'Souhlasím se zpracováním osobních údajů za účelem zobrazení na Platformě NajdiPilota.cz a jejich předání zájemcům o mé služby dle Zásad zpracování osobních údajů.',
+        req.ip,
+        req.headers['user-agent']
+      ]
+    );
+
+    console.log(`✅ Pilot ${name} zaregistrován a GDPR souhlas uložen.`);
     res.redirect('/');
+
   } catch (err) {
     console.error("Chyba při registraci:", err);
     res.status(500).send("Chyba při registraci");
   }
 });
+
 
 // Přihlášení
 app.post('/login', async (req, res) => {
@@ -160,6 +179,11 @@ app.post('/login', async (req, res) => {
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) return res.status(401).send("Nesprávné heslo.");
+
+    // Uložit do session
+    req.session.userId = user.id;
+    req.session.email = user.email;
+
     res.send("Přihlášení úspěšné");
   } catch (err) {
     console.error("Chyba při přihlášení:", err);
@@ -182,8 +206,26 @@ app.get('/pilots', async (req, res) => {
         available, visible, visible_payment, visible_valid, type_account
       FROM pilots
     `);
-    console.log('První záznam z DB:', result.rows[0]); // Debug
-    res.json(result.rows);
+
+   const pilots = [];
+   for (let row of result.rows) {
+      // Ověření, jestli má souhlas "public_contact"
+      const consentRes = await pool.query(
+        'SELECT 1 FROM consents WHERE user_id = $1 AND consent_type = $2 LIMIT 1',
+        [row.id, 'public_contact']
+      );
+      row.hasPublicConsent = consentRes.rowCount > 0;
+
+      // Pokud není souhlas, smažeme z výstupu email a telefon
+      if (!row.hasPublicConsent) {
+        row.email = null;
+        row.phone = null;
+      }
+
+      pilots.push(row);
+    }
+
+    res.json(pilots);
   } catch (err) {
     console.error("Chyba při načítání pilotů:", err);
     res.status(500).json([]);
@@ -598,6 +640,102 @@ app.post("/update-membership", async (req, res) => {
   }
 });
 
+// --- Vrácení dat přihlášeného pilota ---
+app.get('/get-my-pilot', async (req, res) => {
+  try {
+    let email = req.session?.email || req.query.email || req.headers['x-user-email'];
+    let userId = req.session?.userId;
+
+    // Pokud není userId v session, ale máme email, najdeme ho v DB
+    if (!userId && email) {
+      const userRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
+      if (userRes.rowCount > 0) {
+        userId = userRes.rows[0].id;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Nepřihlášen' });
+    }
+
+    const result = await pool.query('SELECT * FROM pilots WHERE id = $1', [userId]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Pilot nenalezen' });
+    }
+
+    res.json(result.rows[0]);
+  } catch (err) {
+    console.error('Chyba při načítání pilota:', err);
+    res.status(500).json({ error: 'Chyba na serveru' });
+  }
+});
+
+// --- Načtení souhlasu ---
+app.get('/get-my-consents', async (req, res) => {
+  const email = req.query.email;
+  let userId = req.session?.userId;
+
+  try {
+    if (!userId && email) {
+      const userRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
+      if (userRes.rowCount > 0) {
+        userId = userRes.rows[0].id;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Nepřihlášen' });
+    }
+
+    const result = await pool.query(
+      'SELECT 1 FROM consents WHERE user_id = $1 AND consent_type = $2 LIMIT 1',
+      [userId, 'public_contact']
+    );
+
+    res.json({ hasPublicConsent: result.rowCount > 0 });
+  } catch (err) {
+    console.error('Chyba při načítání souhlasu:', err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+// --- Uložení / odvolání souhlasu ---
+app.post('/save-consent', async (req, res) => {
+  const { email, consent_type, consent_text, granted } = req.body;
+  let userId = req.session?.userId;
+
+  try {
+    if (!userId && email) {
+      const userRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
+      if (userRes.rowCount > 0) {
+        userId = userRes.rows[0].id;
+      }
+    }
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Nepřihlášen' });
+    }
+
+    if (granted) {
+      await pool.query(
+        `INSERT INTO consents (user_id, consent_type, consent_text, ip_address, user_agent)
+         VALUES ($1, $2, $3, $4, $5)
+         ON CONFLICT DO NOTHING`,
+        [userId, consent_type, consent_text, req.ip, req.headers['user-agent']]
+      );
+    } else {
+      await pool.query(
+        'DELETE FROM consents WHERE user_id = $1 AND consent_type = $2',
+        [userId, consent_type]
+      );
+    }
+
+    res.status(200).json({ success: true, hasPublicConsent: granted });
+  } catch (err) {
+    console.error('Chyba při ukládání souhlasu:', err);
+    res.status(500).json({ error: 'Chyba při ukládání souhlasu', detail: err.message });
+  }
+});
 
 
 // Spuštění serveru

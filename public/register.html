@@ -80,6 +80,16 @@
         </select>
       </div>
 
+<div class="mb-3 form-check">
+  <input type="checkbox" class="form-check-input" id="gdprConsent" required>
+  <label class="form-check-label small" for="gdprConsent">
+    Souhlasím se zpracováním mých osobních údajů za účelem zobrazení na Platformě NajdiPilota.cz 
+    a jejich předání zájemcům o mé služby, včetně podrobností uvedených v 
+    <a href="/gdpr.html" target="_blank">Zásadách zpracování osobních údajů</a>.
+  </label>
+</div>
+
+
      
       
       <div class="col-12">
@@ -121,5 +131,7 @@ document.querySelector('form').addEventListener('submit', function (e) {
     document.getElementById("ref").value = decodeURIComponent(ref);
   }
 </script>
+
+
 </body>
 </html>

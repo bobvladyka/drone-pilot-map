@@ -369,3 +369,101 @@ button.accordion-button:not(.collapsed) {
 .form-check .form-check-input {
     margin-top: 0 !important;
   }
+
+.discount-offer {
+  font-size: 16px;
+  color: #495057; /* Text color */
+  font-weight: normal;
+  line-height: 1.4;
+  margin-top: 15px;
+  text-align: justify; /* Justify text to align the text block */
+  background-color: #fff3cd; /* Light yellow background */
+  padding: 10px;
+  border-radius: 5px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  max-width: 100%;
+  word-wrap: break-word; /* Ensure long words break for wrapping */
+}
+
+.discount-offer strong {
+  font-weight: bold; /* Bold for discounts */
+  color: #000000; /* Green color for discount */
+}
+
+/* General Card Styling */
+.membership-card {
+  border-radius: 10px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  transition: transform 0.3s ease;
+}
+
+.membership-card:hover {
+  transform: scale(1.05);
+}
+
+.membership-image {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin-bottom: 15px;
+}
+
+.membership-price {
+  font-size: 20px;
+  font-weight: bold;
+  margin-bottom: 15px;
+}
+
+/* Free Plan - Green */
+.free-card {
+  background-color: #b0f759; /* Light Green */
+}
+
+.free-card h4 {
+  color: #fff;
+}
+
+.free-card .membership-price {
+  color: #006600;
+}
+
+.free-card ul li {
+  color: #fff;
+}
+
+/* Basic Plan - Dark Green */
+.basic-card {
+  background-color: #258f01; /* Dark Green */
+}
+
+.basic-card h4 {
+  color: #fff;
+}
+
+.basic-card .membership-price {
+  color: #d0ffb2;
+}
+
+.basic-card ul li {
+  color: #fff;
+}
+
+/* Premium Plan - Purple */
+.premium-card {
+  background-color: #8f06bd; /* Purple */
+}
+
+.premium-card h4 {
+  color: #fff;
+}
+
+.premium-card .membership-price {
+  color: #ffd2f2;
+}
+
+.premium-card ul li {
+  color: #fff;
+}
+
+

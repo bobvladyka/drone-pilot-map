@@ -25,9 +25,15 @@
       font-weight: bold;
       color: var(--primary);
     }
+    .discount {
+      font-size: 1rem;
+      color: green;
+    }
   </style>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
 </head>
 <body class="bg-light">
+
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
   <div class="container">
@@ -35,8 +41,12 @@
       <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
       <span class="fs-4">NajdiPilota.cz | Členství</span>
     </a>
+    <div class="text-center mt-4">
+      <a href="/account.html" class="btn btn-secondary">⬅ Zpět na účet</a>
+    </div>
   </div>
 </nav>
+
 
 <div class="container py-5">
   <h2 class="text-center mb-4">Vyberte si typ členství</h2>
@@ -49,87 +59,143 @@
   <form id="membership-form">
     <div class="row g-4">
       <!-- Free -->
-      <div class="col-md-4">
-        <input type="radio" name="membership_type" value="Free" class="d-none" id="plan-free">
-        <label for="plan-free" class="w-100">
-          <div class="card membership-card text-center p-4">
-            <h4>Free</h4>
-            <p class="membership-price">0 Kč</p>
-            <ul class="list-unstyled">
-              <li>1 specializace</li>
-              <li>1 dron</li>
-              <li>Bez webu / portfolia</li>
-              <li>Základní viditelnost</li>
-            </ul>
-          </div>
-        </label>
-      </div>
+<div class="col-md-4">
+  <input type="radio" name="membership_type" value="Free" class="d-none" id="plan-free">
+  <label for="plan-free" class="w-100">
+    <div class="card membership-card text-center p-4 free-card">
+      <img src="icons/freejpg.png" alt="Free Plan" class="membership-image">
+      <h4>Free</h4>
+      <p class="membership-price">0 Kč</p>
+       <ul class="list-unstyled">
+        <li>1 specializace</li>
+        <li>1 dron</li>
+        <li>Základní viditelnost</li>
+        <li style="font-weight: bold; color: red;">Bez možnosti kontaktování</li>
+        <li style="font-weight: bold; color: red;">Pro inzerenty se nezobrazuje ve filtrech</li>
+      </ul>
+    </div>
+  </label>
+</div>
 
-      <!-- Basic -->
-      <div class="col-md-4">
-        <input type="radio" name="membership_type" value="Basic" class="d-none" id="plan-basic">
-        <label for="plan-basic" class="w-100">
-          <div class="card membership-card text-center p-4">
-            <h4>Basic</h4>
-            <p class="membership-price">Cenu doplníme</p>
-            <ul class="list-unstyled">
-              <li>Až 3 specializace</li>
-              <li>Až 2 drony</li>
-              <li>Možnost nastavit dostupnost</li>
-              <li>Registrační číslo provozovatele</li>
-              <li>Zobrazení telefonu a e-mailu</li>
-              <li>Odkaz na portfolio / web</li>
-            </ul>
-          </div>
-        </label>
-      </div>
+<!-- Basic -->
+<div class="col-md-4">
+  <input type="radio" name="membership_type" value="Basic" class="d-none" id="plan-basic">
+  <label for="plan-basic" class="w-100">
+    <div class="card membership-card text-center p-4 basic-card">
+      <img src="icons/basicjpg.png" alt="Basic Plan" class="membership-image">
+      <h4>Basic</h4>
+      <p class="membership-price">119 Kč</p>
+      <ul class="list-unstyled">
+        <li>Až 2 specializace</li>
+        <li>Až 2 drony</li>
+        <li>Možnost nastavit dostupnost</li>
+        <li>Registrační číslo provozovatele</li>
+        <li>Zobrazení telefonu a e-mailu</li>
+        <li>Odkaz na portfolio / web</li>
+        <li>Možnost kontaktování přes Napiš pilotovi</li>
+      </ul>
+    </div>
+  </label>
+</div>
 
-      <!-- Premium -->
-      <div class="col-md-4">
-        <input type="radio" name="membership_type" value="Premium" class="d-none" id="plan-premium">
-        <label for="plan-premium" class="w-100">
-          <div class="card membership-card text-center p-4">
-            <h4>Premium</h4>
-            <p class="membership-price">Cenu doplníme</p>
-            <ul class="list-unstyled">
-              <li>Neomezené specializace</li>
-              <li>Neomezený počet dronů</li>
-              <li>Veškeré kontaktní údaje</li>
-              <li>Prioritní viditelnost na mapě</li>
-              <li>Zvýrazněný profil</li>
-            </ul>
-          </div>
-        </label>
-      </div>
+<!-- Premium -->
+<div class="col-md-4">
+  <input type="radio" name="membership_type" value="Premium" class="d-none" id="plan-premium">
+  <label for="plan-premium" class="w-100">
+    <div class="card membership-card text-center p-4 premium-card">
+      <img src="icons/premiumjpg.png" alt="Premium Plan" class="membership-image">
+      <h4>Premium</h4>
+      <p class="membership-price">249 Kč</p>
+      <ul class="list-unstyled">
+        <li>Vše z Basic</li>
+<li><span class="glyphicon glyphicon-plus"></li>
+        <li>Neomezené specializace</li>
+        <li>Neomezený počet dronů</li>
+        <li>Veškeré kontaktní údaje</li>
+        <li>Prioritní viditelnost na mapě</li>
+        <li>Zvýrazněný profil</li>
+      </ul>
+    </div>
+  </label>
+</div>
+    <br>
+
+  <p class="discount-offer mt-3">
+  <strong>Chcete ušetřit? </strong> Využijte exkluzivní slevy při dlouhodobém předplatném! Při zaplacení půlročního členství získáte <strong>5% slevu</strong> a při ročním členství <strong>15% slevu</strong>. Získejte výhody za ještě výhodnější cenu!
+</p>
+
+
+
+
+    <form id="membership-form" class="text-center">
+    <!-- Typ účtu -->
+    <div class="form-group mb-3">
+      <label for="account-type">Vyberte typ účtu:</label>
+      <select id="account-type" class="form-control w-50 mx-auto">
+        <option value="Free">Free</option>
+        <option value="Basic">Basic</option>
+        <option value="Premium">Premium</option>
+      </select>
     </div>
 
-    <!-- Platební údaje + QR -->
-    <div id="payment-section" class="mt-5" style="display: none;">
-      <h4 class="mb-3">Bankovní údaje</h4>
-      <ul class="list-group mb-4">
-        <li class="list-group-item"><strong>Částka:</strong> <span id="price">–</span></li>
-        <li class="list-group-item"><strong>Číslo účtu (IBAN):</strong> <span id="iban">CZ7530300000003034593012</span></li>
-        <li class="list-group-item"><strong>Zpráva pro příjemce:</strong> <span id="recipient-msg">[e-mail]</span></li>
-      </ul>
+    <!-- Délka předplatného -->
+    <div class="form-group mb-3">
+      <label for="subscription-duration">Vyberte délku předplatného:</label>
+      <select id="subscription-duration" class="form-control w-50 mx-auto">
+        <option value="monthly">Měsíční</option>
+        <option value="halfYearly">Půlroční</option>
+        <option value="yearly">Roční</option>
+      </select>
+    </div>
 
-      <h4 class="mb-3">QR kód pro platbu</h4>
-      <div class="text-center mb-3">
-        <canvas id="qrcode"></canvas>
-      </div>
+    <!-- Tlačítko pro generování QR kódu -->
+    <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2" id="generate-btn">Vygenerovat QR kód</button>
+  </form>
+
+  <!-- Platební údaje + QR kód -->
+  <div id="pricing-info" class="mt-4">
+    <p class="membership-price" id="membership-price">Cena: –</p>
+    <p class="new-price" id="discounted-price">–</p>
+  </div>
+
+<div id="qr-code-container" class="text-center">
+    <canvas id="qrcode"></canvas>
+  </div>
+</div>
       <p class="text-muted text-center">Naskenujte v mobilní bankovní aplikaci.</p>
     </div>
+<div class="account-info mt-4">
+  <h4>Platební údaje</h4>
+  <ul class="list-group">
+    <li class="list-group-item"><strong>IBAN:</strong> <span id="iban">CZ7530300000003034593012</span></li>
+    <li class="list-group-item"><strong>Zpráva pro příjemce:</strong> <span id="recipient-msg">[Typ účtu] a [Délka předplatného]</span></li>
+    
+  </ul>
+</div>
+</div>     
 
-    <div class="text-center mt-4">
-      <a href="/account.html" class="btn btn-secondary">⬅ Zpět na účet</a>
-    </div>
-  </form>
+ 
 </div>
 
 <script>
 const priceMap = {
-  Basic: 199, // Kč
-  Premium: 349
+  Basic: {
+    monthly: 119, // Kč
+    halfYearly: Math.round(119 * 6 * 0.95), // Půlroční (5% sleva)
+    yearly: Math.round(119 * 12 * 0.85) // Roční (15% sleva)
+  },
+  Premium: {
+    monthly: 249, // Kč
+    halfYearly: Math.round(249 * 6 * 0.95), // Půlroční (10% sleva)
+    yearly: Math.round(249 * 12 * 0.85) // Roční (20% sleva)
+  },
+  Free: {
+    monthly: 0, // Bez nákladů
+    halfYearly: 0,
+    yearly: 0
+  }
 };
+
 const iban = "CZ7530300000003034593012";
 const currency = "CZK";
 
@@ -137,17 +203,22 @@ function removeDiacritics(str) {
   return str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
 }
 
-function generateQR(plan) {
-  const price = priceMap[plan] || 0;
-  document.getElementById("price").innerText = price ? price + " Kč" : "0 Kč";
+// Funkce pro generování QR kódu
+function generateQR(accountType, duration) {
+  const price = priceMap[accountType][duration] || 0;
+  const originalPrice = priceMap[accountType].monthly;
 
+  // Zobrazení ceny a slevy
+  document.getElementById("membership-price").innerText = `${originalPrice} Kč`;
+  document.getElementById("discounted-price").innerText = price ? `Nová cena: ${price} Kč` : 'Bez nákladů';
+  
   const email = localStorage.getItem("loggedEmail") || "neznamy@pilot.cz";
-  const recipientMsg = removeDiacritics(`Clenstvi ${plan} pro ${email}`);
+  const recipientMsg = `Clenstvi ${accountType} (${duration}) pro ${email}`;
 
   document.getElementById("recipient-msg").innerText = recipientMsg;
-  document.getElementById("iban").innerText = iban;
 
-  const amount = price.toFixed(2);
+  // Generování QR kódu pro platbu
+  const amount = price.toFixed(0);
   const qrPayload = `SPD*1.0*ACC:${iban}*AM:${amount}*CC:${currency}*MSG:${recipientMsg}`;
 
   new QRious({
@@ -156,6 +227,14 @@ function generateQR(plan) {
     size: 250
   });
 }
+
+// Event listener pro tlačítko "Vygenerovat QR kód"
+document.getElementById('generate-btn').addEventListener('click', () => {
+  const accountType = document.getElementById('account-type').value;
+  const duration = document.getElementById('subscription-duration').value;
+  const price = document.getElementById('membership-price').value;
+  generateQR(accountType, duration);
+});
 
 document.addEventListener("DOMContentLoaded", async () => {
   const email = localStorage.getItem("loggedEmail");
@@ -182,9 +261,11 @@ document.addEventListener("DOMContentLoaded", async () => {
   <br>Každé prodloužení je o <strong>1 měsíc</strong>.
 `;
 
+
+
     infoBox.style.display = "block";
 
-    // Nastavit aktuální výběr
+        // Nastavit aktuální výběr
     const currentInput = document.querySelector(`input[name="membership_type"][value="${currentType}"]`);
     if (currentInput) {
       currentInput.checked = true;
@@ -192,7 +273,7 @@ document.addEventListener("DOMContentLoaded", async () => {
       if (card) card.classList.add("active");
       if (currentType !== "Free") {
         document.getElementById("payment-section").style.display = "block";
-        generateQR(currentType);
+        generateQR(currentType, "monthly");
       }
     }
 
@@ -207,7 +288,7 @@ document.addEventListener("DOMContentLoaded", async () => {
           document.getElementById("payment-section").style.display = "none";
         } else {
           document.getElementById("payment-section").style.display = "block";
-          generateQR(input.value);
+          generateQR(input.value, "monthly");
         }
       });
     });

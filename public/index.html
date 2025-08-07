@@ -302,13 +302,6 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
       if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
 
-      html += `
-        <div class="mt-3">
-          <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
-            ✉️ Napsat pilotovi
-          </button>
-        </div>
-      `;
       html += `</div>`;
     } else if (p.type_account === "Basic") {
   // Basic účet - více informací

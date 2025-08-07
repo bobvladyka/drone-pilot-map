@@ -80,7 +80,7 @@ app.get("/", (req, res) => {
 });
 
 
- const onboardingEmailContent = () => {
+const onboardingEmailContent = () => {
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
       <h2 style="color: #0077B6;">Vítejte na NajdiPilota.cz! 🚀</h2>
@@ -94,45 +94,48 @@ app.get("/", (req, res) => {
       </ul>
 
       <p style="font-size: 16px; color: #495057;"><strong>Co to znamená pro vás?</strong></p>
-      <p style="font-size: 16px; color: #495057;">Váš účet byl nastaven na typ <span style="color: #38B000;">Basic</span>, což vám přináší následující výhody:</p>
+      <p style="font-size: 16px; color: #495057;">Váš účet byl nastaven na typ <strong style="color: #38B000;">Basic</strong>, což vám přináší následující výhody:</p>
       <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
-        <li><strong>Viditelnost a přehlednost:</strong> Vaše jméno a status dobrovolníka jsou viditelné pro inzerenty, kteří vás mohou snadněji najít.</li>
-        <li><strong>2 Drony a 2 Specializace:</strong> Můžete mít až <span style="color: #0077B6;">2 drony</span> a <span style="color: #0077B6;">2 specializace</span> pro různé zakázky.</li>
-        <li><strong>Aktuální dostupnost a ochota dojíždět:</strong> Vaše dostupnost je viditelná pro potenciální klienty, což vám přináší nové příležitosti.</li>
-        <li><strong>Ověřený provozovatel:</strong> Pokud jste ověřený, vaše důvěryhodnost bude vyšší a přitahujete více klientů.</li>
-        <li><strong>Napiš pilotovi:</strong> Inzerenti vás mohou kontaktovat přímo na platformě.</li>
+        <li><strong style="color: #38B000;">Viditelnost a přehlednost:</strong> Vaše jméno a status dobrovolníka jsou viditelné pro inzerenty, kteří vás mohou snadněji najít. 🔍</li>
+        <li><strong style="color: #38B000;">2 Drony a 2 Specializace:</strong> Můžete mít až <span style="color: #0077B6;">2 drony</span> a <span style="color: #0077B6;">2 specializace</span> pro různé zakázky. 🚁</li>
+        <li><strong style="color: #38B000;">Aktuální dostupnost a ochota dojíždět:</strong> Vaše dostupnost je viditelná pro potenciální klienty, což vám přináší nové příležitosti. ⏰</li>
+        <li><strong style="color: #38B000;">Ověřený provozovatel:</strong> Pokud jste ověřený, vaše důvěryhodnost bude vyšší a přitahujete více klientů. 🛡️</li>
+        <li><strong style="color: #38B000;">Napiš pilotovi:</strong> Inzerenti vás mohou kontaktovat přímo na platformě. 💬</li>
+      </ul>
+      
+      <p style="font-size: 16px; color: #495057;"><strong>Co kdybych měl Premium účet? 🤩</strong></p>
+      <p style="font-size: 16px; color: #495057;">Pokud chcete plný přístup k funkcím a neomezené možnosti, <strong style="color: #A9D6E5;">Premium účet</strong> je pro vás ideální volbou:</p>
+      <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
+        <li><strong style="color: #A9D6E5;">Neomezený počet dronů:</strong> Už žádné limity, můžete mít tolik dronů, kolik budete potřebovat. 🛸</li>
+        <li><strong style="color: #A9D6E5;">Neomezený počet specializací:</strong> Můžete si přidat libovolný počet specializací, čímž zvýšíte svou nabídku pro klienty. 🎯</li>
+        <li><strong style="color: #A9D6E5;">Viditelné kontakty:</strong> E-mail a telefon jsou viditelné pro inzerenty, což znamená rychlý a přímý kontakt. 📞</li>
+        <li><strong style="color: #A9D6E5;">Fialový kruh:</strong> Vaše profilová značka bude výrazně <span style="color: #A9D6E5;">fialová</span>, což vás zviditelní mezi ostatními. 🔮</li>
+        <li><strong style="color: #A9D6E5;">Ověřený provozovatel:</strong> Tento badge přidává další úroveň důvěryhodnosti! 🏅</li>
       </ul>
 
-      <p style="font-size: 16px; color: #495057;"><strong>Co kdybych měl Premium účet?</strong></p>
-      <p style="font-size: 16px; color: #495057;">Pokud chcete plný přístup k funkcím a neomezené možnosti, <span style="color: #38B000;">Premium účet</span> je pro vás ideální volbou:</p>
-      <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
-        <li><strong>Neomezený počet dronů:</strong> Už žádné limity, můžete mít tolik dronů, kolik budete potřebovat.</li>
-        <li><strong>Neomezený počet specializací:</strong> Můžete si přidat libovolný počet specializací, čímž zvýšíte svou nabídku pro klienty.</li>
-        <li><strong>Viditelné kontakty:</strong> E-mail a telefon jsou viditelné pro inzerenty, což znamená rychlý a přímý kontakt.</li>
-        <li><strong>Fialový kruh:</strong> Vaše profilová značka bude výrazně <span style="color: #A9D6E5;">fialová</span>, což vás zviditelní mezi ostatními.</li>
-        <li><strong>Ověřený provozovatel:</strong> Tento badge přidává další úroveň důvěryhodnosti!</li>
-      </ul>
-
-      <p style="font-size: 16px; color: #495057;"><strong>Co to znamená pro inzerenty?</strong></p>
+      <p style="font-size: 16px; color: #495057;"><strong>Co to znamená pro inzerenty? 🏢</strong></p>
       <p style="font-size: 16px; color: #495057;">Inzerenti mohou filtrovat piloty podle typu účtu (Free, Basic, Premium) a mají přístup k širším informacím:</p>
       <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
-        <li><strong>Veškeré informace o pilotech:</strong> Inzerenti vidí všechny detaily, jako jsou vaše kontakty, specializace, drony a dostupnost.</li>
-        <li><strong>Přímý kontakt s piloty:</strong> Inzerenti mohou kontaktovat piloty ihned, pokud jsou dostupní, bez složitých formulářů.</li>
-        <li><strong>Podrobné profily:</strong> Získají všechny potřebné informace o vašich dovednostech a zkušenostech.</li>
+        <li><strong>Veškeré informace o pilotech:</strong> Inzerenti vidí všechny detaily, jako jsou vaše kontakty, specializace, drony a dostupnost. 📋</li>
+        <li><strong>Přímý kontakt s piloty:</strong> Inzerenti mohou kontaktovat piloty ihned, pokud jsou dostupní, bez složitých formulářů. 📩</li>
+        <li><strong>Podrobné profily:</strong> Získají všechny potřebné informace o vašich dovednostech a zkušenostech. 📑</li>
       </ul>
 
-      <p style="font-size: 16px; color: #495057;"><strong>Co dál?</strong></p>
-      <p style="font-size: 16px; color: #495057;">Teď, když máte účet <span style="color: #38B000;">Basic</span>, je čas začít <strong>aktivně spravovat svůj profil</strong> a přitahovat více inzerentů! Vyplňte všechny podrobnosti, přidejte své drony a specializace, a připravte se na vzrušující příležitosti.</p>
-      <p style="font-size: 16px; color: #495057;">Pokud máte zájem o <span style="color: #38B000;">upgradování na Premium účet</span>, zvažte všechny skvělé výhody, které přináší.</p>
+      <p style="font-size: 16px; color: #495057;"><strong>Co dál? 🏁</strong></p>
+      <p style="font-size: 16px; color: #495057;">Teď, když máte účet <strong style="color: #38B000;">Basic</strong>, je čas začít <strong>aktivně spravovat svůj profil</strong> a přitahovat více inzerentů! Vyplňte všechny podrobnosti, přidejte své drony a specializace, a připravte se na vzrušující příležitosti.</p>
+      <p style="font-size: 16px; color: #495057;">Pokud máte zájem o <strong style="color: #38B000;">upgradování na Premium účet</strong>, zvažte všechny skvělé výhody, které přináší.</p>
 
       <p style="font-size: 16px; color: #495057;">Pokud máte jakékoli dotazy nebo potřebujete pomoc, neváhejte se na nás obrátit na <a href="mailto:dronadmin@seznam.cz" style="color: #0077B6;">dronadmin@seznam.cz</a>.</p>
 
-      <p style="font-size: 16px; color: #495057;">Těšíme se, že s námi budete růst a létat!</p>
+      <p style="font-size: 16px; color: #495057;">Těšíme se, že s námi budete růst a létat! 🌈</p>
 
       <p style="font-size: 16px; color: #495057;" class="footer">S pozdravem,<br />Tým NajdiPilota.cz</p>
+
+      <p style="font-size: 16px; color: #495057;">Pro více informací navštivte naše <a href="https://www.najdipilota.cz/o-projektu.html" style="color: #0077B6;">O projektu</a> a <a href="https://www.najdipilota.cz/faq.html" style="color: #0077B6;">FAQ</a> stránky.</p>
     </div>
   `;
 };
+
 
 // Registrace
 app.post('/register', async (req, res) => {

@@ -212,6 +212,9 @@
         </div>
       </div>
     </form>
+
+<div id="status"></div>
+
   </div>
 
   <script>
@@ -227,6 +230,8 @@ if (!email) {
   window.location.href = "/login.html";
 }
     const status = document.getElementById("status");
+
+
 
 function addDroneField(value = "") {
   const container = document.getElementById("drones");

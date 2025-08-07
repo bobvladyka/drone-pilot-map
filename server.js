@@ -79,6 +79,59 @@ app.get("/", (req, res) => {
   res.send("Vše běží!");
 });
 
+
+const onboardingEmailContent = () => {
+  return `
+    <h2>Vítejte na NajdiPilota.cz! 🚀</h2>
+    <p>Vítejte na palubě, [Jméno]! 🎉</p>
+    <p>Děkujeme, že jste se zaregistrovali na NajdiPilota.cz! Jsme nadšeni, že se připojujete k naší komunitě profesionálních pilotů dronů. 🌍</p>
+    <p>Zde je rychlý průvodce, jak začít: 🛫</p>
+    <ul>
+      <li><strong>Dokončete svůj profil:</strong> Ujistěte se, že máte všechny údaje aktuální. Pomůže to klientům snadněji vás najít. 📝</li>
+      <li><strong>Zůstaňte viditelní:</strong> Jakmile bude váš profil dokončen, můžete aktivovat viditelnost svého účtu a zajistit, aby vaše služby byly dostupné těm, kteří hledají kvalifikovaného pilota. 👀</li>
+      <li><strong>Využijte exkluzivní nabídky:</strong> Jako registrovaný pilot máte přístup k exkluzivním nabídkám a slevám od našich partnerů. Nezapomeňte se na ně podívat! 🎁</li>
+    </ul>
+    <p><strong>Co to znamená pro vás? 🤔</strong></p>
+    <p>Váš účet byl nastaven na <strong>Basic</strong> typ. To vám přináší skvélé výhody:</p>
+    <ul>
+      <li><strong>Viditelnost a přehlednost:</strong> Vaše jméno a dobrovolník status jsou viditelné pro inzerenty, kteří vás mohou snadněji najít. 🔍</li>
+      <li><strong>2 Drony a 2 Specializace:</strong> Můžete mít až **2 drony** a **2 specializace** pro různé zakázky. 🚁</li>
+      <li><strong>Aktuální dostupnost a ochota dojíždět:</strong> Vaše dostupnost je viditelná pro potenciální klienty, což vám přináší nové příležitosti. ⏰</li>
+      <li><strong>Ověřený provozovatel:</strong> Pokud jste ověřený, vaše důvěryhodnost bude vyšší a přitahujete více klientů. 🛡️</li>
+      <li><strong>Napiš pilotovi:</strong> Inzerenti vás mohou kontaktovat přímo na platformě. 💬</li>
+    </ul>
+    
+    <p><strong>Co kdybych měl Premium účet? 🤩</strong></p>
+    <p>Pokud chcete plný přístup k funkcím a neomezené možnosti, **Premium účet** je pro vás ideální:</p>
+    <ul>
+      <li><strong>Neomezený počet dronů:</strong> Už žádné limity, můžete mít tolik dronů, kolik budete potřebovat! 🛸</li>
+      <li><strong>Neomezený počet specializací:</strong> Můžete si přidat libovolný počet specializací, čímž zvýšíte svou nabídku pro klienty. 🎯</li>
+      <li><strong>Viditelné kontakty:</strong> E-mail a telefon jsou viditelné pro inzerenty, což znamená rychlý a přímý kontakt. 📞</li>
+      <li><strong>Fialový kruh:</strong> Vaše profilová značka bude výrazně **fialová**, což vás zviditelní mezi ostatními. 🔮</li>
+      <li><strong>Ověřený provozovatel:</strong> Tento badge přidává další úroveň důvěryhodnosti! 🏅</li>
+    </ul>
+
+    <p><strong>Co to znamená pro inzerenty? 🏢</strong></p>
+    <p>Inzerenti mohou filtrovat piloty podle typu účtu (Free, Basic, Premium) a mají přístup k širším informacím:</p>
+    <ul>
+      <li><strong>Veškeré informace o pilotech:</strong> Inzerenti vidí všechny detaily, jako jsou vaše kontakty, specializace, drony a dostupnost. 📋</li>
+      <li><strong>Přímý kontakt s piloty:</strong> Inzerenti mohou kontaktovat piloty ihned, pokud jsou dostupní, bez složitých formulářů. 📩</li>
+      <li><strong>Podrobné profily:</strong> Získají všechny potřebné informace o vašich dovednostech a zkušenostech. 📑</li>
+    </ul>
+
+    <p><strong>Co dál? 🏁</strong></p>
+    <p>Teď, když máte účet **Basic**, je čas začít **aktivně spravovat svůj profil** a přitahovat více inzerentů! Vyplňte všechny podrobnosti, přidejte své drony a specializace, a připravte se na vzrušující příležitosti. 🌟</p>
+
+    <p>Pokud máte zájem o **upgradování na Premium účet**, zvažte všechny skvělé výhody, které přináší. 🚀</p>
+
+    <p>Pokud máte jakékoli dotazy nebo potřebujete pomoc, neváhejte se na nás obrátit na [podpůrný e-mail]. 📧</p>
+
+    <p>Těšíme se, že s námi budete růst a létat! 🌈</p>
+    <p>S pozdravem, <br />Tým NajdiPilota.cz</p>
+  `;
+};
+
+
 // Registrace
 app.post('/register', async (req, res) => {
   const {
@@ -177,12 +230,20 @@ if (ref) {
 
   console.log(`✅ Pilot ${name} zaregistrován a GDPR souhlas uložen.`);
   res.redirect('/');
+await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: email,
+      subject: "Vítejte na NajdiPilota.cz!",
+      html: onboardingEmailContent()  // Odeslání onboardingového e-mailu
+    });
 
-} catch (err) {
-  console.error("Chyba při registraci:", err);
-  res.status(500).send("Chyba při registraci");
-}
+    console.log(`✅ Onboarding e-mail odeslán na: ${email}`);
+    res.redirect('/');  // Po úspěšném přihlášení přesměrujeme na domovskou stránku
 
+  } catch (err) {
+    console.error("Chyba při registraci:", err);
+    res.status(500).send("Chyba při registraci");
+  }
 });
 
 
@@ -545,6 +606,8 @@ console.log("Záznam uložen do databáze.");
     res.status(500).send("Nastala chyba při registraci.");
   }
 });
+
+
 
 app.post("/inzerent", async (req, res) => {
   const { email, password } = req.body;

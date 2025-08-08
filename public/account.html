@@ -217,6 +217,11 @@
 
   </div>
 
+ <div id="chat-content">
+    <!-- Zde se dynamicky načtou konverzace pilota -->
+  </div>
+
+
   <script>
 
 let currentPilot = null;
@@ -542,6 +547,45 @@ console.log("Odesílaná data:", data);
   }
 </script>
 
+ <script>
+    document.addEventListener("DOMContentLoaded", async () => {
+  const loggedEmail = localStorage.getItem("loggedEmail");
+
+  // Pokud není uživatel přihlášen, přesměrujeme na stránku přihlášení
+  if (!loggedEmail) {
+    alert("Nejste přihlášeni! Přihlaste se prosím.");
+    window.location.href = "/index.html"; // Přesměrování na stránku přihlášení
+    return;
+  }
+
+  // 1. Načtení konverzací pro pilota
+  try {
+    const response = await fetch(`/api/get-conversations?pilotEmail=${encodeURIComponent(loggedEmail)}`);
+    const conversations = await response.json();
+
+    if (conversations.length === 0) {
+      document.getElementById("chat-content").innerHTML = "<p>Nemáte žádné konverzace.</p>";
+    } else {
+      // Pokud máte nějaké konverzace, zobrazíme je
+      conversations.forEach(conv => {
+        const convElement = document.createElement("div");
+        convElement.classList.add("conversation");
+        convElement.innerHTML = `
+          <h3>Konverzace s: ${conv.inzerentEmail}</h3>
+          <a href="/chat.html?conversationId=${conv.conversationId}" class="btn btn-primary">
+            Přejít do chatu
+          </a>
+        `;
+        document.getElementById("chat-content").appendChild(convElement);
+      });
+    }
+
+  } catch (error) {
+    console.error("Chyba při načítání konverzací:", error);
+    document.getElementById("chat-content").innerHTML = "<p>Chyba při načítání konverzací.</p>";
+  }
+});
+  </script>
 
 </body>
 </html>

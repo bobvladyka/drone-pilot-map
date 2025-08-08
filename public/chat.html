@@ -1,32 +1,276 @@
 <!DOCTYPE html>
-<html>
+<html lang="cs">
 <head>
-  <title>SendBird Chat</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat | NajdiPilota.cz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    #chat { height: 300px; border: 1px solid #ddd; overflow-y: scroll; padding: 10px; }
-    #message { width: 70%; padding: 8px; }
-    #send { padding: 8px 15px; }
+    .chat-container {
+      height: calc(100vh - 200px);
+      display: flex;
+      flex-direction: column;
+    }
+    .messages-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 15px;
+      background-color: #f8f9fa;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
+    .message {
+      max-width: 80%;
+      margin-bottom: 12px;
+      padding: 10px 15px;
+      border-radius: 18px;
+    }
+    .message-sent {
+      margin-left: auto;
+      background-color: #d1e7dd;
+    }
+    .message-received {
+      margin-right: auto;
+      background-color: #ffffff;
+      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+    }
+    #message-input {
+      resize: none;
+      border-radius: 20px;
+      padding: 12px 20px;
+    }
+    .partner-info {
+      background-color: #f1f1f1;
+      padding: 10px;
+      border-radius: 8px;
+      margin-bottom: 15px;
+    }
   </style>
 </head>
 <body>
-  <div id="chat"></div>
-  <input type="text" id="message" placeholder="Type a message">
-  <button id="send">Send</button>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container">
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
+        <img src="/icons/logo.png" alt="" height="40" class="me-2">
+        <span class="fs-5">NajdiPilota.cz</span>
+      </a>
+      <button id="back-btn" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Zpět
+      </button>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <div id="chat-content">
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Načítání...</span>
+        </div>
+        <p class="mt-3">Probíhá příprava chatu...</p>
+      </div>
+    </div>
+  </div>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // Implementace výše uvedeného kódu
-      
-      // Odesílání zpráv
-      document.getElementById('send').addEventListener('click', () => {
-        const message = document.getElementById('message').value;
-        if (message && channel) {
-          channel.sendUserMessage(message, (msg, error) => {
-            if (!error) document.getElementById('message').value = '';
-          });
+    // Globální proměnné pro stav chatu
+    let currentConversation = null;
+    let currentUserEmail = null;
+
+    // Hlavní funkce pro vykreslení chatu
+    function renderChat(conversation, messages, isPilot) {
+  const chatContent = document.getElementById('chat-content');
+  chatContent.innerHTML = '';
+
+  // Informace o partnerovi (pilot nebo inzerent)
+  const partnerInfo = document.createElement('div');
+  partnerInfo.className = 'partner-info';
+  partnerInfo.innerHTML = `
+    <strong>Pilot:</strong> ${conversation.pilotEmail}<br>
+    <strong>Inzerent:</strong> ${conversation.inzerentEmail}
+  `;
+  chatContent.appendChild(partnerInfo);
+
+  // Kontejner pro zprávy
+  const messagesContainer = document.createElement('div');
+  messagesContainer.className = 'messages-container';
+  messagesContainer.id = 'messages-container';
+
+  // Přidání existujících zpráv
+  messages.forEach(msg => {
+    const isSent = msg.sender_email === currentUserEmail;  // Zkontrolujte, zda je zpráva odeslána aktuálním uživatelem
+    const msgElement = document.createElement('div');
+    msgElement.className = isSent ? 'message message-sent' : 'message message-received';
+    msgElement.innerHTML = `
+      <div>${msg.message}</div>
+      <small class="text-muted d-block text-end">
+        ${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+      </small>
+    `;
+    messagesContainer.appendChild(msgElement);
+  });
+
+  chatContent.appendChild(messagesContainer);
+
+  // Vstup pro novou zprávu (dohled podle uživatele, zda může odesílat zprávu)
+  const messageInputContainer = document.createElement('div');
+  messageInputContainer.innerHTML = `
+    <textarea id="message-input" rows="3" class="form-control" placeholder="Napište zprávu..."></textarea>
+    <button id="send-btn" class="btn btn-primary mt-3" ${isPilot ? '' : 'disabled'}>Odeslat</button>
+  `;
+  chatContent.appendChild(messageInputContainer);
+
+  // Scroll na poslední zprávu
+  messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+  // Pokud je přihlášen pilot, povolíme odesílání zprávy
+  document.getElementById('send-btn').addEventListener('click', async () => {
+    await sendMessage(conversation.conversationId, isPilot);
+  });
+}
+
+        const newMessage = await response.json();
+        
+        // Přidání zprávy do UI
+        const messagesContainer = document.getElementById('messages-container');
+        const msgElement = document.createElement('div');
+        msgElement.className = 'message message-sent';
+        msgElement.innerHTML = `
+          <div>${newMessage.message}</div>
+          <small class="text-muted d-block text-end">
+            ${new Date(newMessage.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+          </small>
+        `;
+        messagesContainer.appendChild(msgElement);
+        input.value = '';
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+
+      } catch (error) {
+        console.error('Chyba při odesílání:', error);
+        alert('Nepodařilo se odeslat zprávu');
+      }
+    }
+
+    // Inicializace chatu po načtení stránky
+    document.addEventListener('DOMContentLoaded', async () => {
+      // Nastavení tlačítka zpět
+      document.getElementById('back-btn').addEventListener('click', () => {
+        window.history.back();
+      });
+
+      // Nastavení posluchače pro odesílání zpráv
+      document.addEventListener('click', (e) => {
+        if (e.target && e.target.id === 'send-btn') {
+          sendMessage();
         }
       });
+
+      // Načtení konverzace
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const pilotEmail = urlParams.get('pilotEmail');
+        currentUserEmail = localStorage.getItem('inzerentEmail');
+        
+        if (!currentUserEmail) {
+          alert('Pro komunikaci se musíte přihlásit jako inzerent');
+          window.location.href = '/prihlaseni-inzerent.html';
+          return;
+        }
+
+        // Získání nebo vytvoření konverzace
+        const convResponse = await fetch('/api/start-conversation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pilotEmail, inzerentEmail: currentUserEmail })
+        });
+        
+        if (!convResponse.ok) {
+          throw new Error('Nepodařilo se vytvořit konverzaci');
+        }
+        
+        currentConversation = await convResponse.json();
+
+        // Načtení zpráv
+        const messagesResponse = await fetch(`/api/conversation-messages?conversationId=${currentConversation.conversationId}`);
+        if (!messagesResponse.ok) {
+          throw new Error('Nepodařilo se načíst zprávy');
+        }
+        
+        const messages = await messagesResponse.json();
+
+        // Zobrazení chatu
+        renderChat(currentConversation, messages);
+
+      } catch (error) {
+        console.error('Chyba:', error);
+        document.getElementById('chat-content').innerHTML = `
+          <div class="alert alert-danger">
+            <h5>Chyba při načítání chatu</h5>
+            <p>${error.message}</p>
+            <button onclick="window.history.back()" class="btn btn-secondary">Zpět</button>
+          </div>
+        `;
+      }
     });
   </script>
+
+<script>
+    // Kód, který jste zmínil v předchozím dotazu, bude umístěn tady.
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const pilotEmail = urlParams.get('pilotEmail');
+      const inzerentEmail = urlParams.get('inzerentEmail');
+      
+      currentUserEmail = localStorage.getItem('loggedEmail');  // Předpokládáme, že máte uživatele přihlášeného
+
+      if (!currentUserEmail) {
+        alert('Pro komunikaci se musíte přihlásit');
+        window.location.href = '/index.html';  // Přesměrování na přihlašovací stránku
+        return;
+      }
+
+      // Pokud je přihlášený uživatel pilot, nastavíme, že bude reagovat jako pilot
+      const isPilot = currentUserEmail === pilotEmail;
+
+      // Získání nebo vytvoření konverzace
+      try {
+        const convResponse = await fetch('/api/start-conversation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ pilotEmail, inzerentEmail })
+        });
+
+        if (!convResponse.ok) {
+          throw new Error('Nepodařilo se vytvořit konverzaci');
+        }
+
+        const conversation = await convResponse.json();
+
+        // Načtení zpráv
+        const messagesResponse = await fetch(`/api/conversation-messages?conversationId=${conversation.conversationId}`);
+        if (!messagesResponse.ok) {
+          throw new Error('Nepodařilo se načíst zprávy');
+        }
+        
+        const messages = await messagesResponse.json();
+
+        // Zobrazení chatu
+        renderChat(conversation, messages, isPilot);
+
+      } catch (error) {
+        console.error('Chyba:', error);
+        document.getElementById('chat-content').innerHTML = `
+          <div class="alert alert-danger">
+            <h5>Chyba při načítání chatu</h5>
+            <p>${error.message}</p>
+            <button onclick="window.history.back()" class="btn btn-secondary">Zpět</button>
+          </div>
+        `;
+      }
+    });
+  </script>
+
+
 </body>
 </html>

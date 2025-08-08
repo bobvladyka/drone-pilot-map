@@ -15,8 +15,7 @@
   <meta property="og:description" content="Spojujeme zákazníky s piloty dronů. Zobraz se na mapě nebo si najdi pilota ve svém okolí." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.najdipilota.cz/" />
-  <meta property="og:image" content="https://www.najdipilota.cz/og-image.jpg" />
-  <!-- Nahraď reálnou URL obrázku -->
+  <meta property="og:image" content="icons/logo.png" />
   <meta name="google-site-verification" content="yxzi02d6ahPBVtx31lx_Mwg07khOFlY_fWUFdkyrsUE" />
 
   <!-- Bootstrap CSS -->
@@ -37,7 +36,6 @@
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/icons/site.webmanifest">
 <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
-<meta name="robots" content="noindex">
 
 
 </head>
@@ -710,6 +708,20 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
     if (localStorage.getItem("inzerentEmail")) {
       localStorage.removeItem("inzerentEmail");
     }
+  });
+</script>
+
+<script>
+  // Automatické přidání třídy 'active' na aktuální stránku v menu
+  document.addEventListener("DOMContentLoaded", () => {
+    const currentPage = window.location.pathname;
+    const navLinks = document.querySelectorAll('.navbar-nav .nav-item .nav-link');
+    
+    navLinks.forEach(link => {
+      if (link.getAttribute('href') === currentPage) {
+        link.parentElement.classList.add('active');
+      }
+    });
   });
 </script>
 

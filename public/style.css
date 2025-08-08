@@ -466,4 +466,60 @@ button.accordion-button:not(.collapsed) {
   color: #fff;
 }
 
+.navbar-nav .nav-link {
+  font-weight: bold; /* Tučný text */
+}
+.navbar-nav {
+  display: flex;
+  justify-content: center; /* Texty na střed */
+  align-items: center;
+}
+@media (max-width: 768px) {
+  .navbar-toggler {
+    margin: 0 auto;
+    display: block;
+  }
+  .navbar-nav {
+    justify-content: center;
+  }
+}
+/* Zvýraznění aktivní položky navigace */
+.navbar-nav .nav-item.active .nav-link {
+  font-weight: 600;  /* Tučnější text pro aktivní položku */
+  color: var(--primary); /* Změna barvy textu na primární barvu */
+  transition: color 0.3s ease, font-weight 0.3s ease;
+}
+
+/* Při najetí na aktivní položku */
+.navbar-nav .nav-item.active .nav-link:hover {
+  color: var(--accent); /* Jemná změna barvy při hoveru */
+  font-weight: 700;  /* Mírné zvýraznění při hoveru */
+}
+
+/* Efekt při najetí na všechny položky menu */
+.navbar-nav .nav-item .nav-link:hover {
+  color: var(--primary); /* Při hoveru změna barvy textu */
+  font-weight: 600;  /* Tučnější text při hoveru */
+}
+ .membership-price {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .old-price {
+      text-decoration: line-through;
+      color: red;
+      font-size: 1.25rem;
+    }
+
+    .new-price {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    .monthly-price {
+      font-size: 1.25rem;
+      color: #555;
+    }
+
 

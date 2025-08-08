@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Možnosti členství | NajdiPilota.cz</title>
+  <meta name="description" content="Informace o možnostech členství v platformě NajdiPilota.cz a výhodách jednotlivých plánů." />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <style>
+    .membership-price {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
+      <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+      <span class="fs-4">NajdiPilota.cz | Možnosti členství</span>
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <a class="nav-link" href="/index.html">Mapa</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/o-projektu.html">O projektu</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/kontakt.html">Kontakt</a>
+        </li>
+       </ul>
+    </div>
+  </div>
+</nav>
+
+<div class="container py-5">
+  <h1 class="mb-4 text-center"><i class="bi bi-person-check me-2"></i>Možnosti členství a jejich výhody</h1>
+
+  <form id="membership-form">
+    <div class="row g-4">
+      <!-- Toggle pro zobrazení cen -->
+      <div class="col-12 text-center mb-4">
+        <label for="toggle" class="form-label">Zvolte typ platby:</label>
+        <select id="toggle" class="form-select w-50" onchange="updatePricing()">
+          <option value="monthly" selected>Měsíční platba</option>
+          <option value="semi-annual">Půlroční platba</option>
+          <option value="annual">Roční platba</option>
+        </select>
+      </div>
+
+      <!-- Free -->
+      <div class="col-md-4">
+        <input type="radio" name="membership_type" value="Free" class="d-none" id="plan-free">
+        <label for="plan-free" class="w-100">
+          <div class="card membership-card text-center p-4 free-card">
+            <img src="icons/freejpg.png" alt="Free Plan" class="membership-image">
+            <h4>Free</h4>
+            <p class="membership-price">0 Kč</p>
+            <ul class="list-unstyled">
+              <li>1 specializace</li>
+              <li>1 dron</li>
+              <li>Základní viditelnost</li>
+              <li style="font-weight: bold; color: red;">Bez možnosti kontaktování</li>
+              <li style="font-weight: bold; color: red;">Pro inzerenty se nezobrazuje ve filtrech</li>
+            </ul>
+          </div>
+        </label>
+      </div>
+
+      <!-- Basic -->
+      <div class="col-md-4">
+        <input type="radio" name="membership_type" value="Basic" class="d-none" id="plan-basic">
+        <label for="plan-basic" class="w-100">
+          <div class="card membership-card text-center p-4 basic-card">
+            <img src="icons/basicjpg.png" alt="Basic Plan" class="membership-image">
+            <h4>Basic</h4>
+            <!-- Zobrazujeme starou cenu pouze pro půlroční a roční plány -->
+            <p id="basic-old-price" class="old-price">119 Kč</p>
+            <p id="basic-price" class="new-price">119 Kč</p>
+            <p id="basic-monthly" class="monthly-price"></p>
+            <ul class="list-unstyled">
+              <li>Až 2 specializace</li>
+              <li>Až 2 drony</li>
+              <li>Možnost nastavit dostupnost</li>
+              <li>Možnost získat odznak "ověřený pilot"</li>
+              <li>Zobrazení telefonu a e-mailu</li>
+              <li>Odkaz na portfolio / web</li>
+              <li>Možnost kontaktování přes „Napiš pilotovi”</li>
+            </ul>
+          </div>
+        </label>
+      </div>
+
+      <!-- Premium -->
+      <div class="col-md-4">
+        <input type="radio" name="membership_type" value="Premium" class="d-none" id="plan-premium">
+        <label for="plan-premium" class="w-100">
+          <div class="card membership-card text-center p-4 premium-card">
+            <img src="icons/premiumjpg.png" alt="Premium Plan" class="membership-image">
+            <h4>Premium</h4>
+            <!-- Zobrazujeme starou cenu pouze pro půlroční a roční plány -->
+            <p id="premium-old-price" class="old-price">249 Kč</p>
+            <p id="premium-price" class="new-price">249 Kč</p>
+            <p id="premium-monthly" class="monthly-price"></p>
+            <ul class="list-unstyled">
+              <li>Vše z Basic</li>
+              <li>Neomezené specializace</li>
+              <li>Neomezený počet dronů</li>
+              <li>Veškeré kontaktní údaje</li>
+              <li>Prioritní viditelnost na mapě</li>
+              <li>Zvýrazněný profil</li>
+            </ul>
+          </div>
+        </label>
+      </div>
+    </div>
+  </form>
+
+</div>
+
+<footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+  <div class="container">
+    <div class="row gy-3 justify-content-between">
+      <div class="col-md-4">
+        <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+          <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+          <span class="fw-bold fs-5">NajdiPilota.cz</span>
+        </a>
+        <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+      </div>
+      <div class="col-md-2">
+        <h6 class="fw-bold">Navigace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
+          <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+          <li><a href="/subscription.html" class="text-decoration-none text-muted">Možnosti členství</a></li>
+        </ul>
+      </div>
+      <div class="col-md-3">
+        <h6 class="fw-bold">Informace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+        </ul>
+      </div>
+      <div class="col-md-3">
+        <h6 class="fw-bold">Provozovatel</h6>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: _________<br>Praha, Česká republika</p>
+        <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+      </div>
+    </div>
+    <hr class="my-4">
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+      <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+      <div>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+        <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("year").textContent = new Date().getFullYear();
+  });
+
+  function updatePricing() {
+    const plan = document.getElementById('toggle').value;
+    const basicOldPrice = document.getElementById('basic-old-price');
+    const basicPrice = document.getElementById('basic-price');
+    const basicMonthly = document.getElementById('basic-monthly');
+
+    const premiumOldPrice = document.getElementById('premium-old-price');
+    const premiumPrice = document.getElementById('premium-price');
+    const premiumMonthly = document.getElementById('premium-monthly');
+
+    if (plan === "monthly") {
+      basicOldPrice.style.display = "none";
+      premiumOldPrice.style.display = "none";
+      basicPrice.textContent = "119 Kč";
+      premiumPrice.textContent = "249 Kč";
+      basicMonthly.textContent = "";
+      premiumMonthly.textContent = "";
+    } else if (plan === "semi-annual") {
+      basicOldPrice.style.display = "inline";
+      premiumOldPrice.style.display = "inline";
+      basicPrice.textContent = "678 Kč";
+      premiumPrice.textContent = "1420 Kč";
+      basicMonthly.textContent = "(113,00 Kč/měsíc)";
+      premiumMonthly.textContent = "(236,50 Kč/měsíc)";
+    } else if (plan === "annual") {
+      basicOldPrice.style.display = "inline";
+      premiumOldPrice.style.display = "inline";
+      basicPrice.textContent = "1214 Kč";
+      premiumPrice.textContent = "2540 Kč";
+      basicMonthly.textContent = "(101,15 Kč/měsíc)";
+      premiumMonthly.textContent = "(211,65 Kč/měsíc)";
+    }
+  }
+</script>
+
+</body>
+</html>

@@ -63,6 +63,7 @@
 
   <div class="container py-4">
     <div id="chat-content">
+      <!-- Zde se dynamicky načte obsah chatu -->
       <div class="text-center py-5">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Načítání...</span>
@@ -73,191 +74,38 @@
   </div>
 
   <script>
-    // Globální proměnné pro stav chatu
-    let currentConversation = null;
-    let currentUserEmail = null;
-
-    // Hlavní funkce pro vykreslení chatu
-    function renderChat(conversation, messages, isPilot) {
-  const chatContent = document.getElementById('chat-content');
-  chatContent.innerHTML = '';
-
-  // Informace o partnerovi (pilot nebo inzerent)
-  const partnerInfo = document.createElement('div');
-  partnerInfo.className = 'partner-info';
-  partnerInfo.innerHTML = `
-    <strong>Pilot:</strong> ${conversation.pilotEmail}<br>
-    <strong>Inzerent:</strong> ${conversation.inzerentEmail}
-  `;
-  chatContent.appendChild(partnerInfo);
-
-  // Kontejner pro zprávy
-  const messagesContainer = document.createElement('div');
-  messagesContainer.className = 'messages-container';
-  messagesContainer.id = 'messages-container';
-
-  // Přidání existujících zpráv
-  messages.forEach(msg => {
-    const isSent = msg.sender_email === currentUserEmail;  // Zkontrolujte, zda je zpráva odeslána aktuálním uživatelem
-    const msgElement = document.createElement('div');
-    msgElement.className = isSent ? 'message message-sent' : 'message message-received';
-    msgElement.innerHTML = `
-      <div>${msg.message}</div>
-      <small class="text-muted d-block text-end">
-        ${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-      </small>
-    `;
-    messagesContainer.appendChild(msgElement);
-  });
-
-  chatContent.appendChild(messagesContainer);
-
-  // Vstup pro novou zprávu (dohled podle uživatele, zda může odesílat zprávu)
-  const messageInputContainer = document.createElement('div');
-  messageInputContainer.innerHTML = `
-    <textarea id="message-input" rows="3" class="form-control" placeholder="Napište zprávu..."></textarea>
-    <button id="send-btn" class="btn btn-primary mt-3" ${isPilot ? '' : 'disabled'}>Odeslat</button>
-  `;
-  chatContent.appendChild(messageInputContainer);
-
-  // Scroll na poslední zprávu
-  messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-  // Pokud je přihlášen pilot, povolíme odesílání zprávy
-  document.getElementById('send-btn').addEventListener('click', async () => {
-    await sendMessage(conversation.conversationId, isPilot);
-  });
-}
-
-        const newMessage = await response.json();
-        
-        // Přidání zprávy do UI
-        const messagesContainer = document.getElementById('messages-container');
-        const msgElement = document.createElement('div');
-        msgElement.className = 'message message-sent';
-        msgElement.innerHTML = `
-          <div>${newMessage.message}</div>
-          <small class="text-muted d-block text-end">
-            ${new Date(newMessage.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-          </small>
-        `;
-        messagesContainer.appendChild(msgElement);
-        input.value = '';
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-      } catch (error) {
-        console.error('Chyba při odesílání:', error);
-        alert('Nepodařilo se odeslat zprávu');
-      }
-    }
-
-    // Inicializace chatu po načtení stránky
-    document.addEventListener('DOMContentLoaded', async () => {
-      // Nastavení tlačítka zpět
-      document.getElementById('back-btn').addEventListener('click', () => {
-        window.history.back();
-      });
-
-      // Nastavení posluchače pro odesílání zpráv
-      document.addEventListener('click', (e) => {
-        if (e.target && e.target.id === 'send-btn') {
-          sendMessage();
-        }
-      });
-
-      // Načtení konverzace
-      try {
-        const urlParams = new URLSearchParams(window.location.search);
-        const pilotEmail = urlParams.get('pilotEmail');
-        currentUserEmail = localStorage.getItem('inzerentEmail');
-        
-        if (!currentUserEmail) {
-          alert('Pro komunikaci se musíte přihlásit jako inzerent');
-          window.location.href = '/prihlaseni-inzerent.html';
-          return;
-        }
-
-        // Získání nebo vytvoření konverzace
-        const convResponse = await fetch('/api/start-conversation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pilotEmail, inzerentEmail: currentUserEmail })
-        });
-        
-        if (!convResponse.ok) {
-          throw new Error('Nepodařilo se vytvořit konverzaci');
-        }
-        
-        currentConversation = await convResponse.json();
-
-        // Načtení zpráv
-        const messagesResponse = await fetch(`/api/conversation-messages?conversationId=${currentConversation.conversationId}`);
-        if (!messagesResponse.ok) {
-          throw new Error('Nepodařilo se načíst zprávy');
-        }
-        
-        const messages = await messagesResponse.json();
-
-        // Zobrazení chatu
-        renderChat(currentConversation, messages);
-
-      } catch (error) {
-        console.error('Chyba:', error);
-        document.getElementById('chat-content').innerHTML = `
-          <div class="alert alert-danger">
-            <h5>Chyba při načítání chatu</h5>
-            <p>${error.message}</p>
-            <button onclick="window.history.back()" class="btn btn-secondary">Zpět</button>
-          </div>
-        `;
-      }
-    });
-  </script>
-
-<script>
-    // Kód, který jste zmínil v předchozím dotazu, bude umístěn tady.
-
     document.addEventListener('DOMContentLoaded', async () => {
       const urlParams = new URLSearchParams(window.location.search);
       const pilotEmail = urlParams.get('pilotEmail');
-      const inzerentEmail = urlParams.get('inzerentEmail');
+      const inzerentEmail = localStorage.getItem('inzerentEmail');
       
-      currentUserEmail = localStorage.getItem('loggedEmail');  // Předpokládáme, že máte uživatele přihlášeného
-
-      if (!currentUserEmail) {
-        alert('Pro komunikaci se musíte přihlásit');
-        window.location.href = '/index.html';  // Přesměrování na přihlašovací stránku
+      if (!inzerentEmail) {
+        alert('Pro komunikaci se musíte přihlásit jako inzerent');
+        window.location.href = '/index.html';
         return;
       }
 
-      // Pokud je přihlášený uživatel pilot, nastavíme, že bude reagovat jako pilot
-      const isPilot = currentUserEmail === pilotEmail;
-
-      // Získání nebo vytvoření konverzace
+      // 1. Získání nebo vytvoření konverzace
       try {
         const convResponse = await fetch('/api/start-conversation', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ pilotEmail, inzerentEmail })
         });
-
-        if (!convResponse.ok) {
-          throw new Error('Nepodařilo se vytvořit konverzaci');
-        }
-
-        const conversation = await convResponse.json();
-
-        // Načtení zpráv
-        const messagesResponse = await fetch(`/api/conversation-messages?conversationId=${conversation.conversationId}`);
-        if (!messagesResponse.ok) {
-          throw new Error('Nepodařilo se načíst zprávy');
-        }
         
+        const conversation = await convResponse.json();
+        
+        if (conversation.error) {
+          throw new Error(conversation.error);
+        }
+
+        // 2. Načtení zpráv
+        const messagesResponse = await fetch(`/api/conversation-messages?conversationId=${conversation.conversationId}`);
         const messages = await messagesResponse.json();
 
-        // Zobrazení chatu
-        renderChat(conversation, messages, isPilot);
-
+        // 3. Zobrazení chatu
+        renderChat(conversation, messages);
+        
       } catch (error) {
         console.error('Chyba:', error);
         document.getElementById('chat-content').innerHTML = `
@@ -268,9 +116,99 @@
           </div>
         `;
       }
+
+      // Funkce pro zobrazení chatu
+      function renderChat(conversation, messages) {
+        const chatHTML = `
+          <div class="partner-info">
+            <h4>${conversation.partnerName || conversation.partnerEmail}</h4>
+            <p class="text-muted mb-0">Konverzace s pilotem</p>
+          </div>
+          
+          <div class="chat-container">
+            <div class="messages-container" id="messages-container">
+              ${messages.length > 0 ? 
+                messages.map(msg => `
+                  <div class="message ${msg.sender_email === inzerentEmail ? 'message-sent' : 'message-received'}">
+                    <div>${msg.message}</div>
+                    <small class="text-muted d-block text-end">
+                      ${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                    </small>
+                  </div>
+                `).join('') : 
+                '<p class="text-muted text-center">Žádné předchozí zprávy</p>'
+              }
+            </div>
+            
+            <div class="input-group mb-3">
+              <textarea id="message-input" class="form-control" placeholder="Napište zprávu..." rows="3" autofocus></textarea>
+              <button id="send-btn" class="btn btn-primary">
+                <i class="bi bi-send-fill"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        document.getElementById('chat-content').innerHTML = chatHTML;
+        
+        // Scroll na konec zpráv
+        const messagesContainer = document.getElementById('messages-container');
+        messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        
+        // Odesílání zpráv
+        document.getElementById('send-btn').addEventListener('click', sendMessage);
+        document.getElementById('message-input').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+          }
+        });
+
+        async function sendMessage() {
+          const input = document.getElementById('message-input');
+          const message = input.value.trim();
+          
+          if (!message) return;
+          
+          try {
+            const response = await fetch('/api/send-message', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                conversation_id: conversation.conversationId,
+                sender_email: inzerentEmail,
+                message: message
+              })
+            });
+            
+            const newMessage = await response.json();
+            
+            // Přidat zprávu do okna
+            const msgElement = document.createElement('div');
+            msgElement.className = 'message message-sent';
+            msgElement.innerHTML = `
+              <div>${newMessage.message}</div>
+              <small class="text-muted d-block text-end">
+                ${new Date(newMessage.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+              </small>
+            `;
+            
+            document.getElementById('messages-container').appendChild(msgElement);
+            input.value = '';
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            
+          } catch (error) {
+            console.error('Chyba při odesílání:', error);
+            alert('Nepodařilo se odeslat zprávu');
+          }
+        }
+      }
+
+      // Tlačítko zpět
+      document.getElementById('back-btn').addEventListener('click', () => {
+        window.history.back();
+      });
     });
   </script>
-
-
 </body>
 </html>

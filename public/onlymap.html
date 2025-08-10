@@ -55,6 +55,10 @@ html {
     <a class="navbar-brand fw-bold d-flex align-items-center">
   <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
   <span class="fs-4">NajdiPilota.cz | Sekce pro inzerenty</span>
+
+  <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm d-none d-md-inline"><i class="bi bi-envelope me-1"></i>Moje zprávy</a>
+
+
 </a>
         
     
@@ -135,6 +139,20 @@ html {
       </div>
     </div>
 
+<!-- Ověřený pilot (registrationnumber) -->
+<div class="col-md-4">
+  <div class="filter-card h-100 p-3 bg-white rounded-3">
+    <h6 class="filter-title fw-bold mb-3 text-primary">
+      <i class="bi bi-patch-check-fill me-2"></i>Ověřený pilot
+    </h6>
+    <select id="filter-verified" class="form-select form-select-sm">
+      <option value="">Všichni</option>
+      <option value="YES">Pouze ověření</option>
+      <option value="NO">Pouze neověření</option>
+    </select>
+  </div>
+</div>
+
 
 <!-- Akční tlačítka -->
     <div class="col-md-6 d-flex flex-column justify-content-end">
@@ -191,7 +209,7 @@ html {
     attribution: '&copy; OpenStreetMap',
     maxZoom: 18
   }).addTo(map);
-
+  let allPilots = [];
   const markers = L.markerClusterGroup();
     const pilotCircles = [];
     fetch('/pilots')
@@ -264,12 +282,16 @@ html {
   html += `
     <div class="d-flex justify-content-between align-items-center">
       <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+      
       ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
         ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
         : ''}
     </div>
   `;
   
+if (p.volunteer === 'ANO') {
+        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      }
 
   if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
   if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
@@ -407,6 +429,13 @@ function contactPilot(pilotEmail) {
   });
 }
 
+function isVerifiedPilot(pilot) {
+  // např. CZE123456789AB
+  const regPattern = /^CZE[A-Za-z0-9]{13}$/;
+  return regPattern.test(pilot.registrationnumber || '');
+}
+
+
 
 function extractUniqueSpecializations(pilots) {
   const specs = new Set();
@@ -441,6 +470,8 @@ function populateSpecializationFilter(pilots) {
 document.getElementById('filter-region').addEventListener('change', applyFilters);
 document.getElementById('filter-availability').addEventListener('change', applyFilters);
 document.getElementById('filter-volunteer').addEventListener('change', applyFilters);
+document.getElementById('filter-verified').addEventListener('change', applyFilters);
+
 document.getElementById('reset-filters-btn').addEventListener('click', resetFilters);
 
 
@@ -453,29 +484,73 @@ function resetFilters() {
   document.getElementById('filter-region').value = '';
   document.getElementById('filter-availability').value = '';
   document.getElementById('filter-volunteer').value = '';
-  
+  const fv = document.getElementById('filter-verified'); if (fv) fv.value = '';
+
   applyFilters();
 }
 
-function applyFilters() {
-  const selectedSpec = document.getElementById('filter-specialization').value.toLowerCase();
-  const selectedRegion = document.getElementById('filter-region').value.toLowerCase();
-  const selectedAvailability = document.getElementById('filter-availability').value;
-  const selectedVolunteer = document.getElementById('filter-volunteer').value;
 
-  const filtered = allPilots.filter(p => {
-    const spec = p.specialization?.toLowerCase() || '';
-    const region = p.region?.toLowerCase() || '';
-    
-    return (
+// ⚙️ jednorázové napojení dat pilota na existující kruhy podle přesné shody lat|lon
+let __pilotAttachmentDone = false;
+function __ensurePilotAttached() {
+  if (__pilotAttachmentDone) return;
+  if (!Array.isArray(allPilots) || allPilots.length === 0) return;
+
+  const byLatLon = new Map();
+  allPilots.forEach(p => {
+    if (p && p.latitude != null && p.longitude != null) {
+      byLatLon.set(`${p.latitude}|${p.longitude}`, p);
+    }
+  });
+
+  pilotCircles.forEach(c => {
+    if (!c.__pilot && c.getLatLng) {
+      const ll = c.getLatLng();
+      const key = `${ll.lat}|${ll.lng}`;
+      if (byLatLon.has(key)) c.__pilot = byLatLon.get(key);
+    }
+  });
+
+  __pilotAttachmentDone = true;
+}
+
+
+function applyFilters() {
+  __ensurePilotAttached(); // zajistí, že každý kruh má c.__pilot (pokud to jde)
+
+  const selectedSpec = (document.getElementById('filter-specialization')?.value || '').toLowerCase();
+  const selectedRegion = (document.getElementById('filter-region')?.value || '').toLowerCase();
+  const selectedAvailability = document.getElementById('filter-availability')?.value || '';
+  const selectedVolunteer = document.getElementById('filter-volunteer')?.value || '';
+  const selectedVerified = document.getElementById('filter-verified')?.value || '';
+
+  // rebuild cluster pouze z existujících kruhů
+  markers.clearLayers();
+
+  pilotCircles.forEach(circle => {
+    const p = circle.__pilot || {}; // pokud se nepodaří napojit, necháme projít většinu filtrů
+    const spec = (p.specialization || '').toLowerCase();
+    const region = (p.region || '').toLowerCase();
+    const isVerified = isVerifiedPilot(p);
+
+
+    const match =
       (!selectedSpec || spec.includes(selectedSpec)) &&
       (!selectedRegion || region.includes(selectedRegion)) &&
       (!selectedAvailability || p.available === selectedAvailability) &&
-      (!selectedVolunteer || p.volunteer === selectedVolunteer)
-    );
+      (!selectedVolunteer || p.volunteer === selectedVolunteer) &&
+      (!selectedVerified ||
+        (selectedVerified === 'YES' && isVerified) ||
+        (selectedVerified === 'NO' && !isVerified));
+
+    if (match) {
+      markers.addLayer(circle);
+    }
   });
 
-  renderPilots(filtered);
+  if (markers.getLayers().length > 0 && markers.getBounds().isValid()) {
+    map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+  }
 }
 
 fetch('/chat.html')
@@ -567,7 +642,6 @@ fetch('/chat.html')
     document.getElementById("year").textContent = new Date().getFullYear();
   });
 </script>
-
 
 </body>
 </html>

@@ -916,6 +916,57 @@ app.post('/create-conversation', async (req, res) => {
 });
 
 
+// GET /get-advertiser-conversations?advertiserEmail=...
+app.get('/get-advertiser-conversations', async (req, res) => {
+  const { advertiserEmail } = req.query;
+  if (!advertiserEmail) return res.json({ success: false, message: 'Missing advertiserEmail' });
+
+  try {
+    // 1) Najdi advertiser_id podle e-mailu
+    const advRes = await pool.query('SELECT id FROM advertisers WHERE email = $1', [advertiserEmail]);
+    if (advRes.rowCount === 0) {
+      return res.json({ success: true, conversations: [] });
+    }
+    const advertiserId = advRes.rows[0].id;
+
+    // 2) Konverzace inzerenta + poslední zpráva + unread (počítané proti conversation_views.user_id = advertiserId)
+    const convRes = await pool.query(`
+      SELECT
+        c.id,
+        p.email AS pilot_email,
+        p.name  AS pilot_name,
+        (SELECT message     FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
+        (SELECT created_at  FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message_time,
+        EXISTS (
+          SELECT 1
+          FROM messages m
+          WHERE m.conversation_id = c.id
+            AND m.sender_id != $1
+            AND (
+              m.created_at > COALESCE((
+                SELECT cv.last_seen
+                FROM conversation_views cv
+                WHERE cv.conversation_id = c.id AND cv.user_id = $1
+                LIMIT 1
+              ), '1970-01-01'::timestamp)
+              OR NOT EXISTS (
+                SELECT 1 FROM conversation_views cv
+                WHERE cv.conversation_id = c.id AND cv.user_id = $1
+              )
+            )
+        ) AS unread
+      FROM conversations c
+      JOIN pilots p ON p.id = c.pilot_id
+      WHERE c.advertiser_id = $1
+      ORDER BY last_message_time DESC NULLS LAST
+    `, [advertiserId]);
+
+    return res.json({ success: true, conversations: convRes.rows });
+  } catch (err) {
+    console.error('Error fetching advertiser conversations:', err);
+    return res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
 
 
 app.get('/get-messages', async (req, res) => {

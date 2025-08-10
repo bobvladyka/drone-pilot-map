@@ -1,214 +1,383 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Chat | NajdiPilota.cz</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat - NajdiPilota.cz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <style>
-    .chat-container {
-      height: calc(100vh - 200px);
+    #chat-container {
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
       display: flex;
       flex-direction: column;
     }
-    .messages-container {
-      flex: 1;
-      overflow-y: auto;
-      padding: 15px;
-      background-color: #f8f9fa;
-      border-radius: 8px;
-      margin-bottom: 15px;
-    }
+
     .message {
+      margin: 8px 0;
       max-width: 80%;
-      margin-bottom: 12px;
+      display: flex;
+    }
+
+    .my-message {
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .their-message {
+      align-self: flex-start;
+      margin-right: auto;
+    }
+
+    .message-content {
       padding: 10px 15px;
       border-radius: 18px;
+      position: relative;
+      word-wrap: break-word;
     }
-    .message-sent {
-      margin-left: auto;
-      background-color: #d1e7dd;
+
+    .my-message .message-content {
+      background-color: #d4edda; /* světle zelená pro pilota */
+      border-bottom-right-radius: 4px;
     }
-    .message-received {
-      margin-right: auto;
-      background-color: #ffffff;
-      box-shadow: 0 1px 1px rgba(0,0,0,0.1);
+
+    .their-message .message-content {
+      background-color: #fff3cd; /* světle žlutá pro inzerenta */
+      border-bottom-left-radius: 4px;
     }
+
+    .message-time {
+      font-size: 0.75rem;
+      color: #6c757d;
+      margin-top: 4px;
+    }
+
+    .my-message .message-time {
+      text-align: right;
+    }
+
+    .their-message .message-time {
+      text-align: left;
+    }
+
     #message-input {
-      resize: none;
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    #message-input input {
+      flex: 1;
       border-radius: 20px;
-      padding: 12px 20px;
+      padding: 10px 15px;
     }
-    .partner-info {
-      background-color: #f1f1f1;
-      padding: 10px;
-      border-radius: 8px;
-      margin-bottom: 15px;
+
+    #send-message-btn {
+      border-radius: 20px;
+      padding: 0 20px;
     }
+
+    .email-display {
+      direction: rtl;
+      unicode-bidi: bidi-override;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+     :root{
+    --pilot-bg:#E8F4FF;      /* světle modrá */
+    --pilot-text:#0A3D62;    /* tmavě modrá */
+    --adv-bg:#F6F6F6;        /* světle šedá */
+    --adv-text:#333333;      /* grafitová */
+    --me-ring:#38B000;       /* zelený proužek u „mých“ zpráv (volitelné) */
+  }
+
+  .msg{
+    max-width: 72%;
+    padding: .6rem .8rem;
+    border-radius: 14px;
+    margin: .25rem 0;
+    line-height: 1.35;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+    position: relative;
+    word-wrap: break-word;
+  }
+  .msg--pilot{
+    background: var(--pilot-bg);
+    color: var(--pilot-text);
+    border-top-left-radius: 6px;
+  }
+  .msg--adv{
+    background: var(--adv-bg);
+    color: var(--adv-text);
+    border-top-right-radius: 6px;
+  }
+  /* zarovnání podle toho, kdo píše */
+  .msg--left{ align-self: flex-start; }
+  .msg--right{ align-self: flex-end; }
+
+  /* jemný proužek pro „moje“ zprávy (ten, kdo je přihlášený) */
+  .msg--me::after{
+    content:"";
+    position:absolute;
+    inset:auto -4px auto auto;
+    width:4px; height:60%;
+    background:var(--me-ring);
+    border-radius:2px;
+  }
+
+  .msg-meta{
+    font-size:.75rem; opacity:.7; margin-top:.25rem;
+    display:flex; gap:.5rem; align-items:center;
+  }
+  .badge{
+    font-size:.65rem; padding:.12rem .4rem; border-radius:999px;
+    background:#00000010;
+  }
+  .badge--pilot{ background:#0077B620; color:#0A3D62; }
+  .badge--adv{ background:#00000014; color:#333; }
+  
+  /* kontejner se zprávami musí být flex-column */
+  #messages{
+    display:flex; flex-direction:column; gap:.25rem;
+  }
+   
   </style>
 </head>
+
 <body>
-  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-    <div class="container">
-      <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
-        <img src="/icons/logo.png" alt="" height="40" class="me-2">
-        <span class="fs-5">NajdiPilota.cz</span>
-      </a>
-      <button id="back-btn" class="btn btn-outline-secondary">
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button onclick="window.history.back()" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Zpět
       </button>
+      <h4 class="mb-0">Konverzace s <span id="pilot-name"></span></h4>
+      <div class="text-muted small">Přihlášen: <span id="advertiser-name" class="email-display"></span></div>
     </div>
-  </nav>
 
-  <div class="container py-4">
-    <div id="chat-content">
-      <!-- Zde se dynamicky načte obsah chatu -->
-      <div class="text-center py-5">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Načítání...</span>
-        </div>
-        <p class="mt-3">Probíhá příprava chatu...</p>
+    <div id="chat-container">
+      <div id="messages">
+        <!-- Messages will be displayed here -->
+      </div>
+
+      <div id="message-input">
+        <input type="text" id="new-message" class="form-control" placeholder="Napište zprávu..." />
+        <button id="send-message-btn" class="btn btn-primary">
+          <i class="bi bi-send"></i> Odeslat
+        </button>
       </div>
     </div>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const urlParams = new URLSearchParams(window.location.search);
-      const pilotEmail = urlParams.get('pilotEmail');
-      const inzerentEmail = localStorage.getItem('inzerentEmail');
-      
-      if (!inzerentEmail) {
-        alert('Pro komunikaci se musíte přihlásit jako inzerent');
-        window.location.href = '/index.html';
-        return;
+document.addEventListener("DOMContentLoaded", function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const conversationId = urlParams.get('conversationId');
+  const pilotEmail = urlParams.get('pilotEmail');
+  const advertiserEmail = urlParams.get('inzerentEmail'); 
+
+  if (!conversationId || !pilotEmail || !advertiserEmail) {
+    alert("Chyba: Chybí parametry konverzace.");
+    window.location.href = '/index.html';
+    return;
+  }
+
+  // Získání přihlášeného e-mailu z localStorage
+const loggedEmail = localStorage.getItem('inzerentEmail') || localStorage.getItem('loggedEmail');
+
+  
+  if (!loggedEmail) {
+    alert("Chyba: Uživatel není přihlášen.");
+    window.location.href = '/login.html'; // Přesměrování na přihlašovací stránku
+    return;
+  }
+
+  // Logování pro kontrolu správnosti parametrů
+  console.log('conversationId:', conversationId);
+  console.log('pilotEmail:', pilotEmail);
+  console.log('advertiserEmail:', advertiserEmail);
+  console.log('loggedEmail:', loggedEmail); // Log pro ověření, že e-mail je uložený v localStorage
+
+  // Ověření, zda je správný uživatel podle URL parametrů a přihlášeného e-mailu
+  const isPilot = loggedEmail === pilotEmail;
+  const isAdvertiser = loggedEmail === advertiserEmail;
+
+  console.log('isPilot:', isPilot);
+  console.log('isAdvertiser:', isAdvertiser);
+
+  if (!isPilot && !isAdvertiser) {
+    alert("Chyba: Neznámý typ uživatele nebo špatná stránka.");
+    window.location.href = '/index.html';
+    return;
+  }
+
+  // Fetch pilot's name from the database, pokud je pilot
+  fetch(`/get-pilot-name?email=${encodeURIComponent(pilotEmail)}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.name) {
+        document.getElementById('pilot-name').textContent = data.name;
+      } else {
+        document.getElementById('pilot-name').textContent = obfuscateEmail(pilotEmail);
       }
-
-      // 1. Získání nebo vytvoření konverzace
-      try {
-        const convResponse = await fetch('/api/start-conversation', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pilotEmail, inzerentEmail })
-        });
-        
-        const conversation = await convResponse.json();
-        
-        if (conversation.error) {
-          throw new Error(conversation.error);
-        }
-
-        // 2. Načtení zpráv
-        const messagesResponse = await fetch(`/api/conversation-messages?conversationId=${conversation.conversationId}`);
-        const messages = await messagesResponse.json();
-
-        // 3. Zobrazení chatu
-        renderChat(conversation, messages);
-        
-      } catch (error) {
-        console.error('Chyba:', error);
-        document.getElementById('chat-content').innerHTML = `
-          <div class="alert alert-danger">
-            <h5>Chyba při načítání chatu</h5>
-            <p>${error.message}</p>
-            <button onclick="window.history.back()" class="btn btn-secondary">Zpět</button>
-          </div>
-        `;
-      }
-
-      // Funkce pro zobrazení chatu
-      function renderChat(conversation, messages) {
-        const chatHTML = `
-          <div class="partner-info">
-            <h4>${conversation.partnerName || conversation.partnerEmail}</h4>
-            <p class="text-muted mb-0">Konverzace s pilotem</p>
-          </div>
-          
-          <div class="chat-container">
-            <div class="messages-container" id="messages-container">
-              ${messages.length > 0 ? 
-                messages.map(msg => `
-                  <div class="message ${msg.sender_email === inzerentEmail ? 'message-sent' : 'message-received'}">
-                    <div>${msg.message}</div>
-                    <small class="text-muted d-block text-end">
-                      ${new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                    </small>
-                  </div>
-                `).join('') : 
-                '<p class="text-muted text-center">Žádné předchozí zprávy</p>'
-              }
-            </div>
-            
-            <div class="input-group mb-3">
-              <textarea id="message-input" class="form-control" placeholder="Napište zprávu..." rows="3" autofocus></textarea>
-              <button id="send-btn" class="btn btn-primary">
-                <i class="bi bi-send-fill"></i>
-              </button>
-            </div>
-          </div>
-        `;
-
-        document.getElementById('chat-content').innerHTML = chatHTML;
-        
-        // Scroll na konec zpráv
-        const messagesContainer = document.getElementById('messages-container');
-        messagesContainer.scrollTop = messagesContainer.scrollHeight;
-        
-        // Odesílání zpráv
-        document.getElementById('send-btn').addEventListener('click', sendMessage);
-        document.getElementById('message-input').addEventListener('keypress', (e) => {
-          if (e.key === 'Enter' && !e.shiftKey) {
-            e.preventDefault();
-            sendMessage();
-          }
-        });
-
-        async function sendMessage() {
-          const input = document.getElementById('message-input');
-          const message = input.value.trim();
-          
-          if (!message) return;
-          
-          try {
-            const response = await fetch('/api/send-message', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                conversation_id: conversation.conversationId,
-                sender_email: inzerentEmail,
-                message: message
-              })
-            });
-            
-            const newMessage = await response.json();
-            
-            // Přidat zprávu do okna
-            const msgElement = document.createElement('div');
-            msgElement.className = 'message message-sent';
-            msgElement.innerHTML = `
-              <div>${newMessage.message}</div>
-              <small class="text-muted d-block text-end">
-                ${new Date(newMessage.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-              </small>
-            `;
-            
-            document.getElementById('messages-container').appendChild(msgElement);
-            input.value = '';
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
-            
-          } catch (error) {
-            console.error('Chyba při odesílání:', error);
-            alert('Nepodařilo se odeslat zprávu');
-          }
-        }
-      }
-
-      // Tlačítko zpět
-      document.getElementById('back-btn').addEventListener('click', () => {
-        window.history.back();
-      });
+    })
+    .catch(err => {
+      console.error("Chyba při načítání jména pilota:", err);
+      document.getElementById('pilot-name').textContent = obfuscateEmail(pilotEmail);
     });
+
+  // Obfuscate advertiser email display
+  document.getElementById('advertiser-name').textContent = obfuscateEmail(advertiserEmail);
+
+  // Funkce pro obfuscation emailu
+  function obfuscateEmail(email) {
+    if (!email) return '';
+    const [name, domain] = email.split('@');
+    return `${name.substring(0, 2)}•••@${domain.substring(0, 2)}•••${domain.substring(domain.lastIndexOf('.'))}`;
+  }
+
+  // Fetch messages for the conversation
+  function loadMessages() {
+    fetch(`/get-messages?conversationId=${conversationId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          displayMessages(data.messages);
+        } else {
+          console.error("Chyba při načítání zpráv:", data.message);
+        }
+      })
+      .catch(err => {
+        console.error("Chyba při načítání zpráv:", err);
+      });
+  }
+
+  // Send message when the button is clicked or Enter is pressed
+  document.getElementById('send-message-btn').addEventListener('click', sendMessageHandler);
+  document.getElementById('new-message').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+      sendMessageHandler();
+    }
+  });
+
+  function sendMessageHandler() {
+    const messageContent = document.getElementById('new-message').value.trim();
+    if (messageContent) {
+      sendMessage(messageContent);
+    }
+  }
+
+  // Send message to the backend and update the chat
+  function sendMessage(messageContent) {
+    const sendBtn = document.getElementById('send-message-btn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Odesílám...';
+
+    fetch('/send-message', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        conversationId,
+        senderEmail: localStorage.getItem('inzerentEmail') || localStorage.getItem('loggedEmail'), // ✅
+        message: messageContent
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('new-message').value = '';
+        loadMessages(); // Reload all messages to maintain order
+      } else {
+        alert("Chyba při odesílání zprávy: " + (data.message || 'Neznámá chyba'));
+      }
+    })
+    .catch(err => {
+      console.error("Chyba při odesílání zprávy:", err);
+      alert("Došlo k chybě při odesílání zprávy.");
+    })
+    .finally(() => {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<i class="bi bi-send"></i> Odeslat';
+    });
+  }
+
+  // Function to format the date and time
+  function formatDateTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  }
+
+  // Function to display messages
+  function displayMessages(messages) {
+  const messagesDiv = document.getElementById('messages');
+  messagesDiv.innerHTML = ''; // Clear existing messages
+
+  if (!messages || messages.length === 0) {
+    messagesDiv.innerHTML = '<div class="text-center text-muted">Žádné zprávy v této konverzaci</div>';
+    return;
+  }
+
+  // Sort messages by date (oldest first)
+  messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+  messages.forEach(message => {
+    const messageDiv = document.createElement('div');
+
+    const isPilotSender = message.sender_email === pilotEmail;
+    const isAdvSender   = message.sender_email === advertiserEmail;
+    const isMyMessage   = message.sender_email === (isPilot ? pilotEmail : advertiserEmail);
+
+    // bublina podle role
+    messageDiv.classList.add(
+      'message',
+      isMyMessage ? 'my-message' : 'their-message',
+      isPilotSender ? 'pilot-message' : 'advertiser-message'
+    );
+
+    const formattedTime = formatDateTime(message.created_at);
+
+    messageDiv.innerHTML = `
+      <div class="message-content">
+        <div class="message-role">${isPilotSender ? 'Pilot' : 'Inzerent'}</div>
+        <div>${message.message}</div>
+        <div class="message-time">${formattedTime}</div>
+      </div>
+    `;
+
+    messagesDiv.appendChild(messageDiv);
+  });
+
+  // Scroll to the bottom
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
+}
+
+  // Load messages initially and set up periodic refresh
+  loadMessages();
+  setInterval(loadMessages, 10000); // Refresh every 10 seconds
+});
+
+
   </script>
 </body>
 </html>

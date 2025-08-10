@@ -870,554 +870,303 @@ app.get('/get-consent-timestamp', async (req, res) => {
   }
 });
 
+app.post('/create-conversation', async (req, res) => {
+  const { pilotEmail, advertiserEmail } = req.body;
 
-// Získání seznamu konverzací pro uživatele
-app.get('/chat-conversations', async (req, res) => {
-  const { userEmail, userType } = req.query; // 'pilot' nebo 'inzerent'
-  
   try {
-    let query;
-    if (userType === 'pilot') {
-      query = `
-        SELECT c.id, a.email as partner_email, MAX(m.created_at) as last_message_time
-        FROM conversations c
-        JOIN advertisers a ON c.advertiser_id = a.id
-        JOIN pilots p ON c.pilot_id = p.id
-        LEFT JOIN messages m ON m.conversation_id = c.id
-        WHERE p.email = $1
-        GROUP BY c.id, a.email
-        ORDER BY last_message_time DESC NULLS LAST`;
-    } else {
-      query = `
-        SELECT c.id, p.email as partner_email, MAX(m.created_at) as last_message_time
-        FROM conversations c
-        JOIN pilots p ON c.pilot_id = p.id
-        JOIN advertisers a ON c.advertiser_id = a.id
-        LEFT JOIN messages m ON m.conversation_id = c.id
-        WHERE a.email = $1
-        GROUP BY c.id, p.email
-        ORDER BY last_message_time DESC NULLS LAST`;
+    // Get pilot and advertiser details from the database
+    const pilotResult = await pool.query('SELECT id FROM pilots WHERE email = $1', [pilotEmail]);
+    const advertiserResult = await pool.query('SELECT id FROM advertisers WHERE email = $1', [advertiserEmail]);
+
+    if (pilotResult.rowCount === 0 || advertiserResult.rowCount === 0) {
+      return res.status(400).json({ success: false, message: 'Pilot nebo inzerent nenalezen' });
     }
 
-    const result = await pool.query(query, [userEmail]);
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Chyba při načítání konverzací:", err);
-    res.status(500).send("Chyba serveru");
-  }
-});
+    const pilotId = pilotResult.rows[0].id;
+    const advertiserId = advertiserResult.rows[0].id;
 
-
-// Získání ID uživatele (pilot/inzerent)
-app.get('/get-user-id', async (req, res) => {
-  const { email, type } = req.query;
-  
-  try {
-    let result;
-    if (type === 'pilot') {
-      result = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
-    } else {
-      result = await pool.query('SELECT id FROM advertisers WHERE email = $1', [email]);
-    }
-    
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Uživatel nenalezen' });
-    }
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Chyba při hledání uživatele:', err);
-    res.status(500).send('Chyba serveru');
-  }
-});
-
-// Najít nebo vytvořit konverzaci
-app.post('/find-or-create-conversation', async (req, res) => {
-  const { pilotId, advertiserId } = req.body;
-  
-  try {
-    // Nejprve zkusíme najít existující konverzaci
-    const findResult = await pool.query(
-      `SELECT * FROM conversations 
-       WHERE pilot_id = $1 AND advertiser_id = $2`,
+    // Check if a conversation already exists between this pilot and advertiser
+    const existingConversation = await pool.query(
+      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 LIMIT 1',
       [pilotId, advertiserId]
     );
-    
-    if (findResult.rowCount > 0) {
-      return res.json(findResult.rows[0]);
+
+    let conversationId;
+
+    if (existingConversation.rowCount > 0) {
+      // If the conversation exists, use the existing conversationId
+      conversationId = existingConversation.rows[0].id;
+    } else {
+      // If no conversation exists, create a new one
+      const conversationResult = await pool.query(
+        `INSERT INTO conversations (pilot_id, advertiser_id) 
+         VALUES ($1, $2) 
+         RETURNING id`,
+        [pilotId, advertiserId]
+      );
+      conversationId = conversationResult.rows[0].id;
     }
-    
-    // Pokud neexistuje, vytvoříme novou
-    const createResult = await pool.query(
-      `INSERT INTO conversations (pilot_id, advertiser_id)
-       VALUES ($1, $2) RETURNING *`,
-      [pilotId, advertiserId]
-    );
-    
-    res.json(createResult.rows[0]);
+
+    res.json({ success: true, conversationId });
+
   } catch (err) {
-    console.error('Chyba při vytváření konverzace:', err);
-    res.status(500).send('Chyba serveru');
+    console.error("Chyba při vytváření konverzace:", err);
+    res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
   }
 });
 
-// Získání konverzace s detailem partnera
-app.get('/get-conversation', async (req, res) => {
-  const { id, currentUserType } = req.query;
-  
-  try {
-    const result = await pool.query(
-      `SELECT c.*, 
-              p.email as pilot_email, p.name as pilot_name,
-              a.email as advertiser_email, a.name as advertiser_name
-       FROM conversations c
-       JOIN pilots p ON c.pilot_id = p.id
-       JOIN advertisers a ON c.advertiser_id = a.id
-       WHERE c.id = $1`,
-      [id]
-    );
-    
-    if (result.rowCount === 0) {
-      return res.status(404).json({ error: 'Konverzace nenalezena' });
-    }
-    
-    const conversation = result.rows[0];
-    
-    // Určíme, kdo je partner
-    const partner = currentUserType === 'pilot' ? {
-      email: conversation.advertiser_email,
-      name: conversation.advertiser_name,
-      type: 'inzerent'
-    } : {
-      email: conversation.pilot_email,
-      name: conversation.pilot_name,
-      type: 'pilot'
-    };
-    
-    res.json({
-      id: conversation.id,
-      partner
-    });
-  } catch (err) {
-    console.error('Chyba při načítání konverzace:', err);
-    res.status(500).send('Chyba serveru');
-  }
-});
 
-// Získání zpráv v konverzaci
+
+
 app.get('/get-messages', async (req, res) => {
   const { conversationId } = req.query;
-  
+
   try {
     const result = await pool.query(
-      `SELECT m.*, 
-              CASE 
-                WHEN m.sender_id = p.id THEN 'pilot' 
-                ELSE 'inzerent' 
-              END as sender_type
+      `SELECT 
+         m.id, m.sender_id, m.message, m.created_at,
+         CASE WHEN m.sender_id = c.pilot_id THEN p.email ELSE a.email END AS sender_email,
+         CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
        FROM messages m
-       JOIN conversations c ON m.conversation_id = c.id
-       JOIN pilots p ON c.pilot_id = p.id
+       JOIN conversations c ON c.id = m.conversation_id
+       JOIN pilots p ON p.id = c.pilot_id
+       JOIN advertisers a ON a.id = c.advertiser_id
        WHERE m.conversation_id = $1
        ORDER BY m.created_at ASC`,
       [conversationId]
     );
-    
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Chyba při načítání zpráv:', err);
-    res.status(500).send('Chyba serveru');
+
+    res.json({ success: true, messages: result.rows });
+  } catch (e) {
+    console.error("Chyba při načítání zpráv:", e);
+    res.status(500).json({ success: false, message: 'Chyba při načítání zpráv' });
   }
 });
 
-// Získání konverzací pro uživatele
-app.get('/api/conversations', async (req, res) => {
-  const { userEmail, userType } = req.query;
-  
-  try {
-    let query;
-    if (userType === 'pilot') {
-      query = `
-        SELECT c.id, a.email as partner_email, a.name as partner_name, 
-               m.message, m.created_at
-        FROM conversations c
-        JOIN advertisers a ON c.advertiser_id = a.id
-        LEFT JOIN (
-          SELECT conversation_id, message, created_at,
-                 ROW_NUMBER() OVER (PARTITION BY conversation_id ORDER BY created_at DESC) as rn
-          FROM messages
-        ) m ON m.conversation_id = c.id AND m.rn = 1
-        WHERE c.pilot_id = (SELECT id FROM pilots WHERE email = $1)`;
-    } else {
-      query = `
-        SELECT c.id, p.email as partner_email, p.name as partner_name, 
-               m.message, m.created_at
-        FROM conversations c
-        JOIN pilots p ON c.pilot_id = p.id
-        LEFT JOIN (
-          SELECT conversation_id, message, created_at,
-                 ROW_NUMBER() OVER (PARTITION BY conversation_id ORDER BY created_at DESC) as rn
-          FROM messages
-        ) m ON m.conversation_id = c.id AND m.rn = 1
-        WHERE c.advertiser_id = (SELECT id FROM advertisers WHERE email = $1)`;
-    }
-    
-    const result = await pool.query(query, [userEmail]);
-    
-    const conversations = result.rows.map(row => ({
-      id: row.id,
-      partnerEmail: row.partner_email,
-      partnerName: row.partner_name,
-      lastMessage: row.message ? {
-        message: row.message,
-        created_at: row.created_at
-      } : null
-    }));
-    
-    res.json(conversations);
-  } catch (err) {
-    console.error('Chyba při načítání konverzací:', err);
-    res.status(500).json([]);
-  }
-});
 
-// Vytvoření nové konverzace
-app.post('/api/conversations', async (req, res) => {
-  const { userEmail, userType, partnerEmail } = req.body;
-  
-  try {
-    // Najdeme ID účastníků
-    let pilotId, advertiserId;
-    
-    if (userType === 'pilot') {
-      // Uživatel je pilot, partner je inzerent
-      const pilotRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [userEmail]);
-      const advertiserRes = await pool.query('SELECT id FROM advertisers WHERE email = $1', [partnerEmail]);
-      
-      if (pilotRes.rowCount === 0 || advertiserRes.rowCount === 0) {
-        return res.status(404).json({ error: 'Uživatel nenalezen' });
-      }
-      
-      pilotId = pilotRes.rows[0].id;
-      advertiserId = advertiserRes.rows[0].id;
-    } else {
-      // Uživatel je inzerent, partner je pilot
-      const advertiserRes = await pool.query('SELECT id FROM advertisers WHERE email = $1', [userEmail]);
-      const pilotRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [partnerEmail]);
-      
-      if (pilotRes.rowCount === 0 || advertiserRes.rowCount === 0) {
-        return res.status(404).json({ error: 'Uživatel nenalezen' });
-      }
-      
-      pilotId = pilotRes.rows[0].id;
-      advertiserId = advertiserRes.rows[0].id;
-    }
-    
-    // Zkontrolujeme, zda konverzace již existuje
-    const existingRes = await pool.query(
-      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2',
-      [pilotId, advertiserId]
-    );
-    
-    if (existingRes.rowCount > 0) {
-      return res.status(400).json({ error: 'Konverzace již existuje' });
-    }
-    
-    // Vytvoříme novou konverzaci
-    const insertRes = await pool.query(
-      'INSERT INTO conversations (pilot_id, advertiser_id) VALUES ($1, $2) RETURNING *',
-      [pilotId, advertiserId]
-    );
-    
-    res.json(insertRes.rows[0]);
-  } catch (err) {
-    console.error('Chyba při vytváření konverzace:', err);
-    res.status(500).json({ error: 'Chyba serveru' });
-  }
-});
 
-// Získání zpráv v konverzaci
-app.get('/api/messages', async (req, res) => {
-  const { conversationId } = req.query;
-  
+
+
+app.post('/send-message', async (req, res) => {
+  const { conversationId, senderEmail, message } = req.body;
+
   try {
-    const result = await pool.query(
-      `SELECT m.*, 
-              CASE 
-                WHEN m.sender_id = p.id THEN p.email
-                ELSE a.email
-              END as sender_email
-       FROM messages m
-       JOIN conversations c ON m.conversation_id = c.id
-       JOIN pilots p ON c.pilot_id = p.id
-       JOIN advertisers a ON c.advertiser_id = a.id
-       WHERE m.conversation_id = $1
-       ORDER BY m.created_at ASC`,
+    // 1) Účastníci konverzace
+    const convRes = await pool.query(
+      'SELECT pilot_id, advertiser_id FROM conversations WHERE id = $1',
       [conversationId]
     );
-    
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Chyba při načítání zpráv:', err);
-    res.status(500).json([]);
-  }
-});
-
-// Odeslání zprávy
-app.post('/api/messages', async (req, res) => {
-  const { conversation_id, sender_email, message } = req.body;
-  
-  try {
-    // Najdeme ID odesílatele
-    let senderId;
-    const pilotRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [sender_email]);
-    if (pilotRes.rowCount > 0) {
-      senderId = pilotRes.rows[0].id;
-    } else {
-      const advertiserRes = await pool.query('SELECT id FROM advertisers WHERE email = $1', [sender_email]);
-      if (advertiserRes.rowCount > 0) {
-        senderId = advertiserRes.rows[0].id;
-      } else {
-        return res.status(404).json({ error: 'Uživatel nenalezen' });
-      }
-    }
-    
-    // Uložíme zprávu
-    const result = await pool.query(
-      `INSERT INTO messages (conversation_id, sender_id, message)
-       VALUES ($1, $2, $3) RETURNING *`,
-      [conversation_id, senderId, message]
-    );
-    
-    res.json(result.rows[0]);
-  } catch (err) {
-    console.error('Chyba při odesílání zprávy:', err);
-    res.status(500).json({ error: 'Chyba serveru' });
-  }
-});
-
-// Najde nebo vytvoří konverzaci
-app.post('/api/find-or-create-conversation', async (req, res) => {
-  const { pilotEmail, inzerentEmail } = req.body;
-
-  try {
-    // 1. Najdeme ID účastníků
-    const pilotRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [pilotEmail]);
-    const inzerentRes = await pool.query('SELECT id FROM advertisers WHERE email = $1', [inzerentEmail]);
-    
-    if (pilotRes.rowCount === 0 || inzerentRes.rowCount === 0) {
-      return res.status(404).json({ error: 'Pilot nebo inzerent nenalezen' });
-    }
-    
-    const pilotId = pilotRes.rows[0].id;
-    const inzerentId = inzerentRes.rows[0].id;
-    
-    // 2. Zkusíme najít existující konverzaci
-    const existingRes = await pool.query(
-      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2',
-      [pilotId, inzerentId]
-    );
-    
-    if (existingRes.rowCount > 0) {
-      return res.json({ id: existingRes.rows[0].id });
-    }
-    
-    // 3. Pokud neexistuje, vytvoříme novou
-    const newRes = await pool.query(
-      'INSERT INTO conversations (pilot_id, advertiser_id) VALUES ($1, $2) RETURNING id',
-      [pilotId, inzerentId]
-    );
-    
-    res.json({ id: newRes.rows[0].id });
-  } catch (err) {
-    console.error('Chyba při vytváření konverzace:', err);
-    res.status(500).json({ error: 'Chyba serveru' });
-  }
-});
-
-// Získání zpráv
-app.get('/api/get-messages', async (req, res) => {
-  const { conversationId } = req.query;
-  
-  try {
-    const result = await pool.query(
-      `SELECT m.*, 
-              CASE 
-                WHEN m.sender_id = p.id THEN p.email
-                ELSE a.email
-              END as sender_email
-       FROM messages m
-       JOIN conversations c ON m.conversation_id = c.id
-       JOIN pilots p ON c.pilot_id = p.id
-       JOIN advertisers a ON c.advertiser_id = a.id
-       WHERE m.conversation_id = $1
-       ORDER BY m.created_at ASC`,
-      [conversationId]
-    );
-    
-    res.json(result.rows);
-  } catch (err) {
-    console.error('Chyba při načítání zpráv:', err);
-    res.status(500).json([]);
-  }
-});
-
-// Odeslání zprávy
-app.post('/api/send-message', async (req, res) => {
-  const { conversation_id, sender_email, message } = req.body;
-  // Validace vstupů
-    if (!conversation_id || !sender_email || !message) {
-        return res.status(400).json({ error: "Chybějící povinná pole" });
-    }
-
-  try {
-    // 1. Najdeme ID odesílatele
-    let senderId;
-    const pilotRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [sender_email]);
-    if (pilotRes.rowCount > 0) {
-      senderId = pilotRes.rows[0].id;
-    } else {
-      const inzerentRes = await pool.query('SELECT id FROM advertisers WHERE email = $1', [sender_email]);
-      if (inzerentRes.rowCount > 0) {
-        senderId = inzerentRes.rows[0].id;
-      } else {
-        return res.status(404).json({ error: 'Uživatel nenalezen' });
-      }
-    }
-    
-    // 2. Ověříme, že konverzace existuje
-    const convRes = await pool.query('SELECT 1 FROM conversations WHERE id = $1', [conversation_id]);
     if (convRes.rowCount === 0) {
-      return res.status(404).json({ error: 'Konverzace nenalezena' });
+      return res.status(404).json({ success: false, message: 'Konverzace nenalezena' });
     }
-    
-    // 3. Uložíme zprávu
-    const result = await pool.query(
+    const { pilot_id, advertiser_id } = convRes.rows[0];
+
+    // 2) Urči roli odesílatele podle e-mailu a ověř, že patří do této konverzace
+    const pilotRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [senderEmail]);
+    const advRes   = await pool.query('SELECT id FROM advertisers WHERE email = $1', [senderEmail]);
+
+    let senderId = null;
+    if (pilotRes.rowCount > 0 && pilotRes.rows[0].id === pilot_id) {
+      senderId = pilot_id; // posílá pilot
+    } else if (advRes.rowCount > 0 && advRes.rows[0].id === advertiser_id) {
+      senderId = advertiser_id; // posílá inzerent
+    } else {
+      return res.status(403).json({ success: false, message: 'Odesílatel do konverzace nepatří' });
+    }
+
+    // 3) Ulož zprávu
+    const inserted = await pool.query(
       `INSERT INTO messages (conversation_id, sender_id, message)
-       VALUES ($1, $2, $3) RETURNING *, $4 as sender_email`,
-      [conversation_id, senderId, message, sender_email]
+       VALUES ($1, $2, $3)
+       RETURNING id, sender_id, message, created_at`,
+      [conversationId, senderId, message]
     );
-    
-    res.json(result.rows[0]);
+
+    // 4) Vrať rovnou i sender_email a sender_role (frontend to hned obarví správně)
+    const enriched = await pool.query(
+      `SELECT 
+         m.id, m.sender_id, m.message, m.created_at,
+         CASE WHEN m.sender_id = c.pilot_id THEN p.email ELSE a.email END AS sender_email,
+         CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
+       FROM messages m
+       JOIN conversations c ON c.id = m.conversation_id
+       JOIN pilots p ON p.id = c.pilot_id
+       JOIN advertisers a ON a.id = c.advertiser_id
+       WHERE m.id = $1`,
+      [inserted.rows[0].id]
+    );
+
+    return res.json({ success: true, newMessage: enriched.rows[0] });
+
   } catch (err) {
-    console.error('Chyba při odesílání zprávy:', err);
-    res.status(500).json({ error: 'Chyba serveru' });
+    console.error("Chyba při odesílání zprávy:", err);
+    res.status(500).json({ success: false, message: 'Chyba při odesílání zprávy' });
   }
 });
-// Najdi nebo vytvoř konverzaci mezi pilotem a inzerentem
-// Upravený endpoint pro start konverzace
-app.post('/api/start-conversation', async (req, res) => {
-  const { pilotEmail, inzerentEmail } = req.body;
+
+
+
+app.post('/create-conversation', async (req, res) => {
+  const { pilotEmail, advertiserEmail } = req.body;
 
   try {
-    // 1. Najdi ID obou uživatelů
-    const pilot = await pool.query('SELECT id, name FROM pilots WHERE email = $1', [pilotEmail]);
-    const inzerent = await pool.query('SELECT id FROM advertisers WHERE email = $1', [inzerentEmail]);
+    // Get pilot and advertiser details from the database
+    const pilotResult = await pool.query('SELECT id FROM pilots WHERE email = $1', [pilotEmail]);
+    const advertiserResult = await pool.query('SELECT id FROM advertisers WHERE email = $1', [advertiserEmail]);
 
-    if (pilot.rowCount === 0 || inzerent.rowCount === 0) {
-      return res.status(404).json({ error: 'Uživatelé nenalezeni' });
+    if (pilotResult.rowCount === 0 || advertiserResult.rowCount === 0) {
+      return res.status(400).json({ success: false, message: 'Pilot nebo inzerent nenalezen' });
     }
 
-    const pilotId = pilot.rows[0].id;
-    const inzerentId = inzerent.rows[0].id;
+    const pilotId = pilotResult.rows[0].id;
+    const advertiserId = advertiserResult.rows[0].id;
 
-    // 2. Zkus najít existující konverzaci
-    const existing = await pool.query(
-      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2',
-      [pilotId, inzerentId]
+    // Check if a conversation already exists between this pilot and advertiser
+    const existingConversation = await pool.query(
+      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 LIMIT 1',
+      [pilotId, advertiserId]
     );
 
-    if (existing.rowCount > 0) {
-      return res.json({ 
-        conversationId: existing.rows[0].id,
-        partnerEmail: pilotEmail,
-        partnerName: pilot.rows[0].name
-      });
+    let conversationId;
+
+    if (existingConversation.rowCount > 0) {
+      // If the conversation exists, use the existing conversationId
+      conversationId = existingConversation.rows[0].id;
+    } else {
+      // If no conversation exists, create a new one
+      const conversationResult = await pool.query(
+        `INSERT INTO conversations (pilot_id, advertiser_id) 
+         VALUES ($1, $2) 
+         RETURNING id`,
+        [pilotId, advertiserId]
+      );
+      conversationId = conversationResult.rows[0].id;
     }
 
-    // 3. Vytvoř novou konverzaci
-    const newConv = await pool.query(
-      `INSERT INTO conversations (pilot_id, advertiser_id) 
-       VALUES ($1, $2) RETURNING id`,
-      [pilotId, inzerentId]
+    res.json({ success: true, conversationId });
+
+  } catch (err) {
+    console.error("Chyba při vytváření konverzace:", err);
+    res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
+  }
+});
+
+// Get pilot's name by email
+app.get('/get-pilot-name', async (req, res) => {
+  const { email } = req.query;
+  
+  try {
+    const result = await pool.query(
+      'SELECT name FROM pilots WHERE email = $1',
+      [email]
     );
+    
+    if (result.rowCount > 0) {
+      res.json({ success: true, name: result.rows[0].name });
+    } else {
+      res.json({ success: false, message: 'Pilot not found' });
+    }
+  } catch (err) {
+    console.error("Error fetching pilot name:", err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Get all conversations for a pilot
+// Get all conversations for a pilot
+app.get('/get-pilot-conversations', async (req, res) => {
+  const { pilotEmail } = req.query;
+
+  try {
+    // First get pilot ID
+    const pilotResult = await pool.query(
+      'SELECT id FROM pilots WHERE email = $1',
+      [pilotEmail]
+    );
+
+    if (pilotResult.rowCount === 0) {
+      return res.json({ success: false, message: 'Pilot not found' });
+    }
+
+    const pilotId = pilotResult.rows[0].id;
+
+    // Get all conversations with advertisers
+    const conversations = await pool.query(`
+      SELECT 
+        c.id,
+        a.email AS advertiser_email,
+        a.name AS advertiser_name,
+        (SELECT message FROM messages 
+         WHERE conversation_id = c.id 
+         ORDER BY created_at DESC LIMIT 1) AS last_message,
+        (SELECT created_at FROM messages 
+         WHERE conversation_id = c.id 
+         ORDER BY created_at DESC LIMIT 1) AS last_message_time,
+        EXISTS (
+          SELECT 1 FROM messages 
+          WHERE conversation_id = c.id 
+          AND sender_id != $1 
+          AND (created_at > (
+            SELECT last_seen FROM conversation_views 
+            WHERE conversation_id = c.id AND user_id = $1
+            LIMIT 1
+          ) OR NOT EXISTS (
+            SELECT 1 FROM conversation_views 
+            WHERE conversation_id = c.id AND user_id = $1
+          ))
+        ) AS unread
+      FROM conversations c
+      JOIN advertisers a ON c.advertiser_id = a.id
+      WHERE c.pilot_id = $1
+      ORDER BY last_message_time DESC NULLS LAST
+    `, [pilotId]);
 
     res.json({
-      conversationId: newConv.rows[0].id,
-      partnerEmail: pilotEmail,
-      partnerName: pilot.rows[0].name
+      success: true,
+      conversations: conversations.rows
     });
-
   } catch (err) {
-    console.error('Chyba při vytváření konverzace:', err);
-    res.status(500).json({ error: 'Server error' });
+    console.error("Error fetching pilot conversations:", err);
+    res.status(500).json({ success: false, message: 'Server error' });
   }
 });
 
-// Získání zpráv pro konverzaci
-app.get('/api/conversation-messages', async (req, res) => {
-  const { conversationId } = req.query;
-
+// Mark conversation as read
+app.post('/mark-conversation-read', async (req, res) => {
+  const { conversationId, userId } = req.body;
+  
   try {
-    const messages = await pool.query(
-      `SELECT m.*, 
-              CASE WHEN m.sender_id = p.id THEN p.email ELSE a.email END as sender_email,
-              CASE WHEN m.sender_id = p.id THEN p.name ELSE a.name END as sender_name
-       FROM messages m
-       JOIN conversations c ON m.conversation_id = c.id
-       JOIN pilots p ON c.pilot_id = p.id
-       JOIN advertisers a ON c.advertiser_id = a.id
-       WHERE m.conversation_id = $1
-       ORDER BY m.created_at ASC`,
-      [conversationId]
-    );
-
-    res.json(messages.rows);
-  } catch (err) {
-    console.error('Chyba při načítání zpráv:', err);
-    res.status(500).json([]);
-  }
-});
-
-async function sendMessage(conversationId, isPilot) {
-  const input = document.getElementById('message-input');
-  const message = input.value.trim();
-
-  if (!message) return;
-
-  try {
-    const response = await fetch('/api/send-message', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        conversation_id: conversationId,
-        sender_email: currentUserEmail,
-        message: message
-      })
-    });
-
-    const newMessage = await response.json();
+    await pool.query(`
+      INSERT INTO conversation_views (conversation_id, user_id, last_seen)
+      VALUES ($1, $2, NOW())
+      ON CONFLICT (conversation_id, user_id) 
+      DO UPDATE SET last_seen = NOW()
+    `, [conversationId, userId]);
     
-    // Přidání zprávy do UI
-    const messagesContainer = document.getElementById('messages-container');
-    const msgElement = document.createElement('div');
-    msgElement.className = 'message message-sent';
-    msgElement.innerHTML = `
-      <div>${newMessage.message}</div>
-      <small class="text-muted d-block text-end">
-        ${new Date(newMessage.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-      </small>
-    `;
-    messagesContainer.appendChild(msgElement);
-    input.value = '';
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-
-  } catch (error) {
-    console.error('Chyba při odesílání zprávy:', error);
-    alert('Nepodařilo se odeslat zprávu');
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Error marking conversation as read:", err);
+    res.status(500).json({ success: false });
   }
-}
+});
 
+// Nastavení složky pro statické soubory
+app.use(express.static(path.join(__dirname, 'public')));
 
+// Route pro přístup k 'onlymap.html'
+app.get('/onlymap.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'onlymap.html'));
+});
+
+// Route pro přístup k 'chat.html' ve složce 'onlymap.html'
+app.get('/onlymap.html/chat.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+});
+
+// Výchozí route
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Spuštění serveru
 const PORT = process.env.PORT || 3000;

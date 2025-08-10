@@ -61,6 +61,13 @@
         <li class="nav-item">
           <a class="nav-link" href="/index.html">Mapa</a>
         </li>
+
+         <li class="nav-item" id="messages-nav-item" style="display:none;">
+          <a class="nav-link" href="/moje-zpravy.html">
+            <i class="bi bi-envelope me-1"></i>Moje zprávy
+          </a>
+        </li>
+
         <li class="nav-item">
           <a class="nav-link" href="/o-projektu.html">O projektu</a>
         </li>
@@ -247,6 +254,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       .then(res => res.json())
       .then(data => {
         data.forEach(p => {
+
+        console.log(p.email);
   if (p.visible !== "ANO") return; // Skryj neviditelné piloty
 
   if (p.latitude != null && p.longitude != null) {
@@ -426,34 +435,42 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       const status = document.getElementById("user-status");
       const loggedEmail = localStorage.getItem("loggedEmail");
       const editBtn = document.getElementById("edit-profile-btn");
+      const messagesNavItem = document.getElementById("messages-nav-item");
 
 const inzerentNavItem = document.getElementById("inzerent-nav-item");
   if (!loggedEmail && inzerentNavItem) {
-    inzerentNavItem.style.display = "block";
+  inzerentNavItem.style.display = "block";
+}
+
+if (loggedEmail) {
+  loginBox.style.display = "none";
+  editBtn.style.display = "inline-block";
+  toggle.textContent = "Odhlásit";
+  status.textContent = "Přihlášen jako: " + loggedEmail;
+  
+  // Zobrazení "Moje zprávy" pro přihlášené uživatele
+  const messagesNavItem = document.getElementById("messages-nav-item");
+  if (messagesNavItem) {
+    messagesNavItem.style.display = "block";
   }
 
-      if (loggedEmail) {
-        loginBox.style.display = "none";
-        editBtn.style.display = "inline-block";
-        toggle.textContent = "Odhlásit";
-        status.textContent = "Přihlášen jako: " + loggedEmail;
-        
-        toggle.addEventListener("click", () => {
-          localStorage.removeItem("loggedEmail");
-          window.location.reload();
-        });
-      } else {
-        toggle.addEventListener("click", () => {
-          loginBox.style.display = loginBox.style.display === "none" ? "block" : "none";
-        });
-      }
+  toggle.addEventListener("click", () => {
+    localStorage.removeItem("loggedEmail");
+    window.location.reload();
+  });
+} else {
+  toggle.addEventListener("click", () => {
+    loginBox.style.display = loginBox.style.display === "none" ? "block" : "none";
+  });
+}
 
-      if (loggedEmail && editBtn) {
-        editBtn.style.display = "inline-block";
-        editBtn.addEventListener("click", () => {
-          window.location.href = "/account.html?email=" + encodeURIComponent(loggedEmail);
-        });
-      }
+if (loggedEmail && editBtn) {
+  editBtn.style.display = "inline-block";
+  editBtn.addEventListener("click", () => {
+    window.location.href = "/account.html?email=" + encodeURIComponent(loggedEmail);
+  });
+}
+
 
       window.pilotLogin = function(event) {
         event.preventDefault();
@@ -568,6 +585,71 @@ document.addEventListener("DOMContentLoaded", () => {
     banner.appendChild(logoutBtn);
     document.body.prepend(banner);
   }
+
+
+fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentEmail=${encodeURIComponent(advertiserEmail)}`)
+
+        .then(res => res.json())
+        .then(data => {
+          const container = document.getElementById("conversations-list");
+          container.innerHTML = "";
+
+          if (data.success && data.conversations.length > 0) {
+            data.conversations.forEach(conv => {
+              const conversationCard = document.createElement("a");
+              conversationCard.href = `/chat.html?conversationId=${conv.id}&pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentEmail=${encodeURIComponent(conv.advertiser_email)}`;
+              conversationCard.className = `conversation-card d-block p-3 border-bottom ${conv.unread ? 'unread' : ''}`;
+              
+              conversationCard.innerHTML = `
+                <div class="d-flex justify-content-between">
+                  <div>
+                    <h5 class="mb-1">${conv.advertiser_name || conv.advertiser_email}</h5>
+                    <p class="mb-1 last-message">${conv.last_message || 'Žádné zprávy'}</p>
+                  </div>
+                  <div class="text-end">
+                    <span class="time-ago">${formatTimeAgo(conv.last_message_time)}</span>
+                    ${conv.unread ? '<span class="badge bg-primary ms-2">Nové</span>' : ''}
+                  </div>
+                </div>
+              `;
+              container.appendChild(conversationCard);
+            });
+          } else {
+            container.innerHTML = `
+              <div class="text-center py-5">
+                <i class="bi bi-envelope-open display-5 text-muted"></i>
+                <p class="mt-3">Zatím nemáte žádné zprávy</p>
+                <a href="/index.html" class="btn btn-primary mt-2">Najít zakázky</a>
+              </div>
+            `;
+          }
+        })
+        .catch(err => {
+          console.error("Chyba při načítání konverzací:", err);
+          document.getElementById("conversations-list").innerHTML = `
+            <div class="text-center py-5 text-danger">
+              <i class="bi bi-exclamation-triangle display-5"></i>
+              <p class="mt-3">Nepodařilo se načíst konverzace</p>
+              <button onclick="window.location.reload()" class="btn btn-outline-primary mt-2">
+                <i class="bi bi-arrow-repeat"></i> Zkusit znovu
+              </button>
+            </div>
+          `;
+        });
+
+      // Helper function to format time ago
+      function formatTimeAgo(timestamp) {
+        if (!timestamp) return "";
+        const now = new Date();
+        const msgDate = new Date(timestamp);
+        const diff = Math.floor((now - msgDate) / 1000); // difference in seconds
+        
+        if (diff < 60) return "právě teď";
+        if (diff < 3600) return `${Math.floor(diff/60)} min`;
+        if (diff < 86400) return `${Math.floor(diff/3600)} h`;
+        return `${Math.floor(diff/86400)} d`;
+      }
+    });
 </script>
 
 
@@ -744,6 +826,26 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
     });
   });
 </script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const loggedEmail = localStorage.getItem("loggedEmail");
+    const navBar = document.querySelector('.navbar-nav');
+    
+    if (loggedEmail) {
+      // Vytvoření položky pro chat v navigaci
+      const chatNavItem = document.createElement('li');
+      chatNavItem.className = 'nav-item';
+      chatNavItem.innerHTML = `
+        <a class="nav-link" href="/chat.html">
+          <i class="bi bi-chat-left-text me-1"></i>Mé zprávy
+        </a>
+      `;
+      
+      // Vložení před poslední položku (kontakt)
+      navBar.insertBefore(chatNavItem, navBar.lastElementChild);
+    }
+  });
 
 
 </body>

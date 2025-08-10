@@ -190,10 +190,10 @@
   <code id="ref-link"></code>
 </div>
   
-<div class="col-12 mt-4" id="gdpr-consent-section" style="display: none;">
+<div class="col-12 mt-4" id="gdpr-consent-section">
   <h5>Souhlas se zveřejněním kontaktů</h5>
   <p class="text-muted">
-    Pokud souhlasíte, váš e‑mail a telefon budou viditelné pro ostatní uživatele v souladu s vaším tarifem. Nastavení souhlasu GDPR je dostupné pouze pro uživatele s tarifem <b>Premium</b>. Ostatní uživatelé již souhlas udělili během registračního procesu.
+    Pokud souhlasíte, váš e‑mail a telefon budou viditelné pro ostatní uživatele.
   </p>
   <div class="form-check">
     <input class="form-check-input" type="checkbox" id="publicContactConsent">
@@ -201,10 +201,11 @@
       Souhlasím se zveřejněním mého e‑mailu a telefonu
     </label>
   </div>
-</div>  
   <span id="consent-status" class="ms-2 text-muted"></span>
   <button type="button" class="btn btn-outline-primary mt-2" id="saveConsentBtn">Uložit souhlas</button>
 </div>
+
+
         <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
         
         <div class="text-center mt-3">
@@ -271,16 +272,15 @@ function addDroneField(value = "") {
   console.log("Data pilota:", pilot);
 
 // 🚨 Handle GDPR consent section visibility
-    if (pilot.type_account !== "Premium") {
-      // Hide GDPR consent section for non-Premium accounts
-      document.getElementById("publicContactConsent").disabled = true;
-      document.getElementById("saveConsentBtn").disabled = true;
-    } else {
-      // Enable GDPR consent for Premium accounts
-      document.getElementById("publicContactConsent").disabled = false;
-      document.getElementById("saveConsentBtn").disabled = false;
-    }
-
+if (pilot.type_account === "Free") {
+  // Hide GDPR consent section for Free accounts
+  document.getElementById("gdpr-consent-section").style.display = "none";
+} else {
+  // Show for Basic and Premium
+  document.getElementById("gdpr-consent-section").style.display = "block";
+  document.getElementById("publicContactConsent").disabled = false;
+  document.getElementById("saveConsentBtn").disabled = false;
+}
   fetch('/get-my-consents?email=' + encodeURIComponent(pilot.email))
     .then(res => res.json())
     .then(data => {
@@ -537,55 +537,8 @@ console.log("Odesílaná data:", data);
   }
 </script>
 
-<script>
-  // Assume type_account is dynamically set from your user data
-  const type_account = 'Premium'; // Replace this with the actual logic that fetches the user's account type
 
-  // Only display the GDPR consent section if the user has a Premium account
-  if (type_account === 'Premium') {
-    document.getElementById('gdpr-consent-section').style.display = 'block';
-  }
-</script>
 
- <script>
-    document.addEventListener("DOMContentLoaded", async () => {
-  const loggedEmail = localStorage.getItem("loggedEmail");
-
-  // Pokud není uživatel přihlášen, přesměrujeme na stránku přihlášení
-  if (!loggedEmail) {
-    alert("Nejste přihlášeni! Přihlaste se prosím.");
-    window.location.href = "/index.html"; // Přesměrování na stránku přihlášení
-    return;
-  }
-
-  // 1. Načtení konverzací pro pilota
-  try {
-    const response = await fetch(`/api/get-conversations?pilotEmail=${encodeURIComponent(loggedEmail)}`);
-    const conversations = await response.json();
-
-    if (conversations.length === 0) {
-      document.getElementById("chat-content").innerHTML = "<p>Nemáte žádné konverzace.</p>";
-    } else {
-      // Pokud máte nějaké konverzace, zobrazíme je
-      conversations.forEach(conv => {
-        const convElement = document.createElement("div");
-        convElement.classList.add("conversation");
-        convElement.innerHTML = `
-          <h3>Konverzace s: ${conv.inzerentEmail}</h3>
-          <a href="/chat.html?conversationId=${conv.conversationId}" class="btn btn-primary">
-            Přejít do chatu
-          </a>
-        `;
-        document.getElementById("chat-content").appendChild(convElement);
-      });
-    }
-
-  } catch (error) {
-    console.error("Chyba při načítání konverzací:", error);
-    document.getElementById("chat-content").innerHTML = "<p>Chyba při načítání konverzací.</p>";
-  }
-});
-  </script>
-
+ 
 </body>
 </html>

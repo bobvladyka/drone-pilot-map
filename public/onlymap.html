@@ -158,6 +158,8 @@ html {
  
 </div>
 
+
+
     
 
     
@@ -373,17 +375,36 @@ html {
 });
 
 function contactPilot(pilotEmail) {
-  // Vytvoření URL pro přesměrování na chatovou stránku s unikátním kanálem
-  const inzerentEmail = localStorage.getItem('inzerentEmail');  // Získání e-mailu inzerenta
-  if (!inzerentEmail) {
+  const advertiserEmail = localStorage.getItem('inzerentEmail');
+  
+  if (!advertiserEmail) {
     alert("Musíte být přihlášen jako inzerent.");
     return;
   }
 
-  const chatUrl = `/chat.html?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentEmail=${encodeURIComponent(inzerentEmail)}`;
-  
-  // Přesměrování na chatovou stránku
-  window.location.href = chatUrl;
+  if (!pilotEmail) {
+    alert("Chyba: Nelze najít kontaktní údaje pilota.");
+    return;
+  }
+
+  // Send a request to check for an existing conversation or create a new one
+  fetch('/create-conversation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pilotEmail,
+      advertiserEmail
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      const chatUrl = `chat.html?conversationId=${data.conversationId}&pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentEmail=${encodeURIComponent(advertiserEmail)}`;
+      window.location.href = chatUrl;  // Redirect to chat page with the conversationId and emails
+    } else {
+      alert("Chyba při vytváření konverzace.");
+    }
+  });
 }
 
 
@@ -456,6 +477,14 @@ function applyFilters() {
 
   renderPilots(filtered);
 }
+
+fetch('/chat.html')
+  .then(response => response.text())
+  .then(data => {
+    document.getElementById('chat-container').innerHTML = data;
+  })
+  .catch(error => console.error('Error loading chat.html:', error));
+
 </script>
 
 <script>

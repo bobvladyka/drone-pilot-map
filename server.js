@@ -8,6 +8,8 @@ const path = require('path');
 const prerender = require('prerender-node');
 const session = require('express-session');
 const cors = require('cors'); // Přidejte tento require
+const rateLimit = require('express-rate-limit');
+
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -23,6 +25,11 @@ const pool = new Pool({
 app.use(prerender);
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
+
+const changePassLimiter = rateLimit({
+  windowMs: 10 * 60 * 1000, // 10 minut
+  max: 20
+});
 
 // Session konfigurace
 app.use(session({
@@ -1200,6 +1207,59 @@ app.post('/mark-conversation-read', async (req, res) => {
     res.status(500).json({ success: false });
   }
 });
+
+app.post('/change-password', changePassLimiter, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body || {};
+    if (!oldPassword || !newPassword) return res.status(400).send("Chybí hesla.");
+    if (newPassword.length < 8) return res.status(400).send("Heslo musí mít min. 8 znaků.");
+
+    // Rozpoznání role ze session
+    const pilotId = req.session?.userId || null;
+    const advertiserId = req.session?.advertiserId || null;
+
+    if (!pilotId && !advertiserId) {
+      return res.status(401).send("Nejste přihlášen.");
+    }
+
+    if (pilotId) {
+      // 🔹 P I L O T
+      const q = await pool.query("SELECT id, password_hash FROM pilots WHERE id = $1", [pilotId]);
+      const user = q.rows[0];
+      if (!user) return res.status(404).send("Uživatel nenalezen.");
+
+      const ok = await bcrypt.compare(oldPassword, user.password_hash);
+      if (!ok) return res.status(403).send("Staré heslo nesouhlasí.");
+
+      const hash = await bcrypt.hash(newPassword, 12);
+      await pool.query("UPDATE pilots SET password_hash = $1, updated_at = NOW() WHERE id = $2", [hash, user.id]);
+
+      // (volitelně) invalidace jiných relací: bumpnout token_version apod.
+      return res.send("Heslo změněno.");
+    }
+
+    if (advertiserId) {
+      // 🔸 I N Z E R E N T
+      const q = await pool.query("SELECT id, password FROM advertisers WHERE id = $1", [advertiserId]);
+      const user = q.rows[0];
+      if (!user) return res.status(404).send("Uživatel nenalezen.");
+
+      const ok = await bcrypt.compare(oldPassword, user.password);
+      if (!ok) return res.status(403).send("Staré heslo nesouhlasí.");
+
+      const hash = await bcrypt.hash(newPassword, 12);
+      await pool.query("UPDATE advertisers SET password = $1 WHERE id = $2", [hash, user.id]);
+
+      return res.send("Heslo změněno.");
+    }
+
+    res.status(400).send("Neplatný stav přihlášení.");
+  } catch (err) {
+    console.error("Chyba při změně hesla:", err);
+    res.status(500).send("Chyba serveru při změně hesla");
+  }
+});
+
 
 // Nastavení složky pro statické soubory
 app.use(express.static(path.join(__dirname, 'public')));

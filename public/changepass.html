@@ -1,34 +1,232 @@
 <!DOCTYPE html>
 <html lang="cs">
 <head>
-  <meta charset="UTF-8">
-  <title>Změna hesla</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Změna hesla – NajdiPilota.cz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
 </head>
 <body>
-  <h2>Změna hesla</h2>
-  <form id="changePassForm">
-    <label>Email: <input type="email" name="email" required></label><br>
-    <label>Staré heslo: <input type="password" name="oldPassword" required></label><br>
-    <label>Nové heslo: <input type="password" name="newPassword" required></label><br>
-    <button type="submit">Změnit heslo</button>
-  </form>
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
+  <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+  <span class="fs-4">NajdiPilota.cz</span>
+</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    
+    <div class="collapse navbar-collapse" id="mainNavbar">
+      <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+	<li class="nav-item" id="inzerent-nav-item" style="display:none;">
+  <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
+    <i class="bi bi-megaphone-fill me-1"></i>Pro inzerenty
+  </a>
+</li>
+        <li class="nav-item">
+          <a class="nav-link" href="/index.html">Mapa</a>
+        </li>
 
-  <p id="result"></p>
+         <li class="nav-item" id="messages-nav-item" style="display:none;">
+          <a class="nav-link" href="/moje-zpravy.html">
+            <i class="bi bi-envelope me-1"></i>Moje zprávy
+          </a>
+        </li>
 
+        <li class="nav-item">
+          <a class="nav-link" href="/o-projektu.html">O projektu</a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" href="/kontakt.html">Kontakt</a>
+        </li>
+<li class="nav-item">
+
+</li>
+      </ul>
+<button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
+  <i class="bi bi-person-badge me-2"></i>
+  <span id="login-toggle">Přihlásit se jako pilot</span>
+</button>
+    </div>
+  </div>
+</nav>
+
+  <div class="container py-4">
+    <h1 class="text-center"><i class="bi bi-shield-lock me-2"></i>Změna hesla</h1>
+    <p class="text-center text-muted">E‑mail je daný vaším přihlášením a nelze ho měnit na této stránce.</p>
+
+    <div class="row justify-content-center">
+      <div class="col-md-6">
+        <div class="card shadow-sm">
+          <div class="card-body">
+            <form id="changePassForm" class="needs-validation" novalidate>
+              <div class="mb-3">
+                <label for="email" class="form-label">E‑mail</label>
+                <input type="email" id="email" name="email" class="form-control" readonly>
+                <div class="form-text">E‑mail je předvyplněn dle aktuálně přihlášeného uživatele.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="oldPassword" class="form-label">Staré heslo</label>
+                <input type="password" id="oldPassword" name="oldPassword" class="form-control" required>
+                <div class="invalid-feedback">Zadejte prosím staré heslo.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="newPassword" class="form-label">Nové heslo</label>
+                <input type="password" id="newPassword" name="newPassword" class="form-control" minlength="8" required>
+                <div class="form-text">Minimálně 8 znaků. Doporučujeme kombinovat písmena, čísla a speciální znaky.</div>
+                <div class="invalid-feedback">Heslo musí mít alespoň 8 znaků.</div>
+              </div>
+
+              <div class="mb-3">
+                <label for="newPassword2" class="form-label">Potvrzení nového hesla</label>
+                <input type="password" id="newPassword2" class="form-control" required>
+                <div class="invalid-feedback">Hesla se musí shodovat.</div>
+              </div>
+
+              <button type="submit" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100">
+                <i class="bi bi-check2-circle me-2"></i>Změnit heslo
+              </button>
+            </form>
+
+            <div id="result" class="mt-3"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+  <div class="container">
+    <div class="row gy-3 justify-content-between">
+      
+      <!-- Logo a popis -->
+      <div class="col-md-4">
+        <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+          <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+          <span class="fw-bold fs-5">NajdiPilota.cz</span>
+        </a>
+        <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+      </div>
+
+      <!-- Navigace -->
+      <div display="no" class="col-md-2">
+        <h6 class="fw-bold">Navigace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
+          <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+        </ul>
+      </div>
+
+      <!-- Právní -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Informace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/gdpr.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+        </ul>
+      </div>
+
+      <!-- Kontakt -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Provozovatel</h6>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: _________<br>Praha, Česká republika</p>
+        <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+      </div>
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+      <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+      <div>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+        <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    document.getElementById('changePassForm').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const formData = new FormData(e.target);
-      const data = Object.fromEntries(formData.entries());
+    // Předvyplníme e‑mail a uzamkneme pole
+    document.addEventListener('DOMContentLoaded', () => {
+      const emailInput = document.getElementById('email');
+      const pilotEmail = localStorage.getItem('loggedEmail');
+      const inzerentEmail = localStorage.getItem('inzerentEmail');
+      const email = pilotEmail || inzerentEmail || '';
+      emailInput.value = email;
+      emailInput.setAttribute('readonly', 'readonly');
+      emailInput.classList.add('bg-light');
 
-      const response = await fetch('/change-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data)
+      // Validace formuláře
+      const form = document.getElementById('changePassForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const resultBox = document.getElementById('result');
+        resultBox.innerHTML = '';
+
+        // základní kontrola
+        const oldPass = document.getElementById('oldPassword').value.trim();
+        const newPass = document.getElementById('newPassword').value.trim();
+        const newPass2 = document.getElementById('newPassword2').value.trim();
+
+        let valid = true;
+        if (!oldPass) valid = false;
+        if (newPass.length < 8) valid = false;
+        if (newPass !== newPass2) {
+          valid = false;
+          document.getElementById('newPassword2').setCustomValidity('Hesla se neshodují');
+        } else {
+          document.getElementById('newPassword2').setCustomValidity('');
+        }
+
+        form.classList.add('was-validated');
+        if (!valid) return;
+
+        // Odeslání požadavku
+        const payload = { email: emailInput.value, oldPassword: oldPass, newPassword: newPass };
+        try {
+          const response = await fetch('/change-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          const text = await response.text();
+          const ok = response.ok;
+
+          resultBox.innerHTML = ok
+            ? `<div class="alert alert-success d-flex align-items-center" role="alert">
+                 <i class="bi bi-check-circle me-2"></i><div>${text}</div>
+               </div>`
+            : `<div class="alert alert-danger d-flex align-items-center" role="alert">
+                 <i class="bi bi-exclamation-triangle me-2"></i><div>${text}</div>
+               </div>`;
+
+          if (ok) {
+            // volitelné: vyčištění polí
+            document.getElementById('oldPassword').value = '';
+            document.getElementById('newPassword').value = '';
+            document.getElementById('newPassword2').value = '';
+            form.classList.remove('was-validated');
+          }
+        } catch (err) {
+          resultBox.innerHTML = `<div class="alert alert-danger d-flex align-items-center" role="alert">
+            <i class="bi bi-exclamation-triangle me-2"></i><div>Chyba spojení se serverem.</div>
+          </div>`;
+        }
       });
-
-      const text = await response.text();
-      document.getElementById('result').innerText = text;
     });
   </script>
 </body>

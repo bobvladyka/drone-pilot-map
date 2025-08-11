@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>Změna hesla</title>
+</head>
+<body>
+  <h2>Změna hesla</h2>
+  <form id="changePassForm">
+    <label>Email: <input type="email" name="email" required></label><br>
+    <label>Staré heslo: <input type="password" name="oldPassword" required></label><br>
+    <label>Nové heslo: <input type="password" name="newPassword" required></label><br>
+    <button type="submit">Změnit heslo</button>
+  </form>
+
+  <p id="result"></p>
+
+  <script>
+    document.getElementById('changePassForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const formData = new FormData(e.target);
+      const data = Object.fromEntries(formData.entries());
+
+      const response = await fetch('/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      const text = await response.text();
+      document.getElementById('result').innerText = text;
+    });
+  </script>
+</body>
+</html>

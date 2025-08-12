@@ -4,9 +4,10 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-  <title>Dronová mapa pilotů v Česku – Najdi nebo se přidej</title>
+<title>Dronová mapa pilotů v Česku – Najdi nebo se přidej | Spojujeme piloty a zákazníky</title>
 
-    <meta name="description" content="Hledáš pilota dronu nebo chceš být vidět? Dronová mapa spojuje piloty a zákazníky. Rychlé spojení, ověření uživatelé a možnost přivýdělku." />
+    <<meta name="description" content="Hledáš pilota dronu nebo chceš být vidět na mapě? Najdi pilota podle lokality, specializace, vybavení a připoj se k ověřené komunitě." />
+
   <meta name="robots" content="index, follow" />
 <link rel="canonical" href="https://www.najdipilota.cz/" />
 
@@ -38,13 +39,24 @@
 <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
 
 
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-3KQTXQ496Y"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-3KQTXQ496Y');
+</script>
+
+
 </head>
 <body>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
   <div class="container">
     <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
-  <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+  <img src="/icons/logo.png" alt="Logo NajdiPilota.cz" height="60" class="me-2" loading="lazy" aria-hidden="true" />
   <span class="fs-4">NajdiPilota.cz</span>
 </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -89,8 +101,7 @@
   <div class="container py-4">
     <h1 class="text-center">
   <i class="bi bi-map-fill me-2" aria-hidden="true"></i>
-  Mapa pilotů dronů v Česku
-</h1>
+  Dronová mapa pilotů v Česku</h1>
     <p id="user-status" class="text-center fw-bold mb-3"></p>
 <!-- Tlačítka přihlášení -->
 <div id="pilot-login-wrapper" class="d-flex flex-wrap align-items-center gap-2 justify-content-center" >
@@ -288,20 +299,32 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
   const isAvailable = p.available === "ANO";
   const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+  const hasBuildBadge = p.id && Number(p.id) <= 80;
+const buildBadge = hasBuildBadge 
+  ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+  : "";
+  // Volitelné: jméno s odznakem (pro re-use)
+const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
+const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
 
   let html = `<div class="pilot-card">`;
-
+ 
   if (isAvailable && loggedIn) {
+
     if (p.type_account === "Free") {
       // Free účet - omezené informace
-      html += `
-        <div class="d-flex justify-content-between align-items-center mb-1">
-          <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-          ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-            ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60">`
-            : ''}
-        </div>
-      `;
+     html += `
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      : ''}
+    ${p.id && Number(p.id) <= 80
+      ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      : ''}
+  </div>
+`;
+  
       if (p.volunteer === 'ANO') {
         html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
       }
@@ -312,15 +335,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       html += `</div>`;
     } else if (p.type_account === "Basic") {
   // Basic účet - více informací
-  html += `
-    <div class="d-flex justify-content-between align-items-center">
-      <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-      
-      ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-        ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
-        : ''}
-    </div>
-  `;
+ html += `
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      : ''}
+    ${p.id && Number(p.id) <= 80
+      ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      : ''}
+  </div>
+`;
+  
+  
   
  if (p.volunteer === 'ANO') {
         html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
@@ -343,13 +370,18 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
  else if (p.type_account === "Premium") {
       // Premium účet - všechny informace
       html += `
-        <div class="d-flex justify-content-between align-items-center">
-          <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-          ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-            ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="mb-2">`
-            : ''}
-        </div>
-      `;
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      : ''}
+    ${p.id && Number(p.id) <= 80
+      ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      : ''}
+  </div>
+`;
+  
+  
       if (p.volunteer === 'ANO') {
         html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
       }
@@ -366,7 +398,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   } else if (!isAvailable) {
     // Pilot není k dispozici
     html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+
       <br>
       ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
@@ -375,7 +408,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   } else {
     // Nepřihlášený uživatel
     html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+      
       <br>
       ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>

@@ -45,28 +45,43 @@
   </style>
 </head>
 <body>
+<script>
+// Add this at the top of your admin.html script
+fetch('/check-admin-session')
+  .then(res => {
+    if (!res.ok) {
+      window.location.href = '/adminland.html';
+    }
+  })
+  .catch(err => {
+    window.location.href = '/adminland.html';
+  });
+
+</script>
   <h1>Admin – Správa pilotů</h1>
 
   <button onclick="deleteAll()">🗑️ Smazat všechny záznamy</button>
   <button onclick="deleteSelected()">🗑️ Odstranit vybrané</button>
+  
+  <!-- Add this button near the other action buttons -->
+<button onclick="sendGdprReminder()">✉️ Odeslat GDPR připomínku</button>
 
   <p id="status"></p>
 
   <table>
-    <thead>
-      <tr>
-        <th><input type="checkbox" onclick="toggleAll(this)"></th>
-        <th>ID</th>
-        <th>Jméno</th>
-        <th>Město</th>
-        <th>Kraj</th>
-        <th>E-mail</th>
-        <th>Available</th>
-        <th>Viditelný do</th>
-      </tr>
-    </thead>
-    <tbody id="pilot-table"></tbody>
-  </table>
+  <thead>
+    <tr>
+      <th><input type="checkbox" onclick="toggleAll(this)"></th>
+      <th>ID</th>
+      <th>Jméno</th>
+      <th>E-mail</th>
+      <th>Typ účtu</th> <!-- Nový sloupec pro Typ účtu -->
+      <th>Město</th>
+      <th>Viditelný do</th>
+    </tr>
+  </thead>
+  <tbody id="pilot-table"></tbody>
+</table>
 
   <div id="form-wrapper" style="display:none;">
     <h3>Úprava pilota</h3>
@@ -138,6 +153,18 @@
   </div>
 
   <script>
+
+fetch('/check-admin-session', {
+    credentials: 'include'  // Odesílání session cookie
+})
+.then(res => {
+    if (!res.ok) {
+        window.location.href = '/adminland.html';
+    }
+})
+.catch(err => {
+    window.location.href = '/adminland.html';
+});
     let editingId = null;
 
     function loadPilots() {
@@ -145,36 +172,26 @@
     .then(res => res.json())
     .then(data => {
       const table = document.getElementById('pilot-table');
-      table.innerHTML = '';
+      table.innerHTML = '';  // Vyčistí stávající řádky tabulky
+
       data.forEach(p => {
-	 // Přepni viditelnost pokud expirovala
-        if (p.visible_valid) {
-          const daysLeft = getDaysLeft(p.visible_valid);
-          if (daysLeft <= 0 && p.visible === 'ANO') {
-            fetch('/update', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: p.email,
-                visible: 'NE'
-              })
-            }).then(() => {
-              p.visible = 'NE';
-            });
-          }
-        }
         const row = document.createElement('tr');
+        
+        // Výpočet času do vypršení viditelnosti
+        let daysLeft = getDaysLeft(p.visible_valid);
+
+        // Vytvoření řádku tabulky s požadovanými informacemi
         row.innerHTML = `
           <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
           <td>${p.id}</td>
           <td>${p.name || ''}</td>
-          <td>${p.city || ''}</td>
-          <td>${p.region || ''}</td>
           <td>${p.email || ''}</td>
-          <td>${p.available || 'NE'}</td>
+          <td>${p.type_account || ''}</td> <!-- Zobrazení typu účtu -->
+          <td>${p.city || ''}</td>
           <td class="${getVisibilityClass(p.visible_valid)}">
-  ${p.visible_valid ? `Viditelný do: ${getDaysLeft(p.visible_valid)} dní` : 'NE'}
-</td>
+            ${p.visible_valid ? `Viditelný do: ${daysLeft} dní` : 'NE'}
+          </td>
+          <td>${p.visible === 'ANO' ? 'Ano' : 'Ne'}</td>
           <td>
             <button class="edit-btn" onclick='edit(${JSON.stringify(p).replace(/'/g, "\\'")})'>
               Upravit
@@ -223,6 +240,43 @@ function getDaysLeft(validDateStr) {
   const validDate = new Date(validDateStr);
   const diff = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
   return diff >= 0 ? diff : 0;
+}
+
+function getVisibilityClass(validDateStr) {
+  if (!validDateStr) return 'text-danger'; // pokud není data valid, zobrazí červeně
+  
+  const daysLeft = getDaysLeft(validDateStr);
+  if (daysLeft <= 5) return 'text-danger'; // červená
+  if (daysLeft <= 10) return 'text-warning'; // žlutá
+  return 'text-success'; // zelená
+}
+
+function sendGdprReminder() {
+  const selected = Array.from(document.querySelectorAll('.row-checkbox:checked'))
+    .map(cb => cb.value);
+  
+  if (selected.length === 0) {
+    if (!confirm("Nevybrali jste žádné piloty. Chcete odeslat připomínku VŠEM pilotům bez GDPR souhlasu?")) {
+      return;
+    }
+  }
+
+  if (!confirm(`Opravdu chcete odeslat GDPR připomínku ${selected.length > 0 ? 'vybraným' : 'všem'} pilotům?`)) return;
+
+  fetch('/admin-send-gdpr-reminder', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+      ids: selected.length > 0 ? selected : null 
+    })
+  })
+    .then(res => res.text())
+    .then(msg => {
+      document.getElementById('status').textContent = msg;
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = "Chyba při odesílání: " + err;
+    });
 }
 
 function getVisibilityClass(validDateStr) {

@@ -37,7 +37,7 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'super_tajne_heslo',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: true } // true pokud jedeš na HTTPS
+    cookie: { secure: process.env.NODE_ENV === 'production' }
 }));
 
 app.use(cors({
@@ -48,15 +48,22 @@ app.use(cors({
 
 // Admin route protection middleware
 function requireAdminLogin(req, res, next) {
+    console.log('isAdmin:', req.session.isAdmin);  // Přidej logování pro session
     if (req.session && req.session.isAdmin) {
         return next();
     }
     return res.redirect('/adminland.html');
 }
-
 app.use(express.static(path.join(__dirname, 'public')));
 
 
+
+app.get('/check-admin-session', (req, res) => {
+    if (req.session.isAdmin) {
+        return res.status(200).send('OK');
+    }
+    return res.status(403).send('Unauthorized');
+});
 
 
 
@@ -264,7 +271,7 @@ app.post('/register', async (req, res) => {
   try {
   let visible_valid = new Date();
 console.log("Původní datum: ", visible_valid);
-visible_valid.setDate(visible_valid.getDate() + 7);
+visible_valid.setDate(visible_valid.getDate() + 30);
 console.log("Datum po přidání 7 dní: ", visible_valid);
 
 
@@ -780,8 +787,12 @@ app.post('/admin-login', async (req, res) => {
 });
 
 
+// Route for /admin
+app.get('/admin', requireAdminLogin, (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+});
 
-
+// Route for /admin.html, same as /admin
 app.get('/admin.html', requireAdminLogin, (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'admin.html'));
 });
@@ -1358,6 +1369,141 @@ app.get('/send-expiry-emails', async (req, res) => {
     res.status(500).send("❌ Chyba při odesílání.");
   }
 });
+
+app.post('/admin-send-gdpr-reminder', requireAdminLogin, async (req, res) => {
+    try {
+        // Zkontroluj, zda je připojen emailový server
+        await transporter.verify(); // Tato funkce ověřuje připojení k serveru
+        console.log('Email server connection is ready');
+
+        // Definování proměnné pro piloty (získání pilotů z DB)
+        let query = `
+            SELECT p.id, p.email, p.name, p.type_account
+            FROM pilots p
+            LEFT JOIN consents c ON p.id = c.user_id AND c.consent_type = 'public_contact'
+            WHERE p.type_account IN ('Premium', 'Basic') -- Vybírá všechny piloty s těmito typy účtů
+        `;
+        
+        let queryParams = [];
+
+        // Pokud je posláno pole 'ids', přidáme podmínku pro konkrétní piloty
+        if (req.body.ids && req.body.ids.length > 0) {
+            query += ` AND p.id IN (${req.body.ids.map((_, i) => `$${i + 1}`).join(',')})`;
+            queryParams = [...req.body.ids];
+        }
+
+        // Spustí dotaz na získání všech pilotů
+        const result = await pool.query({
+            text: query,
+            values: queryParams,
+            timeout: 10000 // 10 sekundy timeout
+        });
+
+        const pilotsWithoutConsent = result.rows;  // Seznam všech pilotů, včetně těch, kteří již mají GDPR souhlas
+
+        if (pilotsWithoutConsent.length === 0) {
+            return res.send("Žádní piloti nevyžadují připomenutí GDPR souhlasu.");
+        }
+
+        let successCount = 0;
+        let failedEmails = [];
+
+        // Posílání GDPR připomínek pilotům
+        for (const pilot of pilotsWithoutConsent) {
+    try {
+        const emailContent = {
+            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+            to: pilot.email,
+            subject: "Důležitá informace k vašemu účtu na NajdiPilota.cz – Potřebujeme váš souhlas s GDPR",
+            html: `
+                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+                    <h2 style="color: #0077B6;">Důležitá informace k vašemu účtu na NajdiPilota.cz</h2>
+                    <p style="font-size: 16px; color: #495057;">Dobrý den, <strong>${pilot.name}</strong>,</p>
+                    <p style="font-size: 16px; color: #495057;">
+                        Děkujeme, že jste součástí komunity <strong style="color: #0077B6;">NajdiPilota.cz</strong>.
+                    </p>
+                    <p style="font-size: 16px; color: #495057;">
+                        Váš účet je <strong style="color: #258f01">${pilot.type_account}</strong>, ale chybí nám váš souhlas se zobrazením kontaktů.
+                    </p>
+                    <p style="font-size: 16px; color: #495057;">
+                        Pokud chcete udělit souhlas s GDPR, klikněte na tento odkaz:
+                    </p>
+                    <p style="font-size: 16px; color: #495057;">
+                        <a href="https://www.najdipilota.cz/index.html" style="font-size: 18px; color: #0077B6; text-decoration: none;">Klikněte zde pro přihlášení a udělení souhlasu s GDPR</a>
+                    </p>
+                    <p style="font-size: 16px; color: #495057;">
+                        Po přihlášení na stránce budete mít možnost souhlas s GDPR udělit.
+                    </p>
+                    <p style="font-size: 16px; color: #495057;">
+                        Pokud máte jakékoliv dotazy nebo potřebujete další informace, neváhejte nás kontaktovat na <a href="mailto:dronadmin@seznam.cz" style="color: #0077B6;">dronadmin@seznam.cz</a>.
+                    </p>
+                    <p style="font-size: 16px; color: #495057;">
+                        Děkujeme vám za spolupráci a těšíme se na další spolupráci!
+                    </p>
+
+                    <p style="font-size: 16px; color: #495057;">
+                        S pozdravem,<br />Tým NajdiPilota.cz
+                    </p>
+
+                    <p style="font-size: 14px; color: #6c757d;">
+                        Tento e-mail je automaticky generován na základě vašeho účtu na NajdiPilota.cz. Pokud nemáte zájem o tuto připomínku, ignorujte prosím tento e-mail.
+                    </p>
+                    <p style="font-size: 14px; color: #6c757d;">
+                        <a href="https://www.najdipilota.cz/o-projektu.html" style="color: #0077B6;">O projektu</a> | <a href="https://www.najdipilota.cz/faq.html" style="color: #0077B6;">FAQ</a>
+                    </p>
+                </div>
+            `,
+            text: `
+                Dobrý den ${pilot.name},
+
+                Děkujeme, že jste součástí komunity NajdiPilota.cz.
+
+                Váš účet je ${pilot.type_account}, ale chybí nám váš souhlas se zobrazením kontaktů.
+
+                Pokud chcete udělit souhlas s GDPR, přihlaste se na následujícím odkazu:
+                https://www.najdipilota.cz/index.html
+
+                Po přihlášení budete mít možnost souhlas s GDPR udělit.
+
+                Pokud máte jakékoliv dotazy nebo potřebujete další informace, kontaktujte nás na: dronadmin@seznam.cz
+
+                S pozdravem,
+                Tým NajdiPilota.cz
+
+                Tento e-mail je automaticky generován na základě vašeho účtu na NajdiPilota.cz. Pokud nemáte zájem o tuto připomínku, ignorujte prosím tento e-mail.
+
+                Pro více informací navštivte:
+                - O projektu: https://www.najdipilota.cz/o-projektu.html
+                - FAQ: https://www.najdipilota.cz/faq.html
+            `
+        };
+
+        await transporter.sendMail(emailContent);  // Odeslání emailu
+        successCount++;
+        console.log(`✅ GDPR reminder sent to: ${pilot.email}`);
+
+        await new Promise(resolve => setTimeout(resolve, 500));  // Malé zpoždění mezi e-maily
+    } catch (err) {
+        console.error(`❌ Error sending to ${pilot.email}:`, err.message);
+        failedEmails.push(pilot.email);
+    }
+}
+
+        // Vytvoření odpovědi
+        let response = `GDPR připomínky odeslány: ${successCount} úspěšně z ${pilotsWithoutConsent.length} pilotů.`;
+        
+        if (failedEmails.length > 0) {
+            response += `\n\nNepodařilo se odeslat na: ${failedEmails.join(', ')}`;
+        }
+
+        res.send(response);
+
+    } catch (err) {
+        console.error("❌ Chyba při odesílání GDPR připomínek:", err);
+        res.status(500).send(`Chyba při odesílání: ${err.message}`);
+    }
+});
+
 
 
 // Nastavení složky pro statické soubory

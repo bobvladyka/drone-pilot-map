@@ -36,12 +36,11 @@ h2, h3 {
 }
 
 #map {
-  height: 500px;
+  height: 85vh; /* Zvětšete podle potřeby (původní hodnota je pravděpodobně kolem 400px) */
   width: 100%;
-  border-radius: var(--radius);
-  border: 1px solid var(--neutral);
-  margin-bottom: 40px;
-  box-shadow: var(--shadow);
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+  
 }
 
 input,

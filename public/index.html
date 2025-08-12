@@ -301,7 +301,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
   const hasBuildBadge = p.id && Number(p.id) <= 80;
 const buildBadge = hasBuildBadge 
-  ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+  ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
   : "";
   // Volitelné: jméno s odznakem (pro re-use)
 const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
@@ -320,7 +320,7 @@ const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
       ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
-      ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
       : ''}
   </div>
 `;
@@ -342,7 +342,7 @@ const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
       ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
-      ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
       : ''}
   </div>
 `;
@@ -376,7 +376,7 @@ const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
       ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
-      ? `<img src="/icons/build50.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
       : ''}
   </div>
 `;

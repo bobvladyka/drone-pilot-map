@@ -37,7 +37,10 @@ app.use(session({
     secret: process.env.SESSION_SECRET || 'super_tajne_heslo',
     resave: false,
     saveUninitialized: false,
-    cookie: { secure: process.env.NODE_ENV === 'production' }
+    //cookie: { secure: process.env.NODE_ENV === 'production' } 
+    //AKTIVOVAT POKUD ŠOUPU NA SERVER
+    cookie: { secure: false } 
+   
 }));
 
 app.use(cors({

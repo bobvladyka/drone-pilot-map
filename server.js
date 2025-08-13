@@ -976,75 +976,46 @@ app.get('/get-consent-timestamp', async (req, res) => {
 
 app.post('/create-conversation', async (req, res) => {
   const { pilotEmail, advertiserEmail } = req.body;
-  console.log('Přijaté e-maily:', { pilotEmail, advertiserEmail });
-
-  // Validace vstupů
-  if (!advertiserEmail || !pilotEmail || pilotEmail === 'null') {
-    return res.status(400).json({ 
-      success: false, 
-      message: 'Chybí nebo je neplatný e-mail pilota nebo inzerenta.' 
-    });
-  }
 
   try {
-    // Najdi ID pilota
-    const pilotResult = await pool.query(
-      'SELECT id FROM pilots WHERE email = $1', 
-      [pilotEmail]
-    );
-    
-    // Najdi ID inzerenta
-    const advertiserResult = await pool.query(
-      'SELECT id FROM advertisers WHERE email = $1', 
-      [advertiserEmail]
-    );
+    // Get pilot and advertiser details from the database
+    const pilotResult = await pool.query('SELECT id FROM pilots WHERE email = $1', [pilotEmail]);
+    const advertiserResult = await pool.query('SELECT id FROM advertisers WHERE email = $1', [advertiserEmail]);
 
     if (pilotResult.rowCount === 0 || advertiserResult.rowCount === 0) {
-      return res.status(400).json({ 
-        success: false, 
-        message: 'Pilot nebo inzerent nenalezen' 
-      });
+      return res.status(400).json({ success: false, message: 'Pilot nebo inzerent nenalezen' });
     }
 
     const pilotId = pilotResult.rows[0].id;
     const advertiserId = advertiserResult.rows[0].id;
 
-    // Kontrola existence konverzace
-    const existingConv = await pool.query(
-      `SELECT id FROM conversations 
-       WHERE pilot_id = $1 AND advertiser_id = $2`,
+    // Check if a conversation already exists between this pilot and advertiser
+    const existingConversation = await pool.query(
+      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 LIMIT 1',
       [pilotId, advertiserId]
     );
 
     let conversationId;
-    
-    if (existingConv.rowCount > 0) {
-      // Konverzace již existuje - vrátíme její ID
-      conversationId = existingConv.rows[0].id;
+
+    if (existingConversation.rowCount > 0) {
+      // If the conversation exists, use the existing conversationId
+      conversationId = existingConversation.rows[0].id;
     } else {
-      // Vytvoříme novou konverzaci
-      const newConv = await pool.query(
+      // If no conversation exists, create a new one
+      const conversationResult = await pool.query(
         `INSERT INTO conversations (pilot_id, advertiser_id) 
-         VALUES ($1, $2) RETURNING id`,
+         VALUES ($1, $2) 
+         RETURNING id`,
         [pilotId, advertiserId]
       );
-      conversationId = newConv.rows[0].id;
+      conversationId = conversationResult.rows[0].id;
     }
 
-    res.status(200).json({ 
-      success: true, 
-      conversationId,
-      message: existingConv.rowCount > 0 
-        ? 'Konverzace již existuje' 
-        : 'Konverzace byla vytvořena'
-    });
+    res.json({ success: true, conversationId });
 
   } catch (err) {
-    console.error('Chyba při vytváření konverzace:', err);
-    res.status(500).json({ 
-      success: false, 
-      message: 'Chyba při vytváření konverzace' 
-    });
+    console.error("Chyba při vytváření konverzace:", err);
+    res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
   }
 });
 
@@ -1193,11 +1164,8 @@ app.post('/send-message', async (req, res) => {
 app.post('/create-conversation', async (req, res) => {
   const { pilotEmail, advertiserEmail } = req.body;
 
-  if (!pilotEmail || !advertiserEmail) {
-    return res.status(400).json({ success: false, message: 'Chybí e-mail pilota nebo inzerenta.' });
-  }
-
   try {
+    // Get pilot and advertiser details from the database
     const pilotResult = await pool.query('SELECT id FROM pilots WHERE email = $1', [pilotEmail]);
     const advertiserResult = await pool.query('SELECT id FROM advertisers WHERE email = $1', [advertiserEmail]);
 
@@ -1208,26 +1176,33 @@ app.post('/create-conversation', async (req, res) => {
     const pilotId = pilotResult.rows[0].id;
     const advertiserId = advertiserResult.rows[0].id;
 
-    // Kontrola, zda konverzace již existuje
-    const existingConvResult = await pool.query(
-      `SELECT * FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2`,
+    // Check if a conversation already exists between this pilot and advertiser
+    const existingConversation = await pool.query(
+      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 LIMIT 1',
       [pilotId, advertiserId]
     );
 
-    if (existingConvResult.rowCount > 0) {
-      return res.status(400).json({ success: false, message: 'Konverzace již existuje' });
+    let conversationId;
+
+    if (existingConversation.rowCount > 0) {
+      // If the conversation exists, use the existing conversationId
+      conversationId = existingConversation.rows[0].id;
+    } else {
+      // If no conversation exists, create a new one
+      const conversationResult = await pool.query(
+        `INSERT INTO conversations (pilot_id, advertiser_id) 
+         VALUES ($1, $2) 
+         RETURNING id`,
+        [pilotId, advertiserId]
+      );
+      conversationId = conversationResult.rows[0].id;
     }
 
-    // Pokud neexistuje konverzace, vytvořte ji
-    await pool.query(
-      `INSERT INTO conversations (pilot_id, advertiser_id) VALUES ($1, $2) RETURNING id`,
-      [pilotId, advertiserId]
-    );
+    res.json({ success: true, conversationId });
 
-    res.status(200).json({ success: true, message: 'Konverzace byla vytvořena' });
   } catch (err) {
-    console.error('Chyba při vytváření konverzace:', err);
-    res.status(500).json({ success: false, message: 'Chyba při vytváření konverzace' });
+    console.error("Chyba při vytváření konverzace:", err);
+    res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
   }
 });
 

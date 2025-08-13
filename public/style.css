@@ -80,6 +80,7 @@ button:not(.pilot-login-btn):not(#login-button),
   transition: transform17:10 31.07.2025 0.2s ease, box-shadow 0.3s ease;
   min-width: 100px;
   text-align: center;
+  position: center;
 }
 
 
@@ -183,16 +184,104 @@ body.modal-open {
 
 
 /* Responsivita */
-@media (max-width: 768px) {
+@media (max-width: 600px) {
   body {
+    padding: 10px;
+    max-width: 100%;  /* Zajistí, že obsah nebude oříznut na malých obrazovkách */
+  }
+
+  h1 {
+    font-size: 24px;
+  }
+
+  .navbar-nav {
+    flex-direction: column; /* Navigace bude ve sloupci na menších obrazovkách */
+    align-items: center;
+  }
+
+  .pilot-card {
     padding: 10px;
   }
 
-  
+  .membership-card {
+    padding: 15px;
+  }
+
+  .footer {
+    font-size: 12px;
+  }
+
+  .button-22 {
+    width: 100%; /* Tlačítka budou zabírat plnou šířku na malých obrazovkách */
+  }
+
+  #map {
+    height: 60vh; /* Mapa bude menší na mobilních zařízeních */
+  }
+
+  input, select, textarea {
+    font-size: 14px; /* Zmenší text v inputech pro lepší přehlednost */
+  }
+
+  .discount-offer {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 768px) {
+  body {
+    padding: 15px;
+  }
+
+  .pilot-card {
+    padding: 15px;
+  }
+
+  .membership-card {
+    padding: 18px;
+  }
+
+  .navbar-nav {
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+
+  .hero-section {
+    padding: 20px;
+    text-align: center;
+  }
+
+  .hero-image {
+    width: 100%;
+    height: auto;
+  }
 
   button {
-    width: 100%;
+    width: 100%; /* Tlačítka na mobilu */
+    padding: 15px;
   }
+
+  #map {
+    height: 65vh; /* Mapa bude o něco větší než na mobilu */
+  }
+
+  .discount-offer {
+    font-size: 15px;
+  }
+  #login-button {
+    display: block;
+    margin: 0 auto;
+    text-align: center;
+    width: auto;
+  }
+  .bindpopup {
+    max-height: 80vh;  /* Maximální výška pro kartu, aby se vešla na obrazovku */
+    overflow-y: auto;  /* Povolení vertikálního scrollování, pokud je obsah větší než max-height */
+    padding: 10px;     /* Padding pro lepší vzhled */
+  }
+
+
 }
 .inzerent-gradient-btn {
   background: linear-gradient(90deg, #ffe259 0%, #ffa751 100%);

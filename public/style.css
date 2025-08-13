@@ -18,8 +18,8 @@
 body {
   font-family: var(--font);
   margin: 0 auto;
-  padding: 20px;
-  max-width: 1000px;
+  padding: 5px;
+  max-width: 80%;  /* Změňte max-width na hodnotu, která vám vyhovuje */
   background: var(--background-light);
   color: var(--secondary);
 }
@@ -36,8 +36,10 @@ h2, h3 {
 }
 
 #map {
-  height: 85vh; /* Zvětšete podle potřeby (původní hodnota je pravděpodobně kolem 400px) */
-  width: 100%;
+   height: 75vh;
+  width: 100%; /* Pokud chcete, aby zabírala více místa, můžete použít větší hodnotu než 100% */
+  max-width: 95%;  /* Zvětší šířku mapy */
+  margin: 0 auto;  /* Aby mapu vycentrovalo */
   border-radius: 8px;
   box-shadow: 0 0 10px rgba(0,0,0,0.1);
   
@@ -108,7 +110,7 @@ button:hover,
   box-shadow: var(--shadow);
   padding: 24px;
   margin-top: 30px;
-  max-width: 420px;
+  max-width: 600px;  /* Můžete zvětšit šířku login boxu */
   margin-left: auto;
   margin-right: auto;
   z-index: 1001;
@@ -186,9 +188,7 @@ body.modal-open {
     padding: 10px;
   }
 
-  #map {
-    height: 300px;
-  }
+  
 
   button {
     width: 100%;
@@ -547,6 +547,12 @@ button.accordion-button:not(.collapsed) {
     .badge-new {
       background-color: #dc3545;
     }
+.container {
+  width: 100%;
+  max-width: 95%;  /* Nebo větší hodnota pro širší obsah */
+  margin: 0 auto;
+  padding: 5px;
+}
 
 
 

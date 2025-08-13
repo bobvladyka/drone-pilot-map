@@ -72,7 +72,7 @@ html {
 </div>
 
 
-	<div class="filter-section bg-light p-3 rounded-3 mb-4 shadow-sm">
+	<div id="filter-section" class="filter-section bg-light p-3 rounded-3 mb-4 shadow-sm">
   <div class="row g-3">
     <!-- Specializace -->
     <div class="col-md-4">
@@ -596,6 +596,32 @@ fetch('/chat.html')
       });
     }
   });
+
+// Vytvoření ovládacího prvku pro tlačítko s šipkou
+const centerMapButton = L.control({ position: 'topright' });
+
+centerMapButton.onAdd = function (map) {
+  const button = L.DomUtil.create('button', 'btn btn-sm');
+  button.innerHTML = '<i class="bi bi-arrow-up-square-fill"></i>';  // Šipka dolů (Bootstrap Icon)
+  button.style.backgroundColor = 'transparent';  // Průhledné pozadí
+  button.style.border = 'none';  // Bez okraje
+  button.style.fontSize = '36px';  // Velikost ikony
+  button.style.cursor = 'pointer';  // Kurzoru na tlačítko
+
+  button.onclick = function () {
+    // Posune stránku na sekci filtrů
+    const filterSection = document.getElementById('filter-section');
+    if (filterSection) {
+      filterSection.scrollIntoView({ behavior: 'smooth' });  // Plynulý posun
+    }
+  };
+
+  return button;
+};
+
+// Přidání ovládacího prvku do mapy
+centerMapButton.addTo(map);
+
 </script>
 
 <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">

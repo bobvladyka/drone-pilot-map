@@ -279,14 +279,28 @@ console.log("Datum po přidání 7 dní: ", visible_valid);
 
 
   const insertPilot = await pool.query(
-    `INSERT INTO pilots (
-      name, email, password_hash, phone, street, city, zip, region,
-      latitude, longitude, visible_valid, ref_by_email, type_account
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-    RETURNING id`,
-    [name, email, password_hash, phone, street, city, zip, region,
-     lat, lon, visible_valid, ref || null, "Basic"]  // Nastavení typu účtu na "Basic"
-  );
+  `INSERT INTO pilots (
+    name, email, password_hash, phone, street, city, zip, region,
+    latitude, longitude, visible_valid, ref_by_email, type_account, available
+  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+  RETURNING id`,
+  [
+    name,
+    email,
+    password_hash,
+    phone,
+    street,
+    city,
+    zip,
+    region,
+    lat,
+    lon,
+    visible_valid,
+    ref || null,
+    "Basic",      // typ účtu
+    "ANO"         // ✅ výchozí dostupnost
+  ]
+);
 
   // Pokud referrer existuje, přidáme bonus
 if (ref) {
@@ -342,6 +356,26 @@ if (ref) {
       req.headers['user-agent']
     ]
   );
+
+if (req.body.public_contact === 'on') {
+  await pool.query(
+    `INSERT INTO consents (user_id, consent_type, consent_text, ip_address, user_agent, timestamp)
+     VALUES ($1, 'public_contact', $2, $3, $4, NOW())
+     ON CONFLICT (user_id, consent_type)
+     DO UPDATE SET timestamp = EXCLUDED.timestamp,
+                   consent_text = EXCLUDED.consent_text,
+                   ip_address = EXCLUDED.ip_address,
+                   user_agent = EXCLUDED.user_agent`,
+    [
+      newPilotId,
+      'Souhlasím se zveřejněním e-mailu a telefonu v mém profilu.',
+      req.ip,
+      req.headers['user-agent']
+    ]
+  );
+}
+
+
 
   console.log(`✅ Pilot ${name} zaregistrován a GDPR souhlas uložen.`);
   
@@ -1205,6 +1239,24 @@ app.post('/create-conversation', async (req, res) => {
     res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
   }
 });
+
+app.get('/blog/article/:id', async (req, res) => {
+  const articleId = req.params.id;
+  try {
+    // Načteme konkrétní článek podle ID
+    const result = await pool.query('SELECT * FROM articles WHERE id = $1', [articleId]);
+    const article = result.rows[0];
+    if (article) {
+      res.render('article', { article });
+    } else {
+      res.status(404).send('Článek nebyl nalezen');
+    }
+  } catch (err) {
+    console.error('Chyba při načítání článku:', err);
+    res.status(500).send('Chyba na serveru');
+  }
+});
+
 
 // Get pilot's name by email
 app.get('/get-pilot-name', async (req, res) => {

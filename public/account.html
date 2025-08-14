@@ -193,17 +193,12 @@
 <div class="col-12 mt-4" id="gdpr-consent-section">
   <h5>Souhlas se zveřejněním kontaktů</h5>
   <p class="text-muted">
-    Pokud souhlasíte, váš e‑mail a telefon budou viditelné pro ostatní uživatele.
+    Pokud souhlasíte, váš e-mail a telefon budou viditelné pro ostatní uživatele.
   </p>
-  <div class="form-check">
-    <input class="form-check-input" type="checkbox" id="publicContactConsent">
-    <label class="form-check-label" for="publicContactConsent">
-      Souhlasím se zveřejněním mého e‑mailu a telefonu
-    </label>
-  </div>
   <span id="consent-status" class="ms-2 text-muted"></span>
-  <button type="button" class="btn btn-outline-primary mt-2" id="saveConsentBtn">Uložit souhlas</button>
+  <button type="button" class="btn btn-outline-primary mt-2" id="toggleConsentBtn">Načítám…</button>
 </div>
+
 
 
         <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
@@ -273,14 +268,13 @@ function addDroneField(value = "") {
 
 // 🚨 Handle GDPR consent section visibility
 if (pilot.type_account === "Free") {
-  // Hide GDPR consent section for Free accounts
   document.getElementById("gdpr-consent-section").style.display = "none";
 } else {
-  // Show for Basic and Premium
   document.getElementById("gdpr-consent-section").style.display = "block";
-  document.getElementById("publicContactConsent").disabled = false;
-  document.getElementById("saveConsentBtn").disabled = false;
+  const btn = document.getElementById("toggleConsentBtn");
+  if (btn) btn.disabled = false;
 }
+
   fetch('/get-my-consents?email=' + encodeURIComponent(pilot.email))
     .then(res => res.json())
     .then(data => {
@@ -344,58 +338,75 @@ if (pilot.type_account === "Basic") {
 }
 
 
-// Načíst stav souhlasu
-fetch('/get-my-consents')
-  .then(res => res.json())
-  .then(data => {
-    document.getElementById('publicContactConsent').checked = data.hasPublicConsent;
-  });
-
-// Uložit/odvolat souhlas
-document.getElementById('saveConsentBtn').addEventListener('click', () => {
-  const consent = document.getElementById('publicContactConsent').checked;
+// GDPR – nové UI s tlačítkem
+(function initGdprToggle() {
   const consentStatusElement = document.getElementById('consent-status');
+  const toggleConsentBtn = document.getElementById('toggleConsentBtn');
 
-    // Date and time in UTC format
-  const consentDate = new Date();
-  consentDate.setHours(consentDate.getHours());  // Adjust to UTC+2
-  const formattedDate = consentDate.toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
-
-  // Store the consent in localStorage
-  localStorage.setItem('publicContactConsent', consent);
-  localStorage.setItem('consentDate', formattedDate);
-
-  fetch('/save-consent', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      email: currentPilot.email, 
-      consent_type: 'public_contact',
-      consent_text: consent 
-        ? 'Souhlasím se zveřejněním e-mailu a telefonu v mém profilu.' 
-        : 'Odvolávám souhlas se zveřejněním e-mailu a telefonu v mém profilu.',
-      granted: consent,
-      timestamp: consent ? consentDate.toISOString() : null // Send timestamp if consented
-    })
-  })
-  .then(res => {
-    if (!res.ok) throw new Error('Chyba při ukládání souhlasu');
-    
-    // Update UI with the stored consent status and date
-    if (consent) {
-      consentStatusElement.textContent = `Udělil souhlas dne: ${formattedDate}`;
+  function setConsentUI(hasConsent, whenText = null) {
+    if (!consentStatusElement || !toggleConsentBtn) return;
+    if (hasConsent) {
+      consentStatusElement.textContent = whenText ? `Souhlas udělen: ${whenText}` : 'Souhlas udělen';
       consentStatusElement.style.color = 'green';
+      toggleConsentBtn.textContent = 'Odvolat souhlas';
+      toggleConsentBtn.dataset.action = 'revoke';
     } else {
       consentStatusElement.textContent = 'Souhlas neudělen';
       consentStatusElement.style.color = 'red';
+      toggleConsentBtn.textContent = 'Udělit souhlas';
+      toggleConsentBtn.dataset.action = 'grant';
     }
-  })
-  .catch(err => {
-    consentStatusElement.textContent = 'Chyba při ukládání souhlasu';
-    consentStatusElement.style.color = 'red';
-    alert(err.message);
-  });
-});
+  }
+
+  // 1) Načti timestamp souhlasu
+  fetch('/get-consent-timestamp?email=' + encodeURIComponent(pilot.email))
+    .then(res => {
+      if (res.ok) return res.json();
+      if (res.status === 404) return null;
+      throw new Error('Chyba při načítání souhlasu');
+    })
+    .then(data => {
+      if (data && data.timestamp) {
+        const when = new Date(data.timestamp).toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
+        setConsentUI(true, when);
+      } else {
+        setConsentUI(false);
+      }
+    })
+    .catch(() => setConsentUI(false));
+
+  // 2) Přepínač – udělit/odvolat
+  if (toggleConsentBtn) {
+    toggleConsentBtn.addEventListener('click', () => {
+      const grant = toggleConsentBtn.dataset.action === 'grant';
+      const consentDate = new Date();
+      const formattedDate = consentDate.toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
+
+      fetch('/save-consent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: pilot.email,
+          consent_type: 'public_contact',
+          consent_text: grant
+            ? 'Souhlasím se zveřejněním e-mailu a telefonu v mém profilu.'
+            : 'Odvolávám souhlas se zveřejněním e-mailu a telefonu v mém profilu.',
+          granted: grant,
+          timestamp: grant ? consentDate.toISOString() : null
+        })
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Chyba při ukládání souhlasu');
+        setConsentUI(grant, grant ? formattedDate : null);
+      })
+      .catch(err => {
+        consentStatusElement.textContent = 'Chyba při ukládání souhlasu';
+        consentStatusElement.style.color = 'red';
+        alert(err.message);
+      });
+    });
+  }
+})();
 
     // 🟢 Zobrazení členství a odpočtu dní
     if (pilot.visible_valid) {

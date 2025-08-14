@@ -249,11 +249,26 @@ html {
   const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
   const isAvailable = p.available === "ANO";
   const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-
+  const hasPublicConsent = p.hasPublicConsent;
   let html = `<div class="pilot-card">`;
 
+  
+
   if (isAvailable && loggedIn) {
-    if (p.type_account === "Free") {
+    
+
+if (!hasPublicConsent) {
+      // Pilot hasn't granted GDPR consent
+      html += `
+        <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Pilot nepředal souhlas se zpracováním osobních údajů</p>
+        ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+        ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+        ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+        <p class="text-muted"><em>Kontaktní údaje nejsou dostupné, protože pilot neudělil GDPR souhlas.</em></p>
+      `;
+    } else if
+ (p.type_account === "Free") {
       // Free účet - omezené informace
        html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
@@ -645,6 +660,7 @@ centerMapButton.addTo(map);
           <li><a href="/index.html?inzerent=1" class="text-decoration-none text-muted">Mapa pilotů</a></li>
           <li><a href="/o-projektu.html?inzerent=1" class="text-decoration-none text-muted">O projektu</a></li>
           <li><a href="/kontakt.html?inzerent=1" class="text-decoration-none text-muted">Kontakt</a></li>
+         <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
         </ul>
       </div>
 

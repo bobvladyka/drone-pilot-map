@@ -86,6 +86,7 @@
         <li class="nav-item">
           <a class="nav-link" href="/kontakt.html">Kontakt</a>
         </li>
+          
 <li class="nav-item">
 
 </li>
@@ -306,12 +307,12 @@ const buildBadge = hasBuildBadge
   // Volitelné: jméno s odznakem (pro re-use)
 const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
 const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
+const hasPublicConsent = p.gdpr_consent === "ANO" || p.public_consent === "ANO"; 
 
   let html = `<div class="pilot-card">`;
  
   if (isAvailable && loggedIn) {
-
-    if (p.type_account === "Free") {
+  if (p.type_account === "Free") {
       // Free účet - omezené informace
      html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
@@ -416,7 +417,7 @@ const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
       ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
       ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-      <p class="text-muted"><em>Přihlaste se pro více informací o pilotovi.</em></p>
+      <p class="text-muted"><em>Přihlaste se jako inzerent a navažte pro více informací o pilotovi.</em></p>
     `;
   }
 
@@ -565,7 +566,7 @@ function contactPilot(pilotEmail) {
   })
   .catch(err => {
     console.error("Chyba při vytváření konverzace:", err);
-    alert("Nepodařilo se zahájit konverzaci");
+    alert("Pro navázání konverzace se přihlašte jako inzerent.");
   });
 }
 document.addEventListener("DOMContentLoaded", () => {
@@ -795,6 +796,7 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
           <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
           <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
           <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+        <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
         </ul>
       </div>
 

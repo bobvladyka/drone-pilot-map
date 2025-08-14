@@ -838,7 +838,7 @@ app.post('/admin-login', async (req, res) => {
     const { username, password } = req.body;
 
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'strongpassword123';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'bi57zF5ih2ae9jRiuJtj';
 
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         req.session.isAdmin = true;

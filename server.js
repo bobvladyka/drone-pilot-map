@@ -252,6 +252,29 @@ app.post('/register', async (req, res) => {
   } = req.body;
   console.log("🔍 Request body:", req.body);
 
+  // Nejprve najdeme nejnižší volné ID
+  let nextFreeId;
+  try {
+    const idResult = await pool.query(`
+      WITH sequence AS (
+        SELECT generate_series(
+          (SELECT MIN(id) FROM pilots),
+          (SELECT MAX(id) FROM pilots) + 100  -- +100 jako buffer
+        ) AS id
+      )
+      SELECT MIN(s.id)
+      FROM sequence s
+      LEFT JOIN pilots p ON s.id = p.id
+      WHERE p.id IS NULL
+    `);
+    
+    nextFreeId = idResult.rows[0].min || 1; // Pokud neexistují žádná ID, začneme od 1
+    console.log(`Přiřazeno ID: ${nextFreeId}`);
+  } catch (err) {
+    console.error("Chyba při hledání volného ID:", err);
+    return res.status(500).send("Chyba při registraci - nelze přidělit ID");
+  }
+
   const password_hash = await bcrypt.hash(password, 10);
   const location = [street, city, zip, region].filter(Boolean).join(', ');
   let lat = null, lon = null;
@@ -279,28 +302,29 @@ console.log("Datum po přidání 7 dní: ", visible_valid);
 
 
   const insertPilot = await pool.query(
-  `INSERT INTO pilots (
-    name, email, password_hash, phone, street, city, zip, region,
-    latitude, longitude, visible_valid, ref_by_email, type_account, available
-  ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-  RETURNING id`,
-  [
-    name,
-    email,
-    password_hash,
-    phone,
-    street,
-    city,
-    zip,
-    region,
-    lat,
-    lon,
-    visible_valid,
-    ref || null,
-    "Basic",      // typ účtu
-    "ANO"         // ✅ výchozí dostupnost
-  ]
-);
+      `INSERT INTO pilots (
+        id, name, email, password_hash, phone, street, city, zip, region,
+        latitude, longitude, visible_valid, ref_by_email, type_account, available
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+      RETURNING id`,
+      [
+        nextFreeId, // Explicitně nastavíme ID
+        name,
+        email,
+        password_hash,
+        phone,
+        street,
+        city,
+        zip,
+        region,
+        lat,
+        lon,
+        visible_valid,
+        ref || null,
+        "Basic",
+        "ANO"
+      ]
+    );
 
   // Pokud referrer existuje, přidáme bonus
 if (ref) {

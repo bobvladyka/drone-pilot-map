@@ -75,7 +75,7 @@ app.get('/check-admin-session', (req, res) => {
 app.post('/admin-login', (req, res) => {
     const { username, password } = req.body;
     const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'strongpassword123';
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'bi57zF5ih2ae9jRiuJtj';
 
     if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
         req.session.isAdmin = true;
@@ -833,19 +833,6 @@ app.post('/inzerent-reset-password', async (req, res) => {
   }
 });
 
-// Admin login endpoint
-app.post('/admin-login', async (req, res) => {
-    const { username, password } = req.body;
-
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'bi57zF5ih2ae9jRiuJtj';
-
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        req.session.isAdmin = true;
-        return res.json({ success: true });
-    }
-    return res.status(401).json({ success: false, message: 'Neplatné přihlašovací údaje' });
-});
 
 
 // Route for /admin

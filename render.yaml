@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: najdipilota-cz  # Nahraďte názvem vašeho služby v Render
+    env: static
+    buildCommand: ""  # Pro statické weby není potřeba
+    staticPublishPath: "./"  # Cesta k statickým souborům (např. obsahuje `robots.txt`)
+    routes:
+      - type: file
+        path: /robots.txt
+        cache: false  # Zakáže cachování

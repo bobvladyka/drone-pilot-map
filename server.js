@@ -1078,35 +1078,37 @@ app.get('/get-advertiser-conversations', async (req, res) => {
 
     // 2) Konverzace inzerenta + poslední zpráva + unread (počítané proti conversation_views.user_id = advertiserId)
     const convRes = await pool.query(`
-      SELECT
-        c.id,
-        p.email AS pilot_email,
-        p.name  AS pilot_name,
-        (SELECT message     FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message,
-        (SELECT created_at  FROM messages WHERE conversation_id = c.id ORDER BY created_at DESC LIMIT 1) AS last_message_time,
-        EXISTS (
-          SELECT 1
-          FROM messages m
-          WHERE m.conversation_id = c.id
-            AND m.sender_id != $1
-            AND (
-              m.created_at > COALESCE((
-                SELECT cv.last_seen
-                FROM conversation_views cv
-                WHERE cv.conversation_id = c.id AND cv.user_id = $1
-                LIMIT 1
-              ), '1970-01-01'::timestamp)
-              OR NOT EXISTS (
-                SELECT 1 FROM conversation_views cv
-                WHERE cv.conversation_id = c.id AND cv.user_id = $1
-              )
-            )
-        ) AS unread
-      FROM conversations c
-      JOIN pilots p ON p.id = c.pilot_id
-      WHERE c.advertiser_id = $1
-      ORDER BY last_message_time DESC NULLS LAST
-    `, [advertiserId]);
+  WITH last_msg AS (
+    SELECT DISTINCT ON (m.conversation_id)
+           m.conversation_id,
+           m.id            AS msg_id,
+           m.sender_id     AS last_sender_id,
+           m.message       AS last_message,
+           m.created_at    AS last_message_time
+    FROM messages m
+    ORDER BY m.conversation_id, m.created_at DESC
+  )
+  SELECT
+    c.id,
+    p.email AS pilot_email,
+    p.name  AS pilot_name,
+    lm.last_message,
+    lm.last_message_time,
+    -- unread = poslední zpráva je od druhé strany A je novější než last_seen (nebo last_seen neexistuje)
+    CASE
+      WHEN lm.msg_id IS NULL THEN FALSE
+      WHEN lm.last_sender_id = c.advertiser_id THEN FALSE
+      ELSE (lm.last_message_time > COALESCE(cv.last_seen, '1970-01-01'))
+    END AS unread
+  FROM conversations c
+  JOIN pilots p ON p.id = c.pilot_id
+  LEFT JOIN conversation_views cv 
+         ON cv.conversation_id = c.id AND cv.user_id = $1
+  LEFT JOIN last_msg lm 
+         ON lm.conversation_id = c.id
+  WHERE c.advertiser_id = $1
+  ORDER BY lm.last_message_time DESC NULLS LAST
+`, [advertiserId]);
 
     return res.json({ success: true, conversations: convRes.rows });
   } catch (err) {

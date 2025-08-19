@@ -438,8 +438,7 @@ app.get('/pilots', async (req, res) => {
       SELECT 
         id, name, email, phone, 
         street, city, zip, region,
-        latitude, longitude, 
-        password_hash, website,
+        latitude, longitude, website,
         note, licenses, drones,
         travel, specialization,
         volunteer, registrationnumber,

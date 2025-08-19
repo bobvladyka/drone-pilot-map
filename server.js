@@ -13,7 +13,17 @@ const rateLimit = require('express-rate-limit');
 const cron = require('node-cron');
 
 const app = express();
-const port = process.env.PORT || 3000;
+
+
+app.set('trust proxy', true); // pokud běží za proxy (Render/Heroku/Nginx), ať .ip funguje správně
+
+const allowLocalhostOnly = (req, res, next) => {
+  const xf = (req.headers['x-forwarded-for'] || '').split(',')[0].trim();
+  const ip = xf || req.ip || req.connection?.remoteAddress || '';
+  const allowed = new Set(['127.0.0.1', '::1', '::ffff:127.0.0.1']);
+  if (allowed.has(ip)) return next();
+  return res.status(403).send('Forbidden (admin only on localhost)');
+};
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -57,44 +67,8 @@ function requireAdminLogin(req, res, next) {
     }
     return res.redirect('/adminland.html');
 }
+// Nastavení složky pro statické soubory
 app.use(express.static(path.join(__dirname, 'public')));
-
-
-
-app.get('/check-admin-session', (req, res) => {
-    if (req.session.isAdmin) {
-        return res.status(200).send('OK');
-    }
-    return res.status(403).send('Unauthorized');
-});
-
-
-
-
-// ADMIN LOGIN
-app.post('/admin-login', (req, res) => {
-    const { username, password } = req.body;
-    const ADMIN_USERNAME = process.env.ADMIN_USERNAME || 'admin';
-    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'bi57zF5ih2ae9jRiuJtj';
-
-    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
-        req.session.isAdmin = true;
-        return res.json({ success: true });
-    }
-    return res.status(401).json({ success: false, message: 'Neplatné přihlašovací údaje' });
-});
-
-// ADMIN LOGOUT
-app.get('/admin-logout', (req, res) => {
-    req.session.destroy(() => {
-        res.redirect('/adminland.html');
-    });
-});
-
-// ADMIN HTML – chráněné
-app.get('/admin.html', requireAdminLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
 
 
 app.get("/", (req, res) => {
@@ -718,7 +692,7 @@ if (!visible_payment) visible_payment = oldData.visible_payment;
 });
 
 
-app.post('/delete-all', requireAdminLogin, async (req, res) => {
+app.post('/delete-all', allowLocalhostOnly, requireAdminLogin, async (req, res) => {
   try {
     await pool.query('DELETE FROM pilots');
     res.send("✅ Všechny záznamy byly smazány.");
@@ -728,7 +702,7 @@ app.post('/delete-all', requireAdminLogin, async (req, res) => {
   }
 });
 
-app.post('/delete-selected',  requireAdminLogin, async (req, res) => {
+app.post('/delete-selected', allowLocalhostOnly,  requireAdminLogin, async (req, res) => {
   const ids = req.body.ids;
   if (!Array.isArray(ids)) {
     return res.status(400).send('Neplatný vstup – očekává se pole ID.');
@@ -835,20 +809,45 @@ app.post('/inzerent-reset-password', async (req, res) => {
 
 
 
-// Route for /admin
-app.get('/admin', requireAdminLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+app.get('/adminland.html', allowLocalhostOnly, (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'adminland.html'));
 });
 
-// Route for /admin.html, same as /admin
-app.get('/admin.html', requireAdminLogin, (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
+// ADMIN stránka
+app.get('/admin.html', allowLocalhostOnly, requireAdminLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'admin.html'));
 });
 
-app.get('/admin-logout', (req, res) => {
+// Alternativní /admin -> stejná ochrana
+app.get('/admin', allowLocalhostOnly, requireAdminLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'admin.html'));
+});
+
+// Admin login/logout akce pouze z localhostu
+app.post('/admin-login', allowLocalhostOnly, (req, res) => { 
+
+    const { username, password } = req.body;
+    const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+    const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
+    if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
+        req.session.isAdmin = true;
+        return res.json({ success: true });
+    }
+    return res.status(401).json({ success: false, message: 'Neplatné přihlašovací údaje' });
+
+});
+app.get('/admin-logout', allowLocalhostOnly, (req, res) => { 
+
     req.session.destroy(() => {
         res.redirect('/adminland.html');
     });
+});
+
+// Stav session pro přesměrování z admin.html
+app.get('/check-admin-session', allowLocalhostOnly, (req, res) => {
+  if (req.session.isAdmin) return res.status(200).send('OK');
+  return res.status(403).send('Unauthorized');
 });
 
 app.post('/contact-pilot', async (req, res) => {
@@ -1570,10 +1569,6 @@ app.post('/admin-send-gdpr-reminder', requireAdminLogin, async (req, res) => {
     }
 });
 
-
-
-// Nastavení složky pro statické soubory
-app.use(express.static(path.join(__dirname, 'public')));
 
 // Route pro přístup k 'onlymap.html'
 app.get('/onlymap.html', (req, res) => {

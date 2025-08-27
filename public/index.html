@@ -273,7 +273,7 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       .then(data => {
         data.forEach(p => {
 
-        console.log(p.email);
+        
   if (p.visible !== "ANO") return; // Skryj neviditelné piloty
 
   if (p.latitude != null && p.longitude != null) {

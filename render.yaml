@@ -1,10 +1,11 @@
 services:
   - type: web
-    name: drone-pilot-map  # Nahraďte názvem vašeho služby v Render
-    env: static
-    buildCommand: ""  # Pro statické weby není potřeba
-    staticPublishPath: "./"  # Cesta k statickým souborům (např. obsahuje `robots.txt`)
-    routes:
-      - type: file
-        path: /robots.txt
-        cache: false  # Zakáže cachování
+    name: drone-pilot-map
+    env: node
+    plan: free            # nebo standard/starter – dle potřeby
+    buildCommand: "npm ci"
+    startCommand: "node server.js"
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production

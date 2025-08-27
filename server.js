@@ -1269,6 +1269,8 @@ app.get('/blog/article/:id', async (req, res) => {
 });
 
 
+
+
 // Get pilot's name by email
 app.get('/get-pilot-name', async (req, res) => {
   const { email } = req.query;
@@ -1290,7 +1292,7 @@ app.get('/get-pilot-name', async (req, res) => {
   }
 });
 
-// Get all conversations for a pilot
+
 // Get all conversations for a pilot
 app.get('/get-pilot-conversations', async (req, res) => {
   const { pilotEmail } = req.query;
@@ -1396,6 +1398,147 @@ app.post('/change-password', changePassLimiter, async (req, res) => {
     return res.status(500).send('Chyba na serveru při změně hesla');
   }
 });
+
+// Kdo je přihlášen jako inzerent (ze session)?
+app.get('/get-my-advertiser', async (req, res) => {
+  try {
+    const email = (req.session?.email || '').toLowerCase();
+    if (!email) return res.status(401).json({});
+
+    const r = await pool.query('SELECT id, email, name FROM advertisers WHERE LOWER(email) = $1', [email]);
+    if (r.rowCount === 0) return res.status(401).json({});
+    res.json(r.rows[0]);
+  } catch (e) {
+    console.error('get-my-advertiser error', e);
+    res.status(500).json({});
+  }
+});
+
+
+
+// GET /poptavky – veřejné i „moje“
+app.get('/poptavky', async (req, res) => {
+  try {
+    const { region = '', mine = '0' } = req.query;
+    const sessionEmail = (req.session?.email || '').toLowerCase();
+
+    if (mine === '1' && sessionEmail) {
+      // moje poptávky (nezávisle na public)
+      const r = await pool.query(
+        `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at
+         FROM demands
+         WHERE LOWER(advertiser_email) = $1
+         ORDER BY created_at DESC`,
+         [sessionEmail]
+      );
+      return res.json(r.rows);
+    }
+
+    // veřejné poptávky (volitelně s filtrem kraje)
+    const params = [];
+    let where = `public = TRUE`;
+    if (region) { params.push(region); where += ` AND region = $${params.length}`; }
+
+    const r = await pool.query(
+      `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at
+       FROM demands
+       WHERE ${where}
+       ORDER BY created_at DESC`,
+      params
+    );
+    res.json(r.rows);
+  } catch (err) {
+    console.error("Chyba při načítání poptávek:", err);
+    res.status(500).send("Chyba serveru při načítání poptávek");
+  }
+});
+
+// POST /poptavky – vložení poptávky inzerentem
+app.post('/poptavky', async (req, res) => {
+  try {
+     const { title, description, location, region, budget, deadline, public: isPublic } = req.body;
+    const advertiser_email = (req.session?.email || '').toLowerCase();
+    if (!advertiser_email) return res.status(401).send('Nepřihlášený inzerent.');
+    if (!title || !location) return res.status(400).send('Chybí povinná pole (název a lokalita).');
+
+    const inserted = await pool.query(
+      `INSERT INTO demands
+       (title, description, location, region, budget, deadline, public, advertiser_email)
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+       RETURNING id, title, description, location, region, budget, deadline, advertiser_email, created_at`,
+      [
+        title || null,
+        description || null,
+        location || null,
+        region || null,
+        Number.isFinite(+budget) ? +budget : null,
+        deadline || null,
+        isPublic !== false, // default true
+        advertiser_email
+      ]
+    );
+
+    res.status(201).json(inserted.rows[0]);
+  } catch (err) {
+    console.error('Chyba při ukládání poptávky:', err);
+    res.status(500).send('Chyba serveru při ukládání poptávky');
+  }
+});
+
+// PUT /poptavky/:id – update jen vlastník
+app.put('/poptavky/:id', async (req, res) => {
+  try {
+    const id = +req.params.id;
+    const { title, description, location, region, budget, deadline, public: isPublic } = req.body;
+    const advertiser_email = (req.session?.email || '').toLowerCase();
+    if (!advertiser_email) return res.status(401).send("Nepřihlášený inzerent.");
+
+    const owner = await pool.query(`SELECT LOWER(advertiser_email) AS advertiser_email FROM demands WHERE id = $1`, [id]);
+
+    if (owner.rowCount === 0) return res.status(404).send("Poptávka nenalezena.");
+    if (owner.rows[0].advertiser_email !== advertiser_email) return res.status(403).send("Nesmíš upravovat cizí poptávku.");
+
+    const r = await pool.query(
+      `UPDATE demands SET
+         title = COALESCE($2,title),
+         description = COALESCE($3,description),
+         location = COALESCE($4,location),
+         region = COALESCE($5,region),
+         budget = $6,
+         deadline = $7,
+         public = COALESCE($8, public)
+       WHERE id = $1
+       RETURNING id, title, description, location, region, budget, deadline, advertiser_email, created_at`,
+      [id, title || null, description || null, location || null, region || null,
+       Number.isFinite(+budget) ? +budget : null, deadline || null,
+       typeof isPublic === 'boolean' ? isPublic : null]
+    );
+    res.json(r.rows[0]);
+  } catch (err) {
+    console.error("Chyba při update poptávky:", err);
+    res.status(500).send("Chyba serveru při update poptávky");
+  }
+});
+
+// DELETE /poptavky/:id – s ověřením vlastníka
+app.delete('/poptavky/:id', async (req, res) => {
+  try {
+    const id = +req.params.id;
+    const advertiser_email = (req.session?.email || '').toLowerCase();
+    if (!advertiser_email) return res.status(401).send("Nepřihlášený inzerent.");
+
+    const owner = await pool.query(`SELECT LOWER(advertiser_email) AS advertiser_email FROM demands WHERE id = $1`, [id]);
+    if (owner.rowCount === 0) return res.status(404).send("Poptávka nenalezena.");
+    if (owner.rows[0].advertiser_email !== advertiser_email) return res.status(403).send("Nesmíš mazat cizí poptávku.");
+
+    await pool.query(`DELETE FROM demands WHERE id = $1`, [id]);
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Chyba při mazání poptávky:", err);
+    res.status(500).send("Chyba serveru při mazání poptávky");
+  }
+});
+
 
 app.get('/send-expiry-emails', async (req, res) => {
   try {

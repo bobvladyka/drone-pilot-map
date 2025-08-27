@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Poptávky – NajdiPilota.cz</title>
+  <meta name="description" content="Přidejte poptávku na letecké práce dronem a oslovte ověřené piloty v okolí."/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="style.css"/>
+</head>
+<body class="bg-light">
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold d-flex align-items-center" href="/">
+      <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true"/>
+      <span class="fs-4">NajdiPilota.cz</span>
+    </a>
+
+    <div class="ms-auto d-none d-md-flex">
+      <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-envelope me-1"></i>Moje zprávy
+      </a>
+      <a href="poptavky.html" class="btn btn-outline-secondary btn-sm ms-2">
+        <i class="bi bi-clipboard-plus me-1"></i>Poptávky
+      </a>
+    </div>
+  </div>
+</nav>
+
+<div class="container my-4">
+  <!-- Inzerent banner / stav -->
+  <div id="inzerent-info" class="alert alert-warning d-none"></div>
+
+  <div class="row g-4">
+    <!-- FORMULÁŘ PRO INZERENTA -->
+    <div class="col-12">
+      <div id="form-card" class="card shadow-sm">
+        <div class="card-body">
+          <h5 class="card-title mb-3"><i class="bi bi-clipboard-plus me-2"></i>Přidat poptávku</h5>
+          <div id="form-locked" class="alert alert-info d-none">
+            Pro přidání poptávky musíte být přihlášen jako inzerent.
+          </div>
+
+          <form id="poptavka-form" class="d-none">
+            <div class="mb-3">
+              <label class="form-label">Krátký popis*</label>
+              <input type="text" class="form-control" id="title" maxlength="120" placeholder="Např. Fotografování rodinného domu dronem" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Detail poptávky</label>
+              <textarea class="form-control" id="description" rows="4" placeholder="Upřesněte požadavky, termíny, výstupy..."></textarea>
+            </div>
+
+            <div class="row">
+              <div class="col-md-7 mb-3">
+                <label class="form-label">Lokalita*</label>
+                <input type="text" class="form-control" id="location" placeholder="Město / adresa" required>
+              </div>
+              <div class="col-md-5 mb-3">
+                <label class="form-label">Kraj</label>
+                <select id="region" class="form-select">
+                  <option value="">Vyberte kraj</option>
+                  <option>Hlavní město Praha</option>
+                  <option>Středočeský kraj</option>
+                  <option>Jihočeský kraj</option>
+                  <option>Plzeňský kraj</option>
+                  <option>Karlovarský kraj</option>
+                  <option>Ústecký kraj</option>
+                  <option>Liberecký kraj</option>
+                  <option>Královéhradecký kraj</option>
+                  <option>Pardubický kraj</option>
+                  <option>Vysočina</option>
+                  <option>Jihomoravský kraj</option>
+                  <option>Olomoucký kraj</option>
+                  <option>Zlínský kraj</option>
+                  <option>Moravskoslezský kraj</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Rozpočet (Kč)</label>
+                <input type="number" min="0" step="100" class="form-control" id="budget" placeholder="např. 8 000">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label class="form-label">Termín</label>
+                <input type="date" class="form-control" id="deadline">
+              </div>
+            </div>
+
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="publicContacts" checked>
+              <label class="form-check-label" for="publicContacts">
+                Souhlasím se zveřejněním této poptávky pro piloty na platformě.
+              </label>
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100 pilot-login-btn btn-sm user-action justify-content-center px-3 py-2">
+              <i class="bi bi-send me-1"></i>Odeslat poptávku
+            </button>
+            <div id="form-note" class="form-text mt-2">Po odeslání se vaše poptávka objeví ve výpisu níže.</div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- VÝPIS POPTÁVEK -->
+   <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+  <div class="d-flex align-items-center gap-2">
+    <i class="bi bi-list-task"></i>
+    <h5 class="mb-0">Aktivní poptávky</h5>
+  </div>
+
+  <div class="d-flex align-items-center gap-3">
+    <select id="filter-region" class="form-select form-select-sm w-auto">
+      <option value="">Všechny kraje</option>
+      <option>Hlavní město Praha</option>
+      <option>Středočeský kraj</option>
+      <option>Jihočeský kraj</option>
+      <option>Plzeňský kraj</option>
+      <option>Karlovarský kraj</option>
+      <option>Ústecký kraj</option>
+      <option>Liberecký kraj</option>
+      <option>Královéhradecký kraj</option>
+      <option>Pardubický kraj</option>
+      <option>Vysočina</option>
+      <option>Jihomoravský kraj</option>
+      <option>Olomoucký kraj</option>
+      <option>Zlínský kraj</option>
+      <option>Moravskoslezský kraj</option>
+    </select>
+
+    <div class="form-check form-switch m-0">
+      <input class="form-check-input" type="checkbox" id="filter-mine">
+      <label class="form-check-label small" for="filter-mine">Moje poptávky</label>
+    </div>
+  </div>
+</div>
+
+      <div id="poptavky-list" class="vstack gap-3"></div>
+      <div id="empty-state" class="text-center text-muted d-none">Zatím tu nic není.</div>
+    </div>
+  </div>
+</div>
+
+<footer class="footer py-4">
+  <div class="container text-center">
+    <small>&copy; NajdiPilota.cz</small>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// -----------------------------
+// Pomocné utility (fetch/json)
+// -----------------------------
+async function apiJson(url, data) {
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type':'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(data)
+  });
+  if (!res.ok) throw new Error(await res.text().catch(()=>res.statusText));
+  return res.json();
+}
+
+function formatKc(n) {
+  if (n == null || n === '') return '';
+  try { return new Intl.NumberFormat('cs-CZ').format(+n) + ' Kč'; } catch { return n + ' Kč'; }
+}
+function formatDateISO(d) {
+  if (!d) return '';
+  const dt = new Date(d);
+  return isNaN(dt) ? '' : dt.toLocaleDateString('cs-CZ');
+}
+function escapeHtml(s) {
+  return (s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
+}
+function setQueryParam(key, value) {
+  const url = new URL(window.location.href);
+  if (value && value !== '') url.searchParams.set(key, value);
+  else url.searchParams.delete(key);
+  history.replaceState(null, "", url.toString());
+}
+function getQueryParam(key, fallback = '') {
+  return new URL(window.location.href).searchParams.get(key) ?? fallback;
+}
+
+// -------------------------------------------
+// Úvodní zpráva, která se pošle inzerentovi
+// -------------------------------------------
+function buildIntroMessage(d) {
+  const rows = [
+    `Dobrý den,`,
+    `reaguji na Vaši poptávku „${d.title ?? ''}“.`,
+    '',
+    `• Lokalita: ${d.location ?? ''}${d.region ? `, ${d.region}` : ''}`,
+    '',
+    `Mám zájem domluvit detaily (rozsah prací, termíny, výstupy).`,
+    '',
+    `Děkuji a těším se na odpověď.`
+  ].filter(Boolean);
+  return rows.join('\n');
+}
+
+// -------------------------------------------
+// Získání e-mailu pilota (session → LS → prompt)
+// -------------------------------------------
+async function resolvePilotEmail() {
+  try {
+    const meRes = await fetch('/get-my-pilot', { credentials: 'include' });
+    if (meRes.ok) {
+      const me = await meRes.json();
+      if (me?.email) {
+        localStorage.setItem('pilotEmail', me.email);
+        return me.email;
+      }
+    }
+  } catch (_) {}
+  const ls = (localStorage.getItem('pilotEmail') || '').trim();
+  if (ls) return ls;
+
+  const ask = (prompt('Zadejte váš e-mail pilota pro odeslání reakce:') || '').trim();
+  if (ask) {
+    localStorage.setItem('pilotEmail', ask);
+    return ask;
+  }
+  throw new Error('Pilot není přihlášen a e-mail nebyl zadán.');
+}
+
+// -------------------------------------------
+// Editace / smazání vlastní poptávky (MVP)
+// -------------------------------------------
+let _lastData = []; // naplní loadPoptavky()
+
+async function editDemand(id) {
+  id = Number(id);
+  const item = (_lastData || []).find(d => Number(d.id) === id);
+  if (!item) return alert('Poptávka nenalezena.');
+
+  const advertiserEmail = localStorage.getItem('inzerentEmail');
+  if (!advertiserEmail || item.advertiser_email !== advertiserEmail) {
+    return alert('Toto není vaše poptávka.');
+  }
+
+  const title       = prompt('Nadpis', item.title || '') ?? item.title;
+  const description = prompt('Popis', item.description || '') ?? item.description;
+  const location    = prompt('Lokalita', item.location || '') ?? item.location;
+  const region      = prompt('Kraj', item.region || '') ?? item.region;
+  const budgetStr   = prompt('Rozpočet (Kč)', item.budget ?? '') ?? item.budget;
+  const deadline    = prompt('Termín (YYYY-MM-DD)', item.deadline ?? '') ?? item.deadline;
+
+  try {
+    const res = await fetch(`/poptavky/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({
+        title, description, location, region,
+        budget: budgetStr === '' ? null : Number(budgetStr),
+        deadline: deadline || null
+      })
+    });
+    if (!res.ok) throw new Error(await res.text());
+    await loadPoptavky(currentRegion());
+  } catch (err) {
+    console.error(err);
+    alert('Nepodařilo se upravit poptávku: ' + (err?.message || err));
+  }
+}
+
+async function deleteDemand(id) {
+  id = Number(id);
+  const item = (_lastData || []).find(d => Number(d.id) === id);
+  if (!item) return alert('Poptávka nenalezena.');
+
+  const advertiserEmail = localStorage.getItem('inzerentEmail');
+  if (!advertiserEmail || item.advertiser_email !== advertiserEmail) {
+    return alert('Toto není vaše poptávka.');
+  }
+
+  if (!confirm('Opravdu smazat tuto poptávku?')) return;
+  try {
+    const res = await fetch(`/poptavky/${id}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({})
+    });
+    if (!res.ok) throw new Error(await res.text());
+    _lastData = _lastData.filter(d => Number(d.id) !== id);
+    renderList(_lastData);
+  } catch (err) {
+    console.error(err);
+    alert('Mazání selhalo: ' + (err?.message || err));
+  }
+}
+
+// -------------------------------------------
+// Reakce pilota na poptávku (vytvoří konverzaci)
+// -------------------------------------------
+async function handleReactById(id) {
+  id = Number(id);
+  const demand = (_lastData || []).find(d => Number(d.id) === Number(id));
+  if (!demand) return alert('Poptávka nenalezena.');
+  const btn = event?.currentTarget;
+  const originalHTML = btn ? btn.innerHTML : null;
+
+  try {
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Odesílám…';
+    }
+
+    // 1) Kdo jsem (pilot)?
+    const pilotEmail = await resolvePilotEmail();
+
+    // 2) Vytvoř / najdi konverzaci
+    const { success, conversationId, message } = await apiJson('/create-conversation', {
+      pilotEmail,
+      advertiserEmail: demand.advertiser_email
+    });
+    if (!success || !conversationId) throw new Error(message || 'Nepodařilo se vytvořit konverzaci');
+
+    // 3) Pošli úvodní zprávu
+    const intro = buildIntroMessage(demand);
+    const sendRes = await apiJson('/send-message', {
+      conversationId,
+      senderEmail: pilotEmail,
+      message: intro
+    });
+    if (!sendRes.success) throw new Error('Zprávu se nepodařilo odeslat.');
+
+    // 4) Přesměruj do chatu (chat.html očekává tyto 3 parametry)
+    const url = new URL(location.origin + '/chat.html');
+    url.searchParams.set('conversationId', conversationId);
+    url.searchParams.set('pilotEmail', pilotEmail);
+    url.searchParams.set('inzerentEmail', demand.advertiser_email);
+    location.href = url.toString();
+
+  } catch (err) {
+    console.error(err);
+    alert('Nepodařilo se reagovat na poptávku: ' + (err?.message || err));
+    if (btn && originalHTML != null) { btn.disabled = false; btn.innerHTML = originalHTML; }
+  }
+}
+
+// -----------------------------
+// Hlavní IIFE
+// -----------------------------
+(async function () {
+  // ------- role: pilot? -------
+  let isPilot = false;
+  const fromIndex = document.referrer.includes('/index.html') || document.referrer.endsWith('/');
+  const pilotQS = ['pilot','as'].some(k => {
+    const v = (new URL(location.href)).searchParams.get(k);
+    return v === '1' || v === 'pilot' || v === 'true';
+  });
+  if (fromIndex || pilotQS) isPilot = true;
+  try {
+    if (!isPilot) {
+      const me = await fetch('/get-my-pilot', { credentials: 'include' });
+      if (me.ok) {
+        const user = await me.json();
+        if (user && user.id) isPilot = true;
+      }
+    }
+  } catch (_) {}
+
+  
+
+  // ------- role: inzerent? -------
+  let advertiserEmail = '';
+  try {
+    const r = await fetch('/get-my-advertiser', { credentials: 'include' });
+    if (r.ok) {
+      const me = await r.json();
+      advertiserEmail = (me?.email || '').toLowerCase();
+    }
+  } catch(_) {}
+
+  
+
+  // fallback pro starý způsob (nepovinné)
+  if (!advertiserEmail) advertiserEmail = (localStorage.getItem('inzerentEmail') || '').toLowerCase();
+  const isAdvertiser = !!advertiserEmail;
+
+
+  // ------- prvky formuláře -------
+  const form = document.getElementById('poptavka-form');
+  const formLocked = document.getElementById('form-locked');
+  const info = document.getElementById('inzerent-info');
+
+  if (isAdvertiser) {
+    form.classList.remove('d-none');
+    formLocked.classList.add('d-none');
+    info.classList.remove('d-none');
+    info.classList.replace('alert-warning','alert-success');
+    info.innerHTML = '<i class="bi bi-person-check me-1"></i>Přihlášený inzerent: <strong>' + advertiserEmail + '</strong>';
+  } else {
+    form.classList.add('d-none');
+    formLocked.classList.remove('d-none');
+    info.classList.add('d-none');
+  }
+
+  // ------- doplnění „Moje poptávky“ přepínače (když chybí v HTML) -------
+  const regionSelect = document.getElementById('filter-region');
+  let mineSwitch = document.getElementById('filter-mine');
+  (function ensureMineSwitch() {
+    if (!mineSwitch) {
+      const host = regionSelect?.parentElement; // stejný wrapper jako select
+      if (host) {
+        const wrap = document.createElement('div');
+        wrap.className = 'form-check form-switch ms-1';
+        wrap.innerHTML = `
+          <input class="form-check-input" type="checkbox" id="filter-mine">
+          <label class="form-check-label small" for="filter-mine">Moje poptávky</label>
+        `;
+        host.appendChild(wrap);
+        mineSwitch = wrap.querySelector('#filter-mine');
+      }
+    }
+    // když není přihlášen inzerent, přepínač skryj
+    if (mineSwitch && !isAdvertiser) {
+      mineSwitch.closest('.form-check')?.classList.add('d-none');
+    }
+  })();
+
+  // volitelný textový vyhledávač, pokud ho později přidáš do HTML
+  const queryInput = document.getElementById('filter-query');
+
+  function currentRegion() {
+    return regionSelect?.value || '';
+  }
+
+  // init z URL
+  const urlRegion = getQueryParam('region', '');
+  if (regionSelect) regionSelect.value = urlRegion;
+
+  // ------- listenery -------
+  regionSelect?.addEventListener('change', async () => {
+    setQueryParam('region', currentRegion());
+    await loadPoptavky(currentRegion());
+  });
+  mineSwitch?.addEventListener('change', async () => {
+    await loadPoptavky(currentRegion());
+  });
+  queryInput?.addEventListener('input', () => {
+    renderList(_lastData || []);
+  });
+
+  // ------- submit formuláře (vytvoření poptávky) -------
+  form?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const rawBudget = document.getElementById('budget').value;
+    const payload = {
+      title: document.getElementById('title').value.trim(),
+      description: document.getElementById('description').value.trim(),
+      location: document.getElementById('location').value.trim(),
+      region: document.getElementById('region').value,
+      budget: rawBudget === '' ? null : Number(rawBudget),
+      deadline: document.getElementById('deadline').value || null,
+      public: document.getElementById('publicContacts').checked,
+    };
+
+    const res = await fetch('/poptavky', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(payload)
+    });
+
+    if (res.ok) {
+      form.reset();
+      await loadPoptavky(currentRegion());
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      const txt = await res.text();
+      alert('Nepodařilo se uložit poptávku: ' + txt);
+    }
+  });
+
+  // ------- načítání poptávek (veřejné / moje) -------
+  async function loadPoptavky(region = '') {
+    const mine = !!mineSwitch?.checked;
+    let url = '/poptavky';
+
+    if (mine) {
+      const qp = new URLSearchParams({ mine: '1' });
+      if (region) qp.set('region', region); // volitelně
+      url += `?${qp.toString()}`;
+    } else {
+      const qs = region ? `?region=${encodeURIComponent(region)}` : '';
+      url += qs;
+    }
+
+    const res = await fetch(url, { credentials: 'include' });
+    _lastData = await res.json();
+    renderList(_lastData);
+  }
+
+  // ------- vykreslení seznamu -------
+  function renderList(items) {
+    const container = document.getElementById('poptavky-list');
+    const empty = document.getElementById('empty-state');
+    const q = (queryInput?.value || '').trim().toLowerCase();
+    const selectedRegion = currentRegion();
+
+    container.innerHTML = '';
+
+    const filtered = (items || []).filter(x => {
+      if (selectedRegion && (x.region || '') !== selectedRegion) return false;
+      if (!q) return true;
+      const hay = `${x.title||''} ${x.description||''} ${x.location||''}`.toLowerCase();
+      return hay.includes(q);
+    });
+
+    if (filtered.length === 0) {
+      empty.classList.remove('d-none');
+      return;
+    }
+    empty.classList.add('d-none');
+
+    filtered.forEach(x => {
+            const dateStr = new Date(x.created_at).toLocaleDateString('cs-CZ');
+const isMine  = (x.advertiser_email && advertiserEmail && x.advertiser_email === advertiserEmail);
+
+const card = document.createElement('div');
+card.className = 'card shadow-sm';
+card.innerHTML = `
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-start">
+      <div>
+        <h6 class="mb-1">${escapeHtml(x.title)}</h6>
+        <div class="text-muted small">
+          ${escapeHtml(x.location || '')}${x.region ? ' · ' + escapeHtml(x.region) : ''}
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span class="badge bg-light text-secondary">${dateStr}</span>
+        ${isMine ? `
+          <button type="button" class="btn btn-outline-secondary btn-sm p-1"
+                  title="Upravit" aria-label="Upravit"
+                  onclick="editDemand(${Number(x.id)})">
+            <i class="bi bi-pencil"></i>
+          </button>
+          <button type="button" class="btn btn-outline-danger btn-sm p-1"
+                  title="Smazat" aria-label="Smazat"
+                  onclick="deleteDemand(${Number(x.id)})">
+            <i class="bi bi-trash"></i>
+          </button>` : ``}
+      </div>
+    </div>
+
+    ${x.description ? `<p class="mt-3 mb-2">${escapeHtml(x.description)}</p>` : ''}
+
+    <div class="d-flex flex-wrap gap-3 align-items-center mt-2">
+      ${x.budget ? `<span class="badge bg-success-subtle text-success-emphasis">
+        <i class="bi bi-cash-coin me-1"></i>${Number(x.budget).toLocaleString('cs-CZ')} Kč</span>` : ''}
+      ${x.deadline ? `<span class="badge bg-warning-subtle text-warning-emphasis">
+        <i class="bi bi-calendar-event me-1"></i>${new Date(x.deadline).toLocaleDateString('cs-CZ')}</span>` : ''}
+    </div>
+
+    ${isPilot ? `
+      <div class="mt-3">
+        <button type="button" class="btn btn-outline-primary btn-sm"
+                title="Napsat inzerentovi"
+                onclick="handleReactById(${Number(x.id)})">
+          <i class="bi bi-reply me-1"></i>Reagovat
+        </button>
+      </div>` : ``}
+  </div>`;
+container.appendChild(card);
+
+    });
+  }
+
+  // zpřístupnění funkcí z IIFE ven (pro edit/delete)
+  window.loadPoptavky = loadPoptavky;
+  window.currentRegion = currentRegion;
+  window.renderList = renderList;
+
+  // první načtení
+  await loadPoptavky(urlRegion);
+})();
+</script>
+
+</body>
+</html>

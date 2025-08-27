@@ -79,6 +79,12 @@
             <i class="bi bi-envelope me-1"></i>Moje zprávy
           </a>
         </li>
+        
+        <li class="nav-item" id="poptavky-nav-item" style="display:none;">
+  <a class="nav-link" href="/poptavky.html">
+    <i class="bi bi-briefcase-fill me-1"></i>Poptávky
+  </a>
+</li>
 
         <li class="nav-item">
           <a class="nav-link" href="/o-projektu.html">O projektu</a>
@@ -489,6 +495,22 @@ if (loggedEmail) {
     messagesNavItem.style.display = "block";
   }
 
+  // Zobrazení "Poptávky" jen pro účty Basic/Premium
+  const poptavkyNavItem = document.getElementById("poptavky-nav-item");
+  if (poptavkyNavItem && loggedEmail) {
+    fetch('/get-my-pilot', { credentials: 'include' })
+      .then(r => r.ok ? r.json() : null)
+      .then(me => {
+        const t = (me?.type_account || '').toLowerCase();
+        if (t === 'basic' || t === 'premium') {
+          poptavkyNavItem.style.display = "block";
+        } else {
+          poptavkyNavItem.style.display = "none";
+        }
+      })
+      .catch(() => { poptavkyNavItem.style.display = "none"; });
+  }
+
   toggle.addEventListener("click", () => {
     localStorage.removeItem("loggedEmail");
     window.location.reload();
@@ -863,25 +885,6 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
   });
 </script>
 
-<script>
-  document.addEventListener("DOMContentLoaded", () => {
-    const loggedEmail = localStorage.getItem("loggedEmail");
-    const navBar = document.querySelector('.navbar-nav');
-    
-    if (loggedEmail) {
-      // Vytvoření položky pro chat v navigaci
-      const chatNavItem = document.createElement('li');
-      chatNavItem.className = 'nav-item';
-      chatNavItem.innerHTML = `
-        <a class="nav-link" href="/chat.html">
-          <i class="bi bi-chat-left-text me-1"></i>Mé zprávy
-        </a>
-      `;
-      
-      // Vložení před poslední položku (kontakt)
-      navBar.insertBefore(chatNavItem, navBar.lastElementChild);
-    }
-  });
 
 
 </body>

@@ -43,6 +43,7 @@ html {
   scroll-behavior: smooth;
 }
 
+.navbar .btn + .btn { margin-left: .5rem; } /* malý odstup mezi sousedními btn */
 </style>
 
 
@@ -56,12 +57,14 @@ html {
   <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
   <span class="fs-4">NajdiPilota.cz | Sekce pro inzerenty</span>
 
-  <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm d-none d-md-inline"><i class="bi bi-envelope me-1"></i>Moje zprávy</a>
-
-
-</a>
-        
-    
+  <div class="ms-auto d-none d-md-flex">
+      <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-envelope me-1"></i>Moje zprávy
+      </a>
+      <a href="poptavky.html" class="btn btn-outline-secondary btn-sm ms-2">
+        <i class="bi bi-clipboard-plus me-1"></i>Poptávky
+      </a>
+    </div>
   </div>
 </nav>
 

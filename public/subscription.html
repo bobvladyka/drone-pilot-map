@@ -85,8 +85,8 @@
             <img src="icons/basicjpg.png" alt="Basic Plan" class="membership-image">
             <h4>Basic</h4>
             <!-- Zobrazujeme starou cenu pouze pro půlroční a roční plány -->
-            <p id="basic-old-price" class="old-price">119 Kč</p>
-            <p id="basic-price" class="new-price">119 Kč</p>
+            <p id="basic-old-price" class="old-price">79 Kč</p>
+            <p id="basic-price" class="new-price">79 Kč</p>
             <p id="basic-monthly" class="monthly-price"></p>
             <ul class="list-unstyled">
               <li>Až 2 specializace</li>
@@ -109,8 +109,8 @@
             <img src="icons/premiumjpg.png" alt="Premium Plan" class="membership-image">
             <h4>Premium</h4>
             <!-- Zobrazujeme starou cenu pouze pro půlroční a roční plány -->
-            <p id="premium-old-price" class="old-price">249 Kč</p>
-            <p id="premium-price" class="new-price">249 Kč</p>
+            <p id="premium-old-price" class="old-price">149 Kč</p>
+            <p id="premium-price" class="new-price">149 Kč</p>
             <p id="premium-monthly" class="monthly-price"></p>
             <ul class="list-unstyled">
               <li>Vše z Basic</li>
@@ -193,24 +193,24 @@
     if (plan === "monthly") {
       basicOldPrice.style.display = "none";
       premiumOldPrice.style.display = "none";
-      basicPrice.textContent = "119 Kč";
-      premiumPrice.textContent = "249 Kč";
+      basicPrice.textContent = "79 Kč";
+      premiumPrice.textContent = "149 Kč";
       basicMonthly.textContent = "";
       premiumMonthly.textContent = "";
     } else if (plan === "semi-annual") {
       basicOldPrice.style.display = "inline";
       premiumOldPrice.style.display = "inline";
-      basicPrice.textContent = "678 Kč";
-      premiumPrice.textContent = "1420 Kč";
-      basicMonthly.textContent = "(113,00 Kč/měsíc)";
-      premiumMonthly.textContent = "(236,50 Kč/měsíc)";
+      basicPrice.textContent = "427 Kč";
+      premiumPrice.textContent = "805 Kč";
+      basicMonthly.textContent = "(71 Kč/měsíc)";
+      premiumMonthly.textContent = "(134 Kč/měsíc)";
     } else if (plan === "annual") {
       basicOldPrice.style.display = "inline";
       premiumOldPrice.style.display = "inline";
-      basicPrice.textContent = "1214 Kč";
-      premiumPrice.textContent = "2540 Kč";
-      basicMonthly.textContent = "(101,15 Kč/měsíc)";
-      premiumMonthly.textContent = "(211,65 Kč/měsíc)";
+      basicPrice.textContent = "749 Kč";
+      premiumPrice.textContent = "1412 Kč";
+      basicMonthly.textContent = "(62 Kč/měsíc)";
+      premiumMonthly.textContent = "(117 Kč/měsíc)";
     }
   }
 </script>

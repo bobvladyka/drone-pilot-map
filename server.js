@@ -70,12 +70,7 @@ function requireAdminLogin(req, res, next) {
 // Nastavení složky pro statické soubory
 app.use(express.static(path.join(__dirname, 'public')));
 
-/ 2) pro jistotu explicitní route (nebude cacheovat a nastaví správný typ)
-app.get('/robots.txt', (req, res) => {
-  res.type('text/plain');
-  res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
-  res.sendFile(path.join(__dirname, 'public', 'robots.txt'));
-});
+
 
 
 app.get("/", (req, res) => {

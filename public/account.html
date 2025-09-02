@@ -189,6 +189,9 @@
   📢 Pozvi kamaráda a získej na týden členství <b>zdarma!</b><br>
   Tvůj odkaz: 
   <code id="ref-link"></code>
+  <button id="copy-btn" class="btn pilot-login-button btn-sm ms-2 w-100" title="Kopírovat odkaz">
+    <i class="bi bi-clipboard"></i> Kopírovat
+  </button>
 </div>
   
 <div class="col-12 mt-4" id="gdpr-consent-section">
@@ -539,6 +542,26 @@ console.log("Odesílaná data:", data);
 	status.classList.toggle("text-success", res.ok);
   status.classList.toggle("text-danger", !res.ok);
     });
+
+document.getElementById("copy-btn").addEventListener("click", () => {
+  const refLink = document.getElementById("ref-link");
+  const textToCopy = refLink.textContent.trim();
+
+  // Vytvoření dočasného textarea elementu pro kopírování do schránky
+  const textarea = document.createElement("textarea");
+  textarea.value = textToCopy;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand("copy");
+  document.body.removeChild(textarea);
+
+  // Změna textu tlačítka po úspěšném zkopírování
+  const copyBtn = document.getElementById("copy-btn");
+  copyBtn.textContent = "Zkopírováno!";
+  setTimeout(() => {
+    copyBtn.textContent = "Kopírovat";
+  }, 2000);  // Obnoví text po 2 vteřinách
+});
   </script>
 
 <script>

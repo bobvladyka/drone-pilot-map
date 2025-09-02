@@ -117,7 +117,7 @@ const onboardingEmailContent = () => {
       <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
         <li>Vidíte pouze omezené informace o ostatních pilotech (jméno, dobrovolník, 1 dron, 1 specializace).</li>
         <li>Nemáte přístup k kontaktům (email, telefon) ani k dalším dronům nebo specializacím.</li>
-        <li>Nemáte přístup k kontaktům (email, telefon) ani k dalším dronům nebo specializacím.</li>
+        
       </ul>
 
       <p style="font-size: 16px; color: #495057;">Pokud budete potřebovat prodloužit své členství, můžete to udělat v sekci, kde upravujete informace o pilotovi. Zde také najdete kód, který můžete poslat kamarádům. Když se zaregistrují, získáte 7 dní členství Basic zdarma, nebo prodloužíte své Premium o 7 dní, pokud jste už v tomto typu účtu.</p>
@@ -901,6 +901,7 @@ app.post("/update-membership", async (req, res) => {
 });
 
 // --- Vrácení dat přihlášeného pilota ---
+// --- Vrácení dat přihlášeného pilota ---
 app.get('/get-my-pilot', async (req, res) => {
   try {
     let email = req.session?.email || req.query.email || req.headers['x-user-email'];
@@ -926,17 +927,23 @@ app.get('/get-my-pilot', async (req, res) => {
     const user = result.rows[0];
     const currentDate = new Date();
 
-    // Pokud uplynul měsíc, přepneme účet na Free
+    // Kontrola platnosti členství - pouze informativní, bez přepisování DB
+    let accountStatus = user.type_account;
+    let isExpired = false;
+    
     if (user.visible_valid && new Date(user.visible_valid) <= currentDate) {
-      await pool.query(
-        `UPDATE pilots SET type_account = $1 WHERE id = $2`,
-        ["Free", userId]
-      );
-      console.log(`Pilot ${user.email} byl přepnut na typ účtu Free.`);
-      user.type_account = "Free";  // Aktualizujeme typ účtu v odpovědi
+      isExpired = true;
+      // Nastavíme status na "expired", ale NEPŘEPISUJEME databázi
+      accountStatus = "Free";
     }
 
-    res.json(user);
+    // Vrátíme data včetně informace o expiraci
+    res.json({
+      ...user,
+      type_account: accountStatus,
+      membership_expired: isExpired
+    });
+    
   } catch (err) {
     console.error('Chyba při načítání pilota:', err);
     res.status(500).json({ error: 'Chyba na serveru' });

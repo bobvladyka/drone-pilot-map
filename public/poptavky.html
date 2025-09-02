@@ -19,7 +19,8 @@
     </a>
 
     <div class="ms-auto d-none d-md-flex">
-      <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm">
+       <!-- Odkaz na zprávy bude dynamicky nastaven v JavaScriptu -->
+      <a id="messages-link" href="#" class="btn btn-outline-secondary btn-sm">
         <i class="bi bi-envelope me-1"></i>Moje zprávy
       </a>
       <a href="poptavky.html" class="btn btn-outline-secondary btn-sm ms-2">
@@ -389,6 +390,19 @@ async function handleReactById(id) {
   // fallback pro starý způsob (nepovinné)
   if (!advertiserEmail) advertiserEmail = (localStorage.getItem('inzerentEmail') || '').toLowerCase();
   const isAdvertiser = !!advertiserEmail;
+
+// ------- Nastavení odkazu na zprávy podle role -------
+  const messagesLink = document.getElementById('messages-link');
+  if (messagesLink) {
+    if (isPilot) {
+      messagesLink.href = 'moje-zpravy.html';
+    } else if (isAdvertiser) {
+      messagesLink.href = 'moje-zpravy-inzerent.html';
+    } else {
+      // Pokud není přihlášen žádný uživatel, skrýt odkaz
+      messagesLink.style.display = 'none';
+    }
+  }
 
 
   // ------- prvky formuláře -------

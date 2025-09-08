@@ -9,6 +9,7 @@ const prerender = require('prerender-node');
 const session = require('express-session');
 const cors = require('cors'); // Přidejte tento require
 const rateLimit = require('express-rate-limit');
+const iconv = require('iconv-lite');
 
 const cron = require('node-cron');
 
@@ -33,7 +34,13 @@ const pool = new Pool({
   }
 });
 
-app.use(prerender);
+// hned po vytvoření poolu
+pool.on('connect', (client) => {
+  client.query("SET CLIENT_ENCODING TO 'UTF8'");
+  client.query("SET search_path TO public"); // ← DŮLEŽITÉ
+});
+
+
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
@@ -41,6 +48,25 @@ const changePassLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minut
   max: 20
 });
+
+const BAD_CHARS = /[ÂÃ ÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞß ]/g;
+const GOOD_CZ   = /[ěščřžýáíéůúďťňóĚŠČŘŽÝÁÍÉŮÚĎŤŇÓ]/g;
+
+function scoreCZ(s) {
+  return (s.match(GOOD_CZ) || []).length - 2 * (s.match(BAD_CHARS) || []).length;
+}
+
+function bestUtfVariant(name) {
+  if (typeof name !== 'string') return name;
+  const variants = [
+    name,
+    // simulace „bylo to cestou převedeno do cp1250 a zase mylně čteno jako UTF-8“
+    iconv.decode(iconv.encode(name, 'win1250'), 'utf8'),
+    // totéž pro latin2
+    iconv.decode(iconv.encode(name, 'latin2'), 'utf8'),
+  ];
+  return variants.reduce((best, cur) => (scoreCZ(cur) > scoreCZ(best) ? cur : best), name);
+}
 
 // Session konfigurace
 app.use(session({
@@ -53,11 +79,15 @@ app.use(session({
    
 }));
 
+// Přidejte toto na začátek server.js
+app.use(express.json({ type: 'application/json; charset=utf-8' }));
+
 app.use(cors({
   origin: 'https://www.najdipilota.cz', // Povolit pouze vaši doménu
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Povolené HTTP metody
   credentials: true // Povolit cookies a autentizační hlavičky
 }));
+
 
 // Admin route protection middleware
 function requireAdminLogin(req, res, next) {
@@ -67,8 +97,7 @@ function requireAdminLogin(req, res, next) {
     }
     return res.redirect('/adminland.html');
 }
-// Nastavení složky pro statické soubory
-app.use(express.static(path.join(__dirname, 'public')));
+
 
 
 
@@ -466,6 +495,7 @@ app.get('/pilots', async (req, res) => {
       pilots.push(row);
     }
 
+    res.setHeader('Content-Type', 'application/json; charset=utf-8'); // Ensure UTF-8 encoding
     res.json(pilots);
   } catch (err) {
     console.error("Chyba při načítání pilotů:", err);
@@ -513,184 +543,226 @@ app.post('/reset-password', async (req, res) => {
 });
 
 app.post("/update", async (req, res) => {
+  console.log("Přijatá data:", req.body);
 
-console.log("Přijatá data:", req.body);
   let {
-  email,
-  name,
-  phone,
-  website,
-  street,
-  city,
-  zip,
-  region,
-  drones,
-  note,
-  travel,
-  licenses,
-  specialization,
-  volunteer,
-  registrationnumber,
-  available,
-  visible,
-  visible_payment,
-  visible_valid
-} = req.body;
+    email,
+    name,
+    phone,
+    website,
+    street,
+    city,
+    zip,
+    region,
+    drones,
+    note,
+    travel,
+    licenses,
+    specialization_ids,   // << sem jde pole ID (Array) nebo comma-string
+    volunteer,
+    registrationnumber,
+    available,
+    visible,
+    visible_payment,
+    visible_valid
+  } = req.body;
 
-if (visible === undefined || visible === null) {
+  // natáhni stará data (kvůli omezením a defaultům)
   const oldDataResult = await pool.query(
-    "SELECT visible, visible_valid, visible_payment, type_account FROM pilots WHERE email = $1",
+    "SELECT visible, visible_valid, visible_payment, type_account, available AS old_available FROM pilots WHERE email = $1",
     [email]
   );
   const oldPilotData = oldDataResult.rows[0];
-
-    if (!oldPilotData) {
-      return res.status(404).send("Pilot nenalezen.");
-    }
-
-    // Pokud nebyly poslány hodnoty viditelnosti, použij staré
-    if (visible === undefined || visible === null) visible = oldPilotData.visible;
-    if (!visible_valid) visible_valid = oldPilotData.visible_valid;
-    if (!visible_payment) visible_payment = oldPilotData.visible_payment;
-
-    // 🔒 Restrikce pro Free účty
-    if (oldPilotData.type_account === "Free") {
-  available = "ANO"; // vždy ANO
-  website = null;    // zakázat web
-  note = null;       // zakázat poznámku
-  registrationnumber = null; // 🚫 zakázat registrační číslo
-  visible = "ANO"; 
-
-  if (specialization) {
-    specialization = specialization.split(",")[0]; // jen první specializace
+  if (!oldPilotData) {
+    return res.status(404).send("Pilot nenalezen.");
   }
 
-  if (drones) {
-    drones = drones.split(",")[0]; // 🚫 jen první dron
+  // Převod specialization_ids -> čisté pole čísel
+  let specIds = [];
+  if (Array.isArray(specialization_ids)) {
+    specIds = specialization_ids
+      .map(x => Number(x))
+      .filter(x => Number.isInteger(x) && x > 0);
+  } else if (typeof specialization_ids === "string" && specialization_ids.trim() !== "") {
+    specIds = specialization_ids
+      .split(",")
+      .map(s => Number(s.trim()))
+      .filter(x => Number.isInteger(x) && x > 0);
   }
-}
-// 🔒 Omezení pro Basic účet
-if (oldPilotData.type_account === "Basic") {
 
-   if (!available) {
-    available = oldPilotData.available;
-  }
-
-  // Povolené: available, registrationnumber, phone, email, website(portfolio)
-  // Omezení: max 3 specializace, max 2 drony
-  if (specialization) {
-    specialization = specialization.split(",").slice(0, 3).join(","); // max 3
-  }
-  if (drones) {
-    drones = drones.split(",").slice(0, 2).join(","); // max 2
-  }
-}
-
-// 🛡️ Zajištění, že available má vždy ANO nebo NE
-if (available !== "ANO" && available !== "NE") {
-  available = "NE";
-}
-
-
-    // Převod visible na ANO/NE
+  // 🔒 Restrikce podle typu účtu
+  if (oldPilotData.type_account === "Free") {
+    available = "ANO";         // vždy ANO
+    website = null;            // zakázat
+    note = null;               // zakázat
+    registrationnumber = null; // zakázat
     visible = "ANO";
 
-if (!visible) visible = oldData.visible;
-if (!visible_valid) visible_valid = oldData.visible_valid;
-if (!visible_payment) visible_payment = oldData.visible_payment;
-} else {
-  visible = visible ? "ANO" : "NE";
-}  const location = [street, city, zip, region].filter(Boolean).join(', ');
+    // Free: max 1 specializace
+    if (specIds.length > 1) specIds = specIds.slice(0, 1);
 
-  let lat = null, lon = null;
-
-  try {
-  const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`, {
-    headers: { 'User-Agent': 'DronMapApp/1.0' }
-  });
-  const data = await response.json();
-  if (data.length > 0) {
-    lat = parseFloat(data[0].lat);
-    lon = parseFloat(data[0].lon);
-  } else {
-    console.warn("❗Adresa se nepodařilo geokódovat:", location);
+    // Free: jen první dron
+    if (drones) {
+      drones = drones.split(",")[0]?.trim() || null;
+    }
   }
-} catch (err) {
-  console.error("Chyba při geokódování:", err);
-}
 
+  if (oldPilotData.type_account === "Basic") {
+    if (!available) available = oldPilotData.old_available;
+    // Basic: max 2 specializace (držíme se FE, kde hlídáš 2)
+    if (specIds.length > 2) specIds = specIds.slice(0, 2);
+    // Basic: max 2 drony
+    if (drones) {
+      drones = drones
+        .split(",")
+        .slice(0, 2)
+        .map(s => s.trim())
+        .filter(Boolean)
+        .join(", ") || null;
+    }
+  }
+
+  // 🛡️ available vždy jen ANO/NE
+  if (available !== "ANO" && available !== "NE") {
+    available = "NE";
+  }
+
+  // visible -> ANO/NE
+  if (visible === undefined || visible === null) {
+    visible = oldPilotData.visible;
+  } else {
+    visible = visible ? "ANO" : "NE";
+  }
+  if (!visible_valid)   visible_valid   = oldPilotData.visible_valid;
+  if (!visible_payment) visible_payment = oldPilotData.visible_payment;
+
+  // Geokódování
+  const location = [street, city, zip, region].filter(Boolean).join(", ");
+  let lat = null, lon = null;
   try {
-    // DEBUG: Logování hodnot před odesláním do DB
-    console.log("Hodnoty pro update:", {
-      name, phone, website, street, city, zip, region,
-      drones, note, travel, licenses, specialization,
-      volunteer, lat, lon, registrationnumber, 
-      available // Toto by mělo být 'ANO' nebo 'NE'
-    });
+    const response = await fetch(
+      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`,
+      { headers: { "User-Agent": "DronMapApp/1.0" } }
+    );
+    const data = await response.json();
+    if (Array.isArray(data) && data.length > 0) {
+      lat = parseFloat(data[0].lat);
+      lon = parseFloat(data[0].lon);
+    } else {
+      console.warn("❗Adresa se nepodařilo geokódovat:", location);
+    }
+  } catch (err) {
+    console.error("Chyba při geokódování:", err);
+  }
 
-    const result = await pool.query(
-  `UPDATE pilots SET 
-    name = $1, 
-    phone = $2, 
-    website = $3, 
-    street = $4, 
-    city = $5, 
-    zip = $6, 
-    region = $7,
-    drones = $8, 
-    note = $9, 
-    travel = $10, 
-    licenses = $11, 
-    specialization = $12, 
-    volunteer = $13, 
-    latitude = $14, 
-    longitude = $15,
-    registrationnumber = $16,
-    available = $17,
-    visible = $18,
-    visible_payment = $19,
-    visible_valid = $20
-  WHERE email = $21
-  RETURNING *`,
-  [
-    name || null,
-    phone || null,
-    website || null,
-    street || null,
-    city || null,
-    zip || null,
-    region || null,
-    drones || null,
-    note || null,
-    travel || null,
-    licenses || null,
-    specialization || null,
-    volunteer === "ANO" ? "ANO" : "NE",
-    lat,
-    lon,
-    registrationnumber || null,
-    available,
-    visible,
-    visible_payment || null,
-    visible_valid || null,
-    email
-  ]
-);
+  // LOG pro kontrolu
+  console.log("Hodnoty pro update:", {
+    name, phone, website, street, city, zip, region,
+    drones, note, travel, licenses,
+    specialization_ids: specIds,
+    volunteer, lat, lon, registrationnumber, available, visible
+  });
 
-  
+  // Uložení v transakci
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
 
+    // 1) Update pilots (bez textového 'specialization' – doplníme hezké CSV až po vložení ID)
+    const r = await client.query(
+      `UPDATE pilots SET 
+        name = $1, 
+        phone = $2, 
+        website = $3, 
+        street = $4, 
+        city = $5, 
+        zip = $6, 
+        region = $7,
+        drones = $8, 
+        note = $9, 
+        travel = $10, 
+        licenses = $11, 
+        volunteer = $12, 
+        latitude = $13, 
+        longitude = $14,
+        registrationnumber = $15,
+        available = $16,
+        visible = $17,
+        visible_payment = $18,
+        visible_valid = $19
+      WHERE email = $20
+      RETURNING id`,
+      [
+        name || null,
+        phone || null,
+        website || null,
+        street || null,
+        city || null,
+        zip || null,
+        region || null,
+        drones || null,
+        note || null,
+        travel || null,
+        licenses || null,
+        volunteer === "ANO" ? "ANO" : "NE",
+        lat,
+        lon,
+        registrationnumber || null,
+        available,
+        visible,
+        visible_payment || null,
+        visible_valid || null,
+        email
+      ]
+    );
+
+    if (r.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).send("Pilot nenalezen.");
+    }
+    const pilotId = r.rows[0].id;
+
+    // 2) Přepiš specializace podle ID
+    await client.query("DELETE FROM pilot_specializations WHERE pilot_id = $1", [pilotId]);
+
+    if (specIds.length > 0) {
+      const values = specIds.map((_, i) => `($1, $${i + 2})`).join(",");
+      await client.query(
+        `INSERT INTO pilot_specializations (pilot_id, category_id) VALUES ${values}
+         ON CONFLICT DO NOTHING`,
+        [pilotId, ...specIds]
+      );
+
+      // hezké CSV názvů do pilots.specialization pro kompatibilitu
+      const csvRes = await client.query(
+        `SELECT string_agg(DISTINCT c.name, ', ' ORDER BY c.name) AS csv
+         FROM categories c
+         WHERE c.id = ANY($1::int[])`,
+        [specIds]
+      );
+      const csv = csvRes.rows[0].csv || null;
+      await client.query("UPDATE pilots SET specialization = $1 WHERE id = $2", [csv, pilotId]);
+    } else {
+      // bez specializací -> nuluj textovou verzi
+      await client.query("UPDATE pilots SET specialization = NULL WHERE id = $1", [pilotId]);
+    }
+
+    await client.query("COMMIT");
     res.send("✅ Údaje byly úspěšně aktualizovány.");
   } catch (err) {
+    await client.query("ROLLBACK");
     console.error("❌ ÚPLNÁ CHYBOVÁ ZPRÁVA:", err);
-    console.error("❌ STACK TRACE:", err.stack); // Detaily o místě chyby
+    console.error("❌ STACK TRACE:", err.stack);
     res.status(500).json({
       error: "Chyba při aktualizaci",
-      details: err.message, // Posíláme klientovi konkrétní chybovou zprávu
+      details: err.message,
       stack: process.env.NODE_ENV === "development" ? err.stack : undefined
     });
+  } finally {
+    client.release();
   }
-
 });
+
 
 
 app.post('/delete-all', allowLocalhostOnly, requireAdminLogin, async (req, res) => {
@@ -900,7 +972,7 @@ app.post("/update-membership", async (req, res) => {
   }
 });
 
-// --- Vrácení dat přihlášeného pilota ---
+
 // --- Vrácení dat přihlášeného pilota ---
 app.get('/get-my-pilot', async (req, res) => {
   try {
@@ -937,12 +1009,20 @@ app.get('/get-my-pilot', async (req, res) => {
       accountStatus = "Free";
     }
 
-    // Vrátíme data včetně informace o expiraci
-    res.json({
-      ...user,
-      type_account: accountStatus,
-      membership_expired: isExpired
-    });
+   // načti specialization_ids
+const specsRes = await pool.query(
+  'SELECT category_id FROM pilot_specializations WHERE pilot_id = $1 ORDER BY category_id',
+  [user.id]
+);
+const specialization_ids = specsRes.rows.map(r => r.category_id);
+
+// vrácení dat vč. specialization_ids (ponecháme původní pole specialization pro kompatibilitu)
+res.json({
+  ...user,
+  specialization_ids,
+  type_account: accountStatus,
+  membership_expired: isExpired
+});
     
   } catch (err) {
     console.error('Chyba při načítání pilota:', err);
@@ -1494,6 +1574,87 @@ app.post('/poptavky', async (req, res) => {
   }
 });
 
+app.get('/__dbinfo', async (req,res) => {
+  const r = await pool.query(`SELECT current_database(), current_user, inet_server_addr(), inet_server_port()`);
+  res.json(r.rows[0]);
+});
+
+
+app.get('/categories', async (req, res) => {
+  try {
+    const { rows } = await pool.query('SELECT id, name FROM categories ORDER BY name');
+    const fixed = rows.map(r => ({ ...r, name: bestUtfVariant(r.name) }));
+    res.set('Content-Type', 'application/json; charset=utf-8');
+    res.set('Cache-Control', 'no-store');
+    res.json(fixed);
+  } catch (err) {
+    console.error('Chyba /categories:', err);
+    res.status(500).json([]);
+  }
+});
+
+
+// Nastavení složky pro statické soubory
+app.use(express.static(path.join(__dirname, 'public')));
+
+// pokud máš prerender, vynech ho pro /categories (nebo ho dej níž)
+app.use((req, res, next) => {
+  if (req.path.startsWith('/categories')) return next();
+  return prerender(req, res, next);
+});
+
+// 1) prostý UTF-8 ping (ověří transport)
+app.get('/utf8-ping', (req, res) => {
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.json({ sample: 'Školení pro pokročilé piloty – údržba, měření, zkoušky' });
+});
+
+// 2) fingerprint DB + ukázka kategorií
+app.get('/db-fingerprint', async (req, res) => {
+  const meta = await pool.query(`
+    SELECT current_database() AS db,
+           current_user       AS "user",
+           current_setting('server_version')  AS server_version,
+           current_setting('server_encoding') AS server_encoding,
+           current_setting('client_encoding') AS client_encoding
+  `);
+  const cnt = await pool.query('SELECT COUNT(*)::int AS n FROM categories');
+  const sample = await pool.query('SELECT id, name FROM categories ORDER BY id LIMIT 5');
+  res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  res.json({ meta: meta.rows[0], categories_count: cnt.rows[0].n, sample: sample.rows });
+});
+
+
+
+
+
+// Funkce pro opravu kódování z databáze
+function fixDatabaseEncoding(str) {
+  if (typeof str !== 'string') return str;
+  
+  // Opravy pro běžné problémy s kódováním z databáze
+  const encodingMap = {
+    'Ã¡': 'á', 'Ã©': 'é', 'Ã­': 'í', 'Ã³': 'ó', 'Ãº': 'ú', 'Ã½': 'ý',
+    'Ã': 'Á', 'Ã': 'É', 'Ã': 'Í', 'Ã': 'Ó', 'Ã': 'Ú', 'Ã': 'Ý',
+    'Ã¤': 'ä', 'Ã«': 'ë', 'Ã¯': 'ï', 'Ã¶': 'ö', 'Ã¼': 'ü',
+    'Ã': 'Ä', 'Ã': 'Ë', 'Ã': 'Ï', 'Ã': 'Ö', 'Ã': 'Ü',
+    'Ã': 'È', 'Ã': 'ß', 'Ã°': 'ð', 'Ã¦': 'æ', 'Â': '',
+    'â€"': '—', 'â€“': '–', 'â€˜': '‘', 'â€™': '’', 'â€œ': '“', 'â€': '”',
+    'Ã½': 'ý', 'Ã¡': 'á', 'Ã©': 'é', 'Ã­': 'í', 'Ã³': 'ó', 'Ãº': 'ú',
+    'Ã¯': 'ï', 'Ã¶': 'ö', 'Ã¼': 'ü', 'Ã§': 'ç', 'Ã¸': 'ø', 'Ã¥': 'å',
+    'Ã±': 'ñ', 'Ãµ': 'õ', 'Ãª': 'ê', 'Ã¹': 'ù', 'Ã¬': 'ì', 'Ã²': 'ò',
+    'Ã¢': 'â', 'Ã»': 'û', 'Ã®': 'î', 'Ã´': 'ô', 'Ã¨': 'è', 'Ã ': 'à'
+  };
+  
+  let result = str;
+  for (const [wrong, correct] of Object.entries(encodingMap)) {
+    result = result.replace(new RegExp(wrong, 'g'), correct);
+  }
+  
+  return result;
+}
+
+
 // PUT /poptavky/:id – update jen vlastník
 app.put('/poptavky/:id', async (req, res) => {
   try {
@@ -1741,6 +1902,8 @@ app.get('/', (req, res) => {
 // Spuštění serveru
 const PORT = process.env.PORT || 3000;
 app.use((err, req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+  next();
     console.error('❌ Chyba:', err.stack);
     res.status(500).json({ error: 'Interní chyba serveru' });
 });

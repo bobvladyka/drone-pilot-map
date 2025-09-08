@@ -155,14 +155,7 @@
 
       <div class="col-12">
         <label class="form-label">Specializace:</label>
-        <select id="specialization" name="specialization" multiple class="form-select">
-          <option value="Foto/video">Foto/video</option>
-          <option value="Fotogrammetrie">Fotogrammetrie</option>
-          <option value="Senoseč">Senoseč</option>
-          <option value="Termální inspekce">Termální inspekce</option>
-          <option value="FPV průlety">FPV průlety</option>
-          <option value="Jiné">Jiné (více v poznámce)</option>
-        </select>
+        <select id="specialization" name="specialization" multiple class="form-select"></select>
       </div>
 
       <div class="col-12">
@@ -269,6 +262,35 @@ function addDroneField(value = "") {
   .then(pilot => {
   currentPilot = pilot;
   console.log("Data pilota:", pilot);
+
+// Načti kategorie až teď (už známe currentPilot)
+fetch('/categories?ts=' + Date.now(), { cache: 'no-store' })
+  .then(res => res.json())
+  .then(categories => {
+    const select = document.getElementById("specialization");
+    select.innerHTML = ''; // multiselect: žádná default položka
+
+    categories.forEach(cat => {
+      const option = document.createElement("option");
+      option.value = String(cat.id);      // hodnota = ID
+      option.textContent = cat.name;      // zobrazovaný text
+      select.appendChild(option);
+    });
+
+    // Předvybrat podle specialization_ids (fallback podle názvů)
+    const ids = Array.isArray(currentPilot?.specialization_ids)
+      ? currentPilot.specialization_ids.map(String)
+      : [];
+
+    if (ids.length) {
+      [...select.options].forEach(o => { o.selected = ids.includes(o.value); });
+    } else if (currentPilot?.specialization) {
+      const byName = currentPilot.specialization.split(',').map(s => s.trim());
+      [...select.options].forEach(o => { o.selected = byName.includes(o.textContent); });
+    }
+  })
+  .catch(err => console.error("Chyba při načítání kategorií:", err));
+
 
 // 🚨 Handle GDPR consent section visibility
 if (pilot.type_account === "Free") {
@@ -478,12 +500,12 @@ if (pilot.type_account === "Basic") {
       cb.checked = licenses.includes(cb.value);
     });
 
-    if (pilot.specialization) {
-      const specializations = pilot.specialization.split(',').map(s => s.trim());
-      [...document.getElementById("specialization").options].forEach(opt => {
-        opt.selected = specializations.includes(opt.value);
-      });
-    }
+    if (pilot.specialization_ids?.length) {
+  const sel = pilot.specialization_ids.map(String);
+  [...document.getElementById("specialization").options].forEach(opt => {
+    opt.selected = sel.includes(opt.value);
+  });
+}
 
     if (pilot.volunteer === "ANO") {
       document.getElementById("volunteer").checked = true;
@@ -505,6 +527,11 @@ if (pilot.type_account === "Basic") {
     document.getElementById("status").classList.add("text-danger");
     return; // Zastaví odeslání
   }
+
+const specSelect = document.getElementById("specialization");
+const specialization_ids = [...specSelect.selectedOptions].map(o => Number(o.value)).filter(n => Number.isInteger(n) && n > 0);
+const specialization = [...specSelect.selectedOptions].map(o => o.textContent).join(", ");
+
       const data = {
         id: document.getElementById("id").value,
         email: document.getElementById("email").value,
@@ -520,7 +547,8 @@ if (pilot.type_account === "Basic") {
         note: document.getElementById("note").value,
         travel: document.getElementById("travel").value,
         licenses: Array.from(document.querySelectorAll("input[name='licenses']:checked")).map(cb => cb.value).join(", "),
-        specialization: Array.from(document.getElementById("specialization").selectedOptions).map(o => o.value).join(", "),
+        specialization,          // text pro kompatibilitu (může být i null)
+  specialization_ids,      // hlavní zdroj pravdy (ID),
         volunteer: document.getElementById("volunteer").checked ? "ANO" : "NE",
         available: document.getElementById("available").value,
       visible: currentPilot?.visible,
@@ -531,7 +559,7 @@ if (pilot.type_account === "Basic") {
 console.log("Odesílaná data:", data);
       const res = await fetch("/update", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json; charset=utf-8"  },
         body: JSON.stringify(data)
       });
 

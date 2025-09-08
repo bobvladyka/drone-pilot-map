@@ -101,11 +101,11 @@ function requireAdminLogin(req, res, next) {
 
 
 
-
+/*
 app.get("/", (req, res) => {
   res.send("Vše běží!");
 });
-
+*/
 
 const onboardingEmailContent = () => {
   return `
@@ -1979,3 +1979,8 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
+
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+

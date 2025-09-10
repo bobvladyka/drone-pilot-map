@@ -208,6 +208,12 @@ html {
     "Rychlý Sysel", "Létající Brambor", "Dronislav Nebešťák", "Turbo Rákosník", "Bezpilotní Emil", "Pískající Páv", "Pilotka Haluz", "František Vrtulník", "Levý Joystick", "Kapitán Stín", "Dr. Rotor", "Pan Točivý", "Letuška Landová", "Střemhlavý Franta", "Nadzvukový Ježek", "Létající Čenda", "Rotorová Róza", "Šumící Fanda", "Bezpečný Béďa", "Maják z Oblak", "Droný Karel", "Letec Šmatla", "Startér Staník", "Přistávací Pepa", "Helikoptérník Honza", "Navigátor Novák", "Senzorová Soňa", "Pán Mraků", "Letící Lojza", "Kamera Kamil", "Rotor Ríša", "Výškoměr Vašek", "Vzdušný Vojta", "Tichý Šumák", "Drnčivý Dan", "Mlha Milda", "Optika Otakar", "Ztracený Signál", "Mistr Gimbal", "Anténa Anička", "Vrtulka Věrka", "Letmo Lída", "Flyboy Felix", "Vzdušná Víla", "Navigační Norbert", "Modrá Letka", "Křídlatý Karel", "Polní Přízrak", "Mapový Mirek", "Kličkující Kuba"
   ];
 
+function normalizeConsent(v) {
+    if (typeof v === 'boolean') return v;
+    const s = String(v ?? '').trim().toLowerCase();
+    return s === 'true' || s === 't' || s === '1' || s === 'ano' || s === 'yes';
+  }
+
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap',
     maxZoom: 18
@@ -252,140 +258,118 @@ html {
   const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
   const isAvailable = p.available === "ANO";
   const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-  const hasPublicConsent = p.hasPublicConsent;
+
+  // stejné odznaky jako na indexu
+  const hasBuildBadge = p.id && Number(p.id) <= 80;
+  const buildBadge = hasBuildBadge 
+    ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+    : "";
+
+  const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
+  const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
+
+  // stejné vyhodnocení GDPR souhlasu
+  const hasPublicConsent = normalizeConsent(p.hasPublicConsent ?? p.granted ?? false);
+
   let html = `<div class="pilot-card">`;
 
-  
-
-  if (isAvailable && loggedIn) {
-    
-
-if (!hasPublicConsent) {
-      // Pilot hasn't granted GDPR consent
-      html += `
-        <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Pilot nepředal souhlas se zpracováním osobních údajů</p>
-        ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+  // Pokud pilot nemá souhlas, nikdy nezobrazíme reálné kontakty/jméno – použijeme „fake“ kartu
+  if (!hasPublicConsent) {
+    return `
+      <div class="pilot-card">
+        <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+        <div class="d-flex flex-wrap gap-2 mb-2">
+          ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Dobrovolník</span>` : ''}
+          <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
+        </div>
         ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-        ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-        <p class="text-muted"><em>Kontaktní údaje nejsou dostupné, protože pilot neudělil GDPR souhlas.</em></p>
-      `;
-    } else if
- (p.type_account === "Free") {
-      // Free účet - omezené informace
-       html += `
-  <div class="d-flex justify-content-between align-items-center mb-1">
-    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
-      : ''}
-    ${p.id && Number(p.id) <= 80
-      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
-      : ''}
-  </div>
-`;
-  
-      if (p.volunteer === 'ANO') {
-        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
-      }
-      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+      </div>
+    `;
+  }
 
-      
+  // Má souhlas → pokračujeme jako na indexu
+  if (isAvailable && loggedIn) {
+    if (p.type_account === "Free") {
+      html += `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+          ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+            ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+            : ''}
+        </div>
+      `;
+      if (p.volunteer === 'ANO') html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      if (p.drones)        html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.specialization)html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
       html += `</div>`;
     } else if (p.type_account === "Basic") {
-  // Basic účet - více informací
-  html += `
-  <div class="d-flex justify-content-between align-items-center mb-1">
-    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
-      : ''}
-    ${p.id && Number(p.id) <= 80
-      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
-      : ''}
-  </div>
-`;
-  
-if (p.volunteer === 'ANO') {
-        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
-      }
-
-  if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-  if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
-  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
-  if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
-  if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
-
-  // Tlačítko pro napsání pilotovi
-  html += `
-    <div class="mt-3">
-      <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
-        ✉️ Napsat pilotovi
-      </button>
-    </div>
-  `;
-}
- else if (p.type_account === "Premium") {
-      // Premium účet - všechny informace
       html += `
-  <div class="d-flex justify-content-between align-items-center mb-1">
-    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
-      : ''}
-    ${p.id && Number(p.id) <= 80
-      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
-      : ''}
-  </div>
-`;
-  
-
-      if (p.volunteer === 'ANO') {
-        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
-      }
-      // Kontakty pro Premium účty
-      if (p.email) html += `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>`;
-      if (p.phone) html += `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>`;
-
-      html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
-      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
-      if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+          ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+            ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+            : ''}
+        </div>
+      `;
+      if (p.volunteer === 'ANO') html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      if (p.drones)        html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.note)          html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+      if (p.travel)        html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+      if (p.licenses)      html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+      if (p.specialization)html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+      html += `
+        <div class="mt-3">
+          <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
+            ✉️ Napsat pilotovi
+          </button>
+        </div>
+      `;
+    } else if (p.type_account === "Premium") {
+      html += `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+          <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+          ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+            ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+            : ''}
+        </div>
+      `;
+      if (p.volunteer === 'ANO') html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      if (p.email)         html += `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>`;
+      if (p.phone)         html += `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>`;
+      if (p.drones)        html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.specialization)html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+      if (p.travel)        html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+      if (p.licenses)      html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
     }
   } else if (!isAvailable) {
-    // Pilot není k dispozici
     html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
-      <br>
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
       ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
     `;
   } else {
-    // Nepřihlášený uživatel
+    // nepřihlášený inzerent, ale souhlas existuje → stejné chování jako index (nezobrazíme kontakty)
     html += `
-  <div class="d-flex justify-content-between align-items-center mb-1">
-    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
-    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
-      : ''}
-    ${p.id && Number(p.id) <= 80
-      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
-      : ''}
-  </div>
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+        ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+          ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+          : ''}
+      </div>
       ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
       <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
       ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
       ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-      <p class="text-muted"><em>Přihlaste se pro více informací o pilotovi.</em></p>
+      <p class="text-muted"><em>Přihlaste se jako inzerent pro více informací o pilotovi.</em></p>
     `;
   }
 
   html += `</div>`;
   return html;
 })
+
 
              markers.addLayer(circle);
             pilotCircles.push(circle);

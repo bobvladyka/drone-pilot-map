@@ -15,6 +15,43 @@ const cron = require('node-cron');
 
 const app = express();
 
+// --- Referral code utils ---
+const crypto = require('crypto');
+const REF_SECRET = process.env.REF_SECRET || 'super-secret-change-me';
+
+function makeRefCode(userId) {
+  const idBase = parseInt(userId, 10).toString(36);        // base36
+  const hmac = crypto.createHmac('sha256', REF_SECRET).update(String(userId)).digest('hex');
+  const check = hmac.slice(0, 6);                           // 6 znaků stačí
+  return `${idBase}-${check}`.toUpperCase();
+}
+
+function parseRefCode(code) {
+  if (!code || !/^[A-Z0-9]+-[A-F0-9]{6}$/i.test(code)) return null;
+  const [idBase, check] = code.split('-');
+  const userId = parseInt(idBase, 36);
+  if (!Number.isInteger(userId) || userId <= 0) return null;
+  const hmac = crypto.createHmac('sha256', REF_SECRET).update(String(userId)).digest('hex');
+  const ok = hmac.slice(0, 6).toUpperCase() === check.toUpperCase();
+  return ok ? userId : null;
+}
+
+// Vrátí kód pro přihlášeného pilota (dle e-mailu)
+app.get('/ref-code', async (req, res) => {
+  try {
+    const email = req.query.email;
+    if (!email) return res.status(400).json({ error: 'Missing email' });
+    const r = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
+    if (!r.rowCount) return res.status(404).json({ error: 'Pilot not found' });
+    const code = makeRefCode(r.rows[0].id);
+    res.json({ code, url: `https://najdipilota.cz/register.html?ref=${code}` });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: 'Failed to make ref code' });
+  }
+});
+
+
 
 app.set('trust proxy', true); // pokud běží za proxy (Render/Heroku/Nginx), ať .ip funguje správně
 
@@ -165,6 +202,80 @@ const onboardingEmailContent = () => {
   `;
 };
 
+function buildUnreadDigestEmail(pilotName, items) {
+  const rows = items.map(it => `
+    <tr>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;">
+        <div style="font-weight:bold;">${escapeHtml(it.advertiserName)}</div>
+        <div style="font-size:12px;color:#666;">${escapeHtml(it.advertiserEmail)}</div>
+      </td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;text-align:center;">${it.unreadCount}</td>
+      <td style="padding:8px 12px;border-bottom:1px solid #eee;">
+        ${escapeHtml(it.lastMessage)}
+        <div style="font-size:12px;color:#666;">${it.lastTime.toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' })}</div>
+      </td>
+    </tr>
+  `).join('');
+
+  const total = items.reduce((a,b)=>a+b.unreadCount,0);
+
+  return `
+  <div style="font-family:Arial,sans-serif;line-height:1.5;color:#333;">
+    <h2 style="margin:0 0 10px 0;">Dobrý den, ${escapeHtml(pilotName)} 👋</h2>
+    <p>Máte <strong>${total}</strong> nepřečtených zpráv v ${items.length} konverzacích.</p>
+
+    <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr>
+          <th align="left" style="padding:8px 12px;border-bottom:2px solid #ddd;">Inzerent</th>
+          <th align="center" style="padding:8px 12px;border-bottom:2px solid #ddd;">Počet</th>
+          <th align="left" style="padding:8px 12px;border-bottom:2px solid #ddd;">Poslední zpráva</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows}
+      </tbody>
+    </table>
+
+    <p style="margin-top:16px;">
+      Přihlaste se na <a href="https://www.najdipilota.cz/moje-zpravy.html">Moje zprávy</a> a odpovězte co nejdříve.
+    </p>
+
+    <p style="font-size:12px;color:#777;">
+      Tento přehled chodí jednou denně. Neposíláme, pokud žádné nepřečtené zprávy nemáte.
+    </p>
+  </div>`;
+}
+
+function buildUnreadDigestText(pilotName, items) {
+  const lines = items.map(it => (
+    `- ${it.advertiserName} <${it.advertiserEmail}> | nepřečtené: ${it.unreadCount}\n  Poslední: ${it.lastMessage}\n  Kdy: ${it.lastTime.toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' })}`
+  )).join('\n\n');
+
+  const total = items.reduce((a,b)=>a+b.unreadCount,0);
+
+  return `Dobrý den, ${pilotName},
+
+Máte ${total} nepřečtených zpráv v ${items.length} konverzacích:
+
+${lines}
+
+Přejděte do sekce "Moje zprávy" na https://www.najdipilota.cz/moje-zpravy.html
+
+(Tento přehled chodí jednou denně a neposílá se, pokud nic nepřečteného nemáte.)
+`;
+}
+
+// bezpečná escapovací utilita pro HTML
+function escapeHtml(s) {
+  return String(s ?? '')
+    .replace(/&/g,'&amp;')
+    .replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;');
+}
+
+
 const membershipExpiry7DaysEmail = (refEmail) => {
   const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refEmail)}`;
   return `
@@ -257,6 +368,12 @@ app.post('/register', async (req, res) => {
   } = req.body;
   console.log("🔍 Request body:", req.body);
 
+  let referrerId = null;
+  if (ref) {
+    const parsed = parseRefCode(String(ref).trim()); // vrátí userId nebo null
+    if (parsed) referrerId = parsed;
+  }
+
   // Nejprve najdeme nejnižší volné ID
   let nextFreeId;
   try {
@@ -325,47 +442,41 @@ console.log("Datum po přidání 7 dní: ", visible_valid);
         lat,
         lon,
         visible_valid,
-        ref || null,
+        ref ? String(ref).trim() : null,
         "Basic",
         "ANO"
       ]
     );
 
   // Pokud referrer existuje, přidáme bonus
-if (ref) {
+// Pokud referrer existuje, přidáme bonus podle ID (bez e-mailu)
+if (referrerId) {
   try {
     const refResult = await pool.query(
       `WITH updated_account AS (
          UPDATE pilots
-         SET 
-           type_account = 
-             CASE 
-               WHEN type_account IS NULL OR type_account = 'Free' THEN 'Basic'  -- Pokud je účet Free, změň ho na Basic
-               ELSE type_account
-             END,
-           visible_valid = 
-             CASE 
-               WHEN visible_valid IS NULL THEN CURRENT_DATE + INTERVAL '7 days'
-               WHEN type_account = 'Premium' THEN visible_valid + INTERVAL '7 days' -- Prodloužení pro Premium účet
-               ELSE visible_valid + INTERVAL '7 days'
-             END
-         WHERE email = $1
-         RETURNING email, type_account
+         SET
+           type_account = CASE
+             WHEN type_account IS NULL OR type_account = 'Free' THEN 'Basic'
+             ELSE type_account
+           END,
+           visible_valid = CASE
+             WHEN visible_valid IS NULL THEN (CURRENT_DATE + INTERVAL '7 days')::timestamp
+             ELSE visible_valid + INTERVAL '7 days'
+           END
+         WHERE id = $1
+         RETURNING id, email, type_account
        )
        SELECT * FROM updated_account`,
-      [ref]
+      [referrerId]
     );
 
     if (refResult.rowCount > 0) {
-      const accountType = refResult.rows[0].type_account;
-      if (accountType === 'Premium') {
-        console.log(`🎉 Připsáno 7 dní na Premium účet pilotovi, který pozval: ${ref}`);
-      } else {
-        console.log(`🎉 Připsáno 7 dní na Basic účet pilotovi, který pozval: ${ref}`);
-      }
+      const acc = refResult.rows[0].type_account;
+      console.log(`🎉 Připsáno +7 dní na ${acc} refererovi id=${referrerId}`);
     }
   } catch (err) {
-    console.warn("⚠️ Nepodařilo se připsat bonus referrerovi:", err);
+    console.warn("⚠️ Nepodařilo se připsat bonus refererovi:", err);
   }
 }
 
@@ -1233,6 +1344,55 @@ app.get('/get-messages', async (req, res) => {
 });
 
 
+// Počet nepřečtených zpráv pro pilota
+app.get('/unread-count', async (req, res) => {
+  try {
+    const email =
+      (req.query.pilotEmail || req.query.email || req.session?.email || '').toLowerCase();
+    if (!email) return res.json({ count: 0 });
+
+    const p = await pool.query('SELECT id FROM pilots WHERE LOWER(email) = $1', [email]);
+    if (p.rowCount === 0) return res.json({ count: 0 });
+    const pilotId = p.rows[0].id;
+
+    const r = await pool.query(`
+      SELECT COUNT(*)::int AS n
+      FROM messages m
+      JOIN conversations c ON c.id = m.conversation_id
+      LEFT JOIN conversation_views cv
+        ON cv.conversation_id = c.id AND cv.user_id = c.pilot_id
+      WHERE c.pilot_id = $1
+        AND m.sender_id = c.advertiser_id
+        AND m.created_at > COALESCE(cv.last_seen, '1970-01-01'::timestamp)
+    `, [pilotId]);
+
+    res.json({ count: r.rows[0].n });
+  } catch (e) {
+    console.error('unread-count error', e);
+    res.status(500).json({ count: 0 });
+  }
+});
+
+// Vrátí DB id podle e-mailu a role (pilot|advertiser)
+app.get('/get-user-id', async (req, res) => {
+  try {
+    const { email, type } = req.query; // type: 'pilot' | 'advertiser'
+    if (!email || !type) return res.status(400).json({ error: 'Missing email or type' });
+
+    const lower = String(email).toLowerCase();
+    const sql = type === 'pilot'
+      ? 'SELECT id FROM pilots WHERE LOWER(email) = $1'
+      : 'SELECT id FROM advertisers WHERE LOWER(email) = $1';
+
+    const r = await pool.query(sql, [lower]);
+    if (!r.rowCount) return res.status(404).json({ error: 'User not found' });
+
+    res.json({ id: r.rows[0].id });
+  } catch (e) {
+    console.error('get-user-id error', e);
+    res.status(500).json({ error: 'Failed to resolve user id' });
+  }
+});
 
 
 
@@ -1979,6 +2139,92 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
+
+// ──────────────────────────────────────────────────────────────
+// CRON: Denní souhrn nepřečtených zpráv (Europe/Prague) – 07:30
+// ──────────────────────────────────────────────────────────────
+cron.schedule(
+  '30 7 * * *',
+  async () => {
+    console.log('⏰ CRON: denní digest nepřečtených zpráv…');
+    try {
+      // 1) piloti s e-mailem
+      const pilotsRes = await pool.query(`
+        SELECT id, email, COALESCE(NULLIF(name,''), 'Pilot') AS name
+        FROM pilots
+        WHERE email IS NOT NULL AND email <> ''
+      `);
+
+      for (const pilot of pilotsRes.rows) {
+        // 2) vyhodnoť nepřečtené zprávy (od inzerenta) per konverzace
+        const unreadRes = await pool.query(`
+          SELECT 
+            c.id AS conversation_id,
+            a.email AS advertiser_email,
+            a.name  AS advertiser_name,
+            COUNT(m.*) AS unread_count,
+            MAX(m.created_at) AS last_time,
+            (
+              SELECT m2.message
+              FROM messages m2
+              WHERE m2.conversation_id = c.id
+                AND m2.sender_id = c.advertiser_id
+                AND m2.created_at > COALESCE(cv.last_seen, '1970-01-01'::timestamp)
+              ORDER BY m2.created_at DESC
+              LIMIT 1
+            ) AS last_message
+          FROM conversations c
+          JOIN advertisers a 
+            ON a.id = c.advertiser_id
+          LEFT JOIN conversation_views cv 
+            ON cv.conversation_id = c.id AND cv.user_id = c.pilot_id  -- last_seen pro PILOTA
+          JOIN messages m 
+            ON m.conversation_id = c.id
+           AND m.sender_id = c.advertiser_id         -- pouze zprávy od inzerenta
+           AND m.created_at > COALESCE(cv.last_seen, '1970-01-01'::timestamp)
+          WHERE c.pilot_id = $1
+          GROUP BY c.id, a.email, a.name, cv.last_seen
+          ORDER BY last_time DESC
+        `, [pilot.id]);
+
+        if (unreadRes.rowCount === 0) {
+          // nic nepřečteného → nic neposíláme
+          continue;
+        }
+
+        // 3) postav e-mail
+        const items = unreadRes.rows.map(r => ({
+          conversationId: r.conversation_id,
+          advertiserEmail: r.advertiser_email,
+          advertiserName: r.advertiser_name || r.advertiser_email,
+          unreadCount: Number(r.unread_count),
+          lastMessage: (r.last_message || '').slice(0, 300), // oříznout pro jistotu
+          lastTime: new Date(r.last_time)
+        }));
+
+        const html = buildUnreadDigestEmail(pilot.name, items);
+        const text = buildUnreadDigestText(pilot.name, items);
+
+        // 4) pošli e-mail
+        await transporter.sendMail({
+          from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+          to: pilot.email,
+          subject: `Máte ${items.reduce((a,b)=>a+b.unreadCount,0)} nepřečtených zpráv`,
+          html,
+          text
+        });
+
+        console.log(`📧 Digest poslán: ${pilot.email} (${items.length} vlákna)`);
+      }
+
+      console.log('✅ CRON denního digestu hotov.');
+    } catch (err) {
+      console.error('❌ Chyba CRONu (digest):', err);
+    }
+  },
+  { timezone: 'Europe/Prague' }
+);
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

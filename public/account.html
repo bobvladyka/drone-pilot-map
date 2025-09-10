@@ -8,9 +8,44 @@
   <link rel="stylesheet" href="style.css" />
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <meta name="robots" content="index, follow">
+
+ <!-- Leaflet a MarkerCluster -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Favicony -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="icon" href="/icons/favicon.ico" type="image/x-icon">  
+
+
 </head>
 <body>
   <div class="card shadow-sm p-4" style="border-radius: var(--radius); background-color: white;">
+<!-- Quickbar: akce po přihlášení -->
+<div id="account-quickbar" class="sticky-top bg-light border-bottom py-2 shadow-sm">
+  <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <a href="/index.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-left-circle me-1"></i>Zpět na mapu
+      </a>
+      <a href="/moje-zpravy.html" class="btn btn-outline-primary btn-sm">
+        <i class="bi bi-envelope me-1"></i>Moje zprávy
+      </a>
+      <a id="poptavkyBtn" href="/poptavky.html" class="btn btn-outline-dark btn-sm d-none">
+        <i class="bi bi-briefcase-fill me-1"></i>Poptávky
+      </a>
+    </div>
+
+    <span id="loggedAs" class="text-muted small d-none d-md-inline"></span>
+  </div>
+</div>
+<br>
+
     <h1 class="text-center mb-4">🧑‍✈️ Účet pilota</h1>
 
     <form id="account-form" class="row g-3">
@@ -160,7 +195,9 @@
 
       <div class="col-12">
         <label class="form-label">Poznámka:</label>
-        <textarea id="note" name="note" rows="3" class="form-control"></textarea>
+        <textarea id="note" name="note" rows="3" class="form-control" maxlength="80"></textarea>
+<small id="noteCounter" class="text-muted">0 / 80 znaků</small>
+
       </div>
 
       <div class="col-12">
@@ -181,9 +218,10 @@
 <div class="alert alert-secondary mt-4">
   📢 Pozvi kamaráda a získej na týden členství <b>zdarma!</b><br>
   Tvůj odkaz: 
-  <code id="ref-link"></code>
+   <code id="ref-code">—</code>
+  <span id="ref-url" class="d-none"></span>
   <button id="copy-btn" class="btn pilot-login-button btn-sm ms-2 w-100" title="Kopírovat odkaz">
-    <i class="bi bi-clipboard"></i> Kopírovat
+    <i class="bi bi-clipboard"></i> Kopírovat pozvánku
   </button>
 </div>
   
@@ -200,9 +238,7 @@
 
         <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
         
-        <div class="text-center mt-3">
-          <a href="/index.html" class="btn btn-link">← Zpět na mapu</a>
-        </div>
+        
       </div>
     </form>
 
@@ -590,16 +626,117 @@ document.getElementById("copy-btn").addEventListener("click", () => {
     copyBtn.textContent = "Kopírovat";
   }, 2000);  // Obnoví text po 2 vteřinách
 });
+
+document.addEventListener("DOMContentLoaded", () => {
+  const noteInput = document.getElementById("note");
+  const counter = document.getElementById("noteCounter");
+  const maxLength = noteInput.getAttribute("maxlength");
+
+  function updateCounter() {
+    counter.textContent = `${noteInput.value.length} / ${maxLength} znaků`;
+  }
+
+  noteInput.addEventListener("input", updateCounter);
+  updateCounter(); // inicializace při načtení stránky
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+  const loggedEmail = localStorage.getItem('loggedEmail');
+  const loggedAs = document.getElementById('loggedAs');
+  if (loggedEmail && loggedAs) {
+    loggedAs.textContent = `Přihlášen: ${loggedEmail}`;
+  }
+
+  // Zobraz Poptávky jen pro Basic/Premium
+  fetch('/get-my-pilot', { credentials: 'include' })
+    .then(r => r.ok ? r.json() : null)
+    .then(me => {
+      const t = (me?.type_account || '').toLowerCase();
+      if (t === 'basic' || t === 'premium') {
+        document.getElementById('poptavkyBtn')?.classList.remove('d-none');
+      }
+    })
+    .catch(() => {});
+});
+
   </script>
 
 <script>
-  const refEmail = localStorage.getItem("loggedEmail");
-  if (refEmail) {
-    const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refEmail)}`;
-    document.getElementById("ref-link").textContent = refUrl;
+document.addEventListener('DOMContentLoaded', async () => {
+  const loggedEmail = localStorage.getItem('loggedEmail');
+  const codeEl = document.getElementById('ref-code');
+  const urlEl  = document.getElementById('ref-url');
+  const copyBtn = document.getElementById('copy-btn');
+
+  if (!loggedEmail || !codeEl || !urlEl || !copyBtn) return;
+
+  try {
+    const r = await fetch(`/ref-code?email=${encodeURIComponent(loggedEmail)}`, { credentials: 'include' });
+    if (!r.ok) throw new Error('Nepodařilo se načíst kód.');
+    const { code, url } = await r.json();
+
+    codeEl.textContent = code;  // zobrazíme jen kód
+    urlEl.textContent  = url;   // celá URL pro kopírování (skrytá)
+
+    copyBtn.addEventListener('click', () => {
+      const toCopy = urlEl.textContent.trim(); // kopíruje se celá URL s kódem
+      const ta = document.createElement('textarea');
+      ta.value = toCopy;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      copyBtn.textContent = 'Zkopírováno!';
+      setTimeout(() => (copyBtn.textContent = 'Kopírovat pozvánku'), 2000);
+    });
+  } catch (e) {
+    codeEl.textContent = '—';
+    copyBtn.disabled = true;
+    copyBtn.title = 'Kód se nepodařilo načíst';
+    console.warn(e);
   }
+});
 </script>
 
+<script>
+  // badge do quickbaru (account.html)
+  function renderUnreadBadgeIntoAccount(count) {
+    const btn = document.querySelector('#account-quickbar a[href="/moje-zpravy.html"]');
+    if (!btn) return;
+
+    let badge = btn.querySelector('#unread-badge-account');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = 'unread-badge-account';
+      badge.className = 'badge rounded-pill bg-danger ms-2';
+      btn.appendChild(badge);
+    }
+    if (count > 0) {
+      badge.textContent = String(count);
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  async function refreshUnreadAccountBadge() {
+    const email = localStorage.getItem('loggedEmail');
+    if (!email) return;
+    try {
+      const r = await fetch('/unread-count?pilotEmail=' + encodeURIComponent(email));
+      const data = await r.json();
+      renderUnreadBadgeIntoAccount(data.count || 0);
+    } catch {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const loggedEmail = localStorage.getItem('loggedEmail');
+    if (loggedEmail) {
+      refreshUnreadAccountBadge();
+      setInterval(refreshUnreadAccountBadge, 60000);
+    }
+  });
+</script>
 
 
  

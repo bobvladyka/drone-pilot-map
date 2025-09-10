@@ -302,6 +302,8 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 }
 
             const circle = L.circle([p.latitude, p.longitude], circleOptions)
+
+
             .bindPopup(() => {
   const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
   const isAvailable = p.available === "ANO";
@@ -313,7 +315,32 @@ const buildBadge = hasBuildBadge
   // Volitelné: jméno s odznakem (pro re-use)
 const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
 const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
-const hasPublicConsent = p.gdpr_consent === "ANO" || p.public_consent === "ANO"; 
+  // Nové: čti souhlas z backendu (preferuj p.hasPublicConsent), ošetři i "t"/"f"
+const hasPublicConsent = (() => {
+  const v = (p.hasPublicConsent ?? p.granted ?? false);
+  if (typeof v === 'boolean') return v;
+  const s = String(v).trim().toLowerCase();
+  return s === 'true' || s === 't' || s === '1' || s === 'ano' || s === 'yes';
+})();
+
+if (!hasPublicConsent) {
+  return `
+    <div class="pilot-card">
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Dobrovolník</span>` : ''}
+        <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
+      </div>
+
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    </div>
+  `;
+}
+
+
+
+ 
 
   let html = `<div class="pilot-card">`;
  
@@ -559,39 +586,36 @@ if (loggedEmail && editBtn) {
 
 function contactPilot(pilotEmail) {
   const currentUserEmail = localStorage.getItem('loggedEmail') || localStorage.getItem('inzerentEmail');
-  const currentUserType = localStorage.getItem('loggedEmail') ? 'pilot' : 'inzerent';
+  const currentUserType  = localStorage.getItem('loggedEmail') ? 'pilot' : 'inzerent';
   
   if (!currentUserEmail) {
     alert("Pro komunikaci s piloty se musíte přihlásit.");
     return;
   }
 
-  // Zjistíme ID aktuálního uživatele a partnera
   Promise.all([
-    fetch(`/get-user-id?email=${currentUserEmail}&type=${currentUserType}`).then(res => res.json()),
-    fetch(`/get-user-id?email=${pilotEmail}&type=pilot`).then(res => res.json())
+    fetch(`/get-user-id?email=${encodeURIComponent(currentUserEmail)}&type=${currentUserType}`).then(res => res.json()),
+    fetch(`/get-user-id?email=${encodeURIComponent(pilotEmail)}&type=pilot`).then(res => res.json())
   ])
   .then(([currentUser, partner]) => {
-    // Najdeme nebo vytvoříme konverzaci
-    return fetch('/find-or-create-conversation', {
+    return fetch('/create-conversation', {   // ← správný endpoint
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        pilotId: currentUserType === 'pilot' ? currentUser.id : partner.id,
-        advertiserId: currentUserType === 'inzerent' ? currentUser.id : partner.id
+        pilotEmail: pilotEmail,
+        advertiserEmail: currentUserType === 'inzerent' ? currentUserEmail : null
       })
     }).then(res => res.json());
   })
-  .then(conversation => {
-    // Přesměrujeme na chat s ID konverzace
-    window.location.href = `/chat.html?conversationId=${conversation.id}`;
+  .then(({ success, conversationId }) => {   // ← server vrací conversationId
+    if (!success) throw new Error("Nepodařilo se vytvořit konverzaci.");
+    window.location.href = `/chat.html?conversationId=${conversationId}`;
   })
   .catch(err => {
     console.error("Chyba při vytváření konverzace:", err);
     alert("Pro navázání konverzace se přihlašte jako inzerent.");
   });
-}
-document.addEventListener("DOMContentLoaded", () => {
+}document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("sendContactMessage").addEventListener("click", () => {
     const pilotEmail = document.getElementById("contactPilotEmail").value;
     const message = document.getElementById("contactMessage").value.trim();
@@ -884,6 +908,50 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
     });
   });
 </script>
+
+<script>
+  // badge do horní navigace (index.html)
+  function renderUnreadBadgeIntoNav(count) {
+    const li = document.getElementById('messages-nav-item');
+    if (!li) return;
+    const a = li.querySelector('a.nav-link');
+    if (!a) return;
+
+    let badge = a.querySelector('#unread-badge');
+    if (!badge) {
+      badge = document.createElement('span');
+      badge.id = 'unread-badge';
+      badge.className = 'badge rounded-pill bg-danger ms-2';
+      a.appendChild(badge);
+    }
+    if (count > 0) {
+      badge.textContent = String(count);
+      badge.style.display = '';
+    } else {
+      badge.style.display = 'none';
+    }
+  }
+
+  async function refreshUnreadNavBadge() {
+    const email = localStorage.getItem('loggedEmail');
+    if (!email) return;
+    try {
+      const r = await fetch('/unread-count?pilotEmail=' + encodeURIComponent(email));
+      const data = await r.json();
+      renderUnreadBadgeIntoNav(data.count || 0);
+    } catch {}
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const loggedEmail = localStorage.getItem('loggedEmail');
+    if (loggedEmail) {
+      // jen pro přihlášené piloty
+      refreshUnreadNavBadge();
+      setInterval(refreshUnreadNavBadge, 60000); // refresh každou minutu
+    }
+  });
+</script>
+
 
 
 

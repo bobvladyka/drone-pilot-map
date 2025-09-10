@@ -194,10 +194,14 @@ body.modal-open {
     font-size: 24px;
   }
 
+  #account-quickbar { z-index: 1030; } 
+
   .navbar-nav {
     flex-direction: column; /* Navigace bude ve sloupci na menších obrazovkách */
     align-items: center;
   }
+  
+  
 
   .pilot-card {
     padding: 10px;
@@ -642,6 +646,18 @@ button.accordion-button:not(.collapsed) {
   margin: 0 auto;
   padding: 5px;
 }
+
+.badge-gdpr {
+  background:#D62828;
+  color:#fff;
+  padding:4px 8px;
+  border-radius:6px;
+  font-size:12px;
+}
+
+
+
+
 
 
 

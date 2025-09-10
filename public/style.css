@@ -656,6 +656,27 @@ button.accordion-button:not(.collapsed) {
 }
 
 
+  .conv-item{background:#fff;border:1px solid #e6e6e6;border-radius:.5rem}
+  .conv-item.unread{background:#fff8f8}
+  .conv-title{margin:0;font-size:1.1rem}
+  /* ořez poslední zprávy na 2 řádky s … */
+  .conv-last{
+    margin:.25rem 0 0;
+    display:-webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+  }
+  /* fallback pro starší prohlížeče: 1 řádek s … */
+  @supports not (-webkit-line-clamp: 2){
+    .conv-last{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  }
+
+
+
+
 
 
 

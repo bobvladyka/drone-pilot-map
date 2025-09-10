@@ -8,6 +8,8 @@
   <meta name="robots" content="index, follow">
   <link rel="stylesheet" href="style.css" />
 
+ 
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
   
@@ -87,26 +89,41 @@
 
             if (data.success && data.conversations.length > 0) {
               data.conversations.forEach(conv => {
-                const conversationCard = document.createElement("a");
-                conversationCard.href = `/chat.html?conversationId=${conv.id}&pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentEmail=${encodeURIComponent(conv.advertiser_email)}`;
-                conversationCard.className = `conversation-card d-block p-3 border-bottom ${conv.unread ? 'unread' : ''}`;
-                
-                conversationCard.innerHTML = `
-                  <div class="d-flex justify-content-between align-items-center">
-                    <div class="flex-grow-1">
-                      <div class="d-flex justify-content-between">
-                        <h5 class="mb-1">${conv.advertiser_name || obfuscateEmail(conv.advertiser_email)}</h5>
-                        ${conv.unread ? '<span class="badge badge-new ms-2">Nové</span>' : ''}
-                      </div>
-                      <p class="mb-0 last-message">${conv.last_message || 'Žádné zprávy'}</p>
-                    </div>
-                    <div class="text-end ms-3">
-                      <span class="time-ago">${formatTimeAgo(conv.last_message_time)}</span>
-                    </div>
-                  </div>
-                `;
-                container.appendChild(conversationCard);
-              });
+  const chatUrl =
+    `/chat.html?conversationId=${conv.id}` +
+    `&pilotEmail=${encodeURIComponent(pilotEmail)}` +
+    `&inzerentEmail=${encodeURIComponent(conv.advertiser_email)}`;
+
+  const containerCard = document.createElement('div');
+  containerCard.className = `conv-item p-3 mb-3 ${conv.unread ? 'unread' : ''}`;
+
+  const safeName = (conv.advertiser_name || conv.advertiser_email)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const safeLast = (conv.last_message || 'Žádné zprávy')
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  containerCard.innerHTML = `
+    <div class="d-flex justify-content-between align-items-start">
+      <div class="flex-grow-1 pe-3">
+        <h5 class="conv-title">
+          <a href="${chatUrl}" class="stretched-link text-reset text-decoration-none">${safeName}</a>
+          ${conv.unread ? '<span class="badge bg-danger ms-2">Nové</span>' : ''}
+        </h5>
+        <p class="text-muted conv-last">${safeLast}</p>
+        <small class="text-muted">${formatTimeAgo(conv.last_message_time)}</small>
+      </div>
+      <div class="text-nowrap">
+        <a href="${chatUrl}" class="btn btn-outline-primary btn-sm">
+          <i class="bi bi-chat-dots me-1"></i>Přejít do zprávy
+        </a>
+      </div>
+    </div>
+  `;
+
+  container.appendChild(containerCard);
+});
+
+
             } else {
               container.innerHTML = `
                 <div class="text-center py-5">

@@ -953,8 +953,16 @@ app.post("/inzerent", async (req, res) => {
 
     const match = await bcrypt.compare(password, advertiser.password);
     if (!match) {
-      return res.status(401).json({ success: false, message: "Neplatný e-mail nebo heslo." });
-    }
+  return res.status(401).json({ success: false, message: "Neplatný e-mail nebo heslo." });
+}
+
+// >>> PŘIDEJ TOTO:
+req.session.userId = advertiser.id;     // volitelné, ale hodí se
+req.session.email  = advertiser.email;  // důležité – čte se v /get-my-advertiser a /poptavky
+req.session.role   = 'advertiser';
+
+return res.json({ success: true, message: "Přihlášení proběhlo úspěšně." });
+
 
     res.json({ success: true, message: "Přihlášení proběhlo úspěšně." });
   } catch (error) {

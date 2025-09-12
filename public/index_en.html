@@ -1,19 +1,19 @@
 <!DOCTYPE html>
-<html lang="cs">
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-<title>Dronová mapa pilotů v Česku – Najdi nebo se přidej | Spojujeme piloty a zákazníky</title>
+<title>Drone Pilot Map in Czechia – Find or Join | Connecting Pilots and Clients</title>
 
-    <meta name="description" content="Hledáš pilota dronu nebo chceš být vidět na mapě? Najdi pilota podle lokality, specializace, vybavení a připoj se k ověřené komunitě." />
+    <meta name="description" content="Looking for a drone pilot or want to be visible on the map? Find pilots by location, specialization, and equipment — or join a verified community." />
 
   <meta name="robots" content="index, follow" />
 <link rel="canonical" href="https://www.najdipilota.cz/" />
 
-  <!-- Open Graph pro Facebook a další sítě -->
-  <meta property="og:title" content="Dronová mapa pilotů v Česku" />
-  <meta property="og:description" content="Spojujeme zákazníky s piloty dronů. Zobraz se na mapě nebo si najdi pilota ve svém okolí." />
+  <!-- Open Graph for Facebook and others -->
+  <meta property="og:title" content="Drone Pilot Map in Czechia" />
+  <meta property="og:description" content="We connect customers with drone pilots. Show up on the map or find a pilot near you." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.najdipilota.cz/" />
   <meta property="og:image" content="icons/logo.png" />
@@ -22,16 +22,16 @@
   <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-  <!-- Vlastní styl -->
+  <!-- Custom style -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Leaflet a MarkerCluster -->
+  <!-- Leaflet & MarkerCluster -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- Favicony -->
+<!-- Favicons -->
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
@@ -56,7 +56,7 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
   <div class="container">
     <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
-  <img src="/icons/logo.png" alt="Logo NajdiPilota.cz" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+  <img src="/icons/logo.png" alt="NajdiPilota.cz logo" height="60" class="me-2" loading="lazy" aria-hidden="true" />
   <span class="fs-4">NajdiPilota.cz</span>
 </a>
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -67,39 +67,39 @@
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
 	<li class="nav-item" id="inzerent-nav-item" style="display:none;">
   <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
-    <i class="bi bi-megaphone-fill me-1"></i>Pro inzerenty
+    <i class="bi bi-megaphone-fill me-1"></i>For Advertisers
   </a>
 </li>
         <li class="nav-item">
-          <a class="nav-link" href="/index.html">Mapa</a>
+          <a class="nav-link" href="/index.html">Map</a>
         </li>
 
          <li class="nav-item" id="messages-nav-item" style="display:none;">
           <a class="nav-link" href="/moje-zpravy.html">
-            <i class="bi bi-envelope me-1"></i>Moje zprávy
+            <i class="bi bi-envelope me-1"></i>My Messages
           </a>
         </li>
         
         <li class="nav-item" id="poptavky-nav-item" style="display:none;">
   <a class="nav-link" href="/poptavky.html">
-    <i class="bi bi-briefcase-fill me-1"></i>Poptávky
+    <i class="bi bi-briefcase-fill me-1"></i>Job Requests
   </a>
 </li>
 
         <li class="nav-item">
-          <a class="nav-link" href="/o-projektu.html">O projektu</a>
+          <a class="nav-link" href="/o-projektu.html">About</a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="/kontakt.html">Kontakt</a>
+          <a class="nav-link" href="/kontakt.html">Contact</a>
         </li>
 
-        <li class="nav-item dropdown">
+<li class="nav-item dropdown">
   <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    🌐 Jazyk
+    🌐 Language
   </a>
   <ul class="dropdown-menu" aria-labelledby="langDropdown">
-    <li><a class="dropdown-item" href="/index.html">Čeština</a></li>
-    <li><a class="dropdown-item" href="/index_en.html">Angličtina</a></li>
+    <li><a class="dropdown-item" href="/index.html">Czech</a></li>
+    <li><a class="dropdown-item" href="/index_en.html">English</a></li>
   </ul>
 </li>
           
@@ -109,7 +109,7 @@
       </ul>
 <button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
   <i class="bi bi-person-badge me-2"></i>
-  <span id="login-toggle">Přihlásit se jako pilot</span>
+  <span id="login-toggle">Log in as a Pilot</span>
 </button>
     </div>
   </div>
@@ -118,30 +118,30 @@
   <div class="container py-4">
     <h1 class="text-center">
   <i class="bi bi-map-fill me-2" aria-hidden="true"></i>
-  Dronová mapa pilotů v Česku</h1>
+  Drone Pilot Map in Czechia</h1>
     <p id="user-status" class="text-center fw-bold mb-3"></p>
-<!-- Tlačítka přihlášení -->
+<!-- Login buttons -->
 <div id="pilot-login-wrapper" class="d-flex flex-wrap align-items-center gap-2 justify-content-center" >
 
   
 
 
-<!-- Modal pro inzerenty -->
+<!-- Modal for advertisers -->
 <div class="modal fade" id="inzerentModal" tabindex="-1" aria-labelledby="inzerentModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-warning">
       <div class="modal-header bg-warning">
         <h5 class="modal-title" id="inzerentModalLabel">
-          <i class="bi bi-building me-2"></i>Pro firmy a inzerenty
+          <i class="bi bi-building me-2"></i>For Companies & Advertisers
         </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        <p>Hledáte pilota pro natáčení, inspekci nebo mapování? Vyberte si z ověřených pilotů podle regionu a specializace.</p>
+        <p>Looking for a pilot for filming, inspection, or mapping? Choose from verified pilots by region and specialization.</p>
       </div>
       <div class="modal-footer">
         <a href="/inzerent.html" class="btn btn-outline-warning">
-          <i class="bi bi-person-badge-fill me-1"></i> Přihlásit se jako inzerent
+          <i class="bi bi-person-badge-fill me-1"></i> Log in as Advertiser
         </a>
       </div>
     </div>
@@ -151,39 +151,39 @@
 
   <span id="logged-info" class="fw-bold small"></span>
   <button id="edit-profile-btn" style="display:none;" class="pilot-login-btn w-100">
-    <i class="bi bi-pencil-square me-1"></i>Upravit
+    <i class="bi bi-pencil-square me-1"></i>Edit
   </button>
 </div>
     
 
     <section class="mb-5">
 <p class="visually-hidden">
-  Najdi ověřené piloty dronů v Česku. Interaktivní mapa pilotů dronů – podle lokality, vybavení a specializace. Rychlý kontakt a přímé propojení se zákazníky.
+  Find verified drone pilots in Czechia. An interactive map of drone pilots — filter by location, equipment, and specialization. Quick contact and direct connection with clients.
 </p>
-      <p><strong>Hledáš pilota dronu ve svém okolí?</strong> Nebo sám létáš a chceš být vidět?</p>
-      <p>Tato mapa spojuje zákazníky a piloty. Najdi si spolehlivého pilota podle místa, vybavení nebo specializace – nebo se sám zaregistruj a získej nové příležitosti k létání i výdělku.</p>
+      <p><strong>Looking for a drone pilot near you?</strong> Or do you fly and want to be discovered?</p>
+      <p>This map connects clients and pilots. Find a reliable pilot by location, equipment, or specialization — or register yourself and get new flying and earning opportunities.</p>
       <ul>
-  <li><strong>Rychlé spojení</strong> bez zbytečných formulářů</li>
-  <li><strong>Ověření piloti</strong> s profilem a kontaktem</li>
-  <li><strong>Možnost přivýdělku</strong> pro každého pilota</li>
+  <li><strong>Fast matchmaking</strong> without unnecessary forms</li>
+  <li><strong>Verified pilots</strong> with profile and contact</li>
+  <li><strong>Extra income opportunity</strong> for every pilot</li>
 </ul>
-      <p><strong>Začni kliknutím na pilota na mapě nebo se rovnou přihlas a přidej se!</strong></p>
+      <p><strong>Start by clicking a pilot on the map — or log in and join!</strong></p>
     </section>
 
     <h2>
   <i class="bi bi-geo-alt-fill text-danger me-2" aria-hidden="true"></i>
-  Seznam pilotů na mapě
+  Pilots Listed on the Map
 </h2>
 
-    <p>Na mapě níže vidíš všechny dostupné piloty. Klikni na ikonu a zobraz si jejich profil, vybavení a kontakt. Přihlášení uživatelé uvidí i další detaily jako specializaci, drony nebo rozsah dojíždění.</p>
+    <p>Below you can see all available pilots. Click the icon to view their profile, equipment, and contact. Logged-in users also see details like specialization, drones, or travel radius.</p>
 
     <div id="login-modal-backdrop"></div>
 
-    <!-- Přihlašovací modal -->
-    <div id="login-box" style="display: "display: none; position: relative;">
-<button type="button" class="btn-close close-btn" aria-label="Zavřít"
+    <!-- Login modal -->
+    <div id="login-box" style="display: none; position: relative;">
+<button type="button" class="btn-close close-btn" aria-label="Close"
         onclick="document.getElementById('login-box').style.display='none';"></button>
-   <h3>Přihlášení pilota</h3>
+   <h3>Pilot Login</h3>
 
 
       <form id="login-form" onsubmit="pilotLogin(event)">
@@ -192,14 +192,14 @@
           <input type="email" id="email" name="email" class="form-control" required />
         </div>
         <div class="mb-3">
-          <label for="password" class="form-label">Heslo:</label>
+          <label for="password" class="form-label">Password:</label>
           <input type="password" id="password" name="password" class="form-control" required />
         </div>
-        <button type="submit" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100"><i class="bi bi-box-arrow-in-right me-2"></i>Přihlásit se</button>
+        <button type="submit" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100"><i class="bi bi-box-arrow-in-right me-2"></i>Sign in</button>
       </form>
       <p id="login-status" class="mt-3"></p>
-      <a href="/register.html" class="link">Nejsem ještě registrován – chci se zaregistrovat</a>
-      <a href="/forgot.html" class="link">Zapomenuté heslo?</a>
+      <a href="/register.html" class="link">Not registered yet – I want to sign up</a>
+      <a href="/forgot.html" class="link">Forgot password?</a>
     </div>
     
     <div id="map" class="mt-4"></div>
@@ -213,60 +213,60 @@
   <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Skript -->
+  <!-- Script -->
   <script>
     const map = L.map('map').setView([49.8, 15.5], 7);
 const fakeNames = [
-  "Rychlý Sysel",
-  "Létající Brambor",
-  "Dronislav Nebešťák",
-  "Turbo Rákosník",
-  "Bezpilotní Emil",
-  "Pískající Páv",
-  "Pilotka Haluz",
-  "František Vrtulník",
-  "Levý Joystick",
-  "Kapitán Stín",
+  "Speedy Ground Squirrel",
+  "Flying Potato",
+  "Dronislav Skywalker",
+  "Turbo Reedbird",
+  "Unmanned Emil",
+  "Whistling Peacock",
+  "Pilot Haluz",
+  "František Rotorcraft",
+  "Left Joystick",
+  "Captain Shadow",
   "Dr. Rotor",
-  "Pan Točivý",
-  "Letuška Landová",
-  "Střemhlavý Franta",
-  "Nadzvukový Ježek",
-  "Létající Čenda",
-  "Rotorová Róza",
-  "Šumící Fanda",
-  "Bezpečný Béďa",
-  "Maják z Oblak",
-  "Droný Karel",
-  "Letec Šmatla",
-  "Startér Staník",
-  "Přistávací Pepa",
-  "Helikoptérník Honza",
-  "Navigátor Novák",
-  "Senzorová Soňa",
-  "Pán Mraků",
-  "Letící Lojza",
-  "Kamera Kamil",
+  "Mr. Spinny",
+  "Stewardess Landová",
+  "Dive-bombing Franta",
+  "Supersonic Hedgehog",
+  "Flying Čenda",
+  "Rotor Rose",
+  "Rustling Fanda",
+  "Safety Béďa",
+  "Beacon of Clouds",
+  "Drony Karel",
+  "Stumbly Pilot",
+  "Starter Stan",
+  "Landing Pepa",
+  "Helicopter Honza",
+  "Navigator Novák",
+  "Sensor Soňa",
+  "Lord of Clouds",
+  "Flying Lojza",
+  "Camera Kamil",
   "Rotor Ríša",
-  "Výškoměr Vašek",
-  "Vzdušný Vojta",
-  "Tichý Šumák",
-  "Drnčivý Dan",
-  "Mlha Milda",
-  "Optika Otakar",
-  "Ztracený Signál",
-  "Mistr Gimbal",
-  "Anténa Anička",
-  "Vrtulka Věrka",
-  "Letmo Lída",
+  "Altimeter Vašek",
+  "Aerial Vojta",
+  "Quiet Hummer",
+  "Buzzing Dan",
+  "Foggy Milda",
+  "Optics Otakar",
+  "Lost Signal",
+  "Gimbal Master",
+  "Antenna Anička",
+  "Little Prop Věrka",
+  "Casual Lída",
   "Flyboy Felix",
-  "Vzdušná Víla",
-  "Navigační Norbert",
-  "Modrá Letka",
-  "Křídlatý Karel",
-  "Polní Přízrak",
-  "Mapový Mirek",
-  "Kličkující Kuba"
+  "Airy Fairy",
+  "Navigational Norbert",
+  "Blue Squadron",
+  "Winged Karel",
+  "Field Phantom",
+  "Map-maker Mirek",
+  "Dodging Kuba"
 ];
 
 
@@ -284,19 +284,19 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         data.forEach(p => {
 
         
-  if (p.visible !== "ANO") return; // Skryj neviditelné piloty
+  if (p.visible !== "ANO") return; // Hide invisible pilots
 
   if (p.latitude != null && p.longitude != null) {
 
             let circleOptions = {
-      radius: 2000, // Výchozí rádius
-      fillOpacity: 0.2, // Výchozí opacity pro Free
+      radius: 2000, // Default radius
+      fillOpacity: 0.2, // Default opacity for Free
       color: p.available === "ANO" ? 'green' : 'gray',
       fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
       weight: 1
     };
 
-    // Změna pro různé typy účtů
+    // Change for different account types
     if (p.type_account === "Free") {
       circleOptions.color = 'lightgreen';
       circleOptions.fillOpacity = 0.2;
@@ -304,11 +304,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       circleOptions.color = 'darkgreen';
       circleOptions.fillOpacity = 0.5;
     } else if (p.type_account === "Premium") {
-  circleOptions.color = 'purple';         // Barva obrysu
-  circleOptions.fillColor = 'purple';     // Barva výplně
-  circleOptions.fillOpacity = 0.8;        // Opacity výplně
-  circleOptions.radius = 10000;           // Dvojnásobně větší rádius než Free a Basic
-  circleOptions.weight = 3;               // Tloušťka linie (nastavena na 3)
+  circleOptions.color = 'purple';         // Outline color
+  circleOptions.fillColor = 'purple';     // Fill color
+  circleOptions.fillOpacity = 0.8;        // Fill opacity
+  circleOptions.radius = 10000;           // Larger radius than Free and Basic
+  circleOptions.weight = 3;               // Stroke width
 }
 
             const circle = L.circle([p.latitude, p.longitude], circleOptions)
@@ -322,10 +322,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const buildBadge = hasBuildBadge 
   ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
   : "";
-  // Volitelné: jméno s odznakem (pro re-use)
+  // Optional: name with badge (for reuse)
 const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
 const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
-  // Nové: čti souhlas z backendu (preferuj p.hasPublicConsent), ošetři i "t"/"f"
+  // New: read consent from backend (prefer p.hasPublicConsent), handle also "t"/"f"
 const hasPublicConsent = (() => {
   const v = (p.hasPublicConsent ?? p.granted ?? false);
   if (typeof v === 'boolean') return v;
@@ -339,11 +339,11 @@ if (!hasPublicConsent) {
       <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
 
       <div class="d-flex flex-wrap gap-2 mb-2">
-        ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Dobrovolník</span>` : ''}
-        <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
+        ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Volunteer</span>` : ''}
+        <span class="badge-gdpr">No GDPR consent – contact via administrator</span>
       </div>
 
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>` : ''}
     </div>
   `;
 }
@@ -356,12 +356,12 @@ if (!hasPublicConsent) {
  
   if (isAvailable && loggedIn) {
   if (p.type_account === "Free") {
-      // Free účet - omezené informace
+      // Free account – limited information
      html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
     <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
     ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      ? `<img src="/icons/approved_4.png" alt="Verified operator" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
       ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
@@ -370,20 +370,20 @@ if (!hasPublicConsent) {
 `;
   
       if (p.volunteer === 'ANO') {
-        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+        html += `<div class="mb-2"><span class="badge-volunteer">Volunteer</span></div>`;
       }
 
-      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drones:</strong> ${p.drones}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>`;
 
       html += `</div>`;
     } else if (p.type_account === "Basic") {
-  // Basic účet - více informací
+  // Basic account – more information
  html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
     <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
     ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      ? `<img src="/icons/approved_4.png" alt="Verified operator" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
       ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
@@ -394,30 +394,30 @@ if (!hasPublicConsent) {
   
   
  if (p.volunteer === 'ANO') {
-        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+        html += `<div class="mb-2"><span class="badge-volunteer">Volunteer</span></div>`;
       }
-  if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-  if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
-  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
-  if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
-  if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+  if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drones:</strong> ${p.drones}</p>`;
+  if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>About me:</strong> ${p.note}</p>`;
+  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Travel radius:</strong> ${p.travel}</p>`;
+  if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licenses:</strong> ${p.licenses}</p>`;
+  if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>`;
 
-  // Tlačítko pro napsání pilotovi
+  // Button to contact the pilot
   html += `
     <div class="mt-3">
       <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
-        ✉️ Napsat pilotovi
+        ✉️ Message the Pilot
       </button>
     </div>
   `;
 }
  else if (p.type_account === "Premium") {
-      // Premium účet - všechny informace
+      // Premium account – all information
       html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
     <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
     ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      ? `<img src="/icons/approved_4.png" alt="Verified operator" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
       ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
@@ -427,40 +427,40 @@ if (!hasPublicConsent) {
   
   
       if (p.volunteer === 'ANO') {
-        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+        html += `<div class="mb-2"><span class="badge-volunteer">Volunteer</span></div>`;
       }
 
-      // Kontakty pro Premium účty
+      // Contacts for Premium accounts
       if (p.email) html += `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>`;
       if (p.phone) html += `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>`;
 
-      html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
-      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
-      if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+      html += `<p><i class="bi bi-drone me-1"></i><strong>Drones:</strong> ${p.drones}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>`;
+      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Travel radius:</strong> ${p.travel}</p>`;
+      if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licenses:</strong> ${p.licenses}</p>`;
     }
   } else if (!isAvailable) {
-    // Pilot není k dispozici
+    // Pilot is not available
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
 
       <br>
-      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-      <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Volunteer</span></div>` : ''}
+      <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>This pilot is currently unavailable</p>
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>` : ''}
     `;
   } else {
-    // Nepřihlášený uživatel
+    // Not logged-in user
     html += `
       <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
       
       <br>
-      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
-      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-      <p class="text-muted"><em>Přihlaste se jako inzerent a navažte pro více informací o pilotovi.</em></p>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Volunteer</span></div>` : ''}
+      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail after login]</span></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[phone hidden]</span></p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>` : ''}
+      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Travel radius:</strong> ${p.travel}</p>` : ''}
+      <p class="text-muted"><em>Log in as an advertiser to see more details and connect.</em></p>
     `;
   }
 
@@ -486,16 +486,16 @@ if (!hasPublicConsent) {
     const minRadius = 100;
     const maxRadius = 2000;
 
-    // Nastavení rádiusu pro různé typy účtů
+    // Radius settings for account types
     let accountMinRadius = minRadius;
     let accountMaxRadius = maxRadius;
 
-    if (circle.options.fillColor === 'darkgreen') { // Basic účet (tmavě zelený)
-      accountMinRadius = 100;   // Min rádius pro Basic
-      accountMaxRadius = 4000;  // Max rádius pro Basic
-    } else if (circle.options.fillColor === 'purple') { // Premium účet (fialový)
-      accountMinRadius = 100;  // Min rádius pro Premium
-      accountMaxRadius = 10000; // Max rádius pro Premium
+    if (circle.options.fillColor === 'darkgreen') { // Basic account (dark green)
+      accountMinRadius = 100;
+      accountMaxRadius = 4000;
+    } else if (circle.options.fillColor === 'purple') { // Premium account (purple)
+      accountMinRadius = 100;
+      accountMaxRadius = 10000;
     }
 
     const ratio = (zoom - minZoom) / (maxZoom - minZoom);
@@ -523,16 +523,16 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
 if (loggedEmail) {
   loginBox.style.display = "none";
   editBtn.style.display = "inline-block";
-  toggle.textContent = "Odhlásit";
-  status.textContent = "Přihlášen jako: " + loggedEmail;
+  toggle.textContent = "Log out";
+  status.textContent = "Logged in as: " + loggedEmail;
   
-  // Zobrazení "Moje zprávy" pro přihlášené uživatele
+  // Show "My Messages" for logged-in users
   const messagesNavItem = document.getElementById("messages-nav-item");
   if (messagesNavItem) {
     messagesNavItem.style.display = "block";
   }
 
-  // Zobrazení "Poptávky" jen pro účty Basic/Premium
+  // Show "Job Requests" only for Basic/Premium
   const poptavkyNavItem = document.getElementById("poptavky-nav-item");
   if (poptavkyNavItem && loggedEmail) {
     fetch('/get-my-pilot', { credentials: 'include' })
@@ -578,7 +578,7 @@ if (loggedEmail && editBtn) {
           body: JSON.stringify({ email, password })
         })
         .then(res => {
-          if (!res.ok) throw new Error("Neplatný e-mail nebo heslo.");
+          if (!res.ok) throw new Error("Invalid e-mail or password.");
           return res.text();
         })
         .then(msg => {
@@ -599,7 +599,7 @@ function contactPilot(pilotEmail) {
   const currentUserType  = localStorage.getItem('loggedEmail') ? 'pilot' : 'inzerent';
   
   if (!currentUserEmail) {
-    alert("Pro komunikaci s piloty se musíte přihlásit.");
+    alert("You must be logged in to contact pilots.");
     return;
   }
 
@@ -608,7 +608,7 @@ function contactPilot(pilotEmail) {
     fetch(`/get-user-id?email=${encodeURIComponent(pilotEmail)}&type=pilot`).then(res => res.json())
   ])
   .then(([currentUser, partner]) => {
-    return fetch('/create-conversation', {   // ← správný endpoint
+    return fetch('/create-conversation', {   // correct endpoint
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -617,13 +617,13 @@ function contactPilot(pilotEmail) {
       })
     }).then(res => res.json());
   })
-  .then(({ success, conversationId }) => {   // ← server vrací conversationId
-    if (!success) throw new Error("Nepodařilo se vytvořit konverzaci.");
+  .then(({ success, conversationId }) => {   // server returns conversationId
+    if (!success) throw new Error("Failed to create conversation.");
     window.location.href = `/chat.html?conversationId=${conversationId}`;
   })
   .catch(err => {
-    console.error("Chyba při vytváření konverzace:", err);
-    alert("Pro navázání konverzace se přihlašte jako inzerent.");
+    console.error("Error creating conversation:", err);
+    alert("Please log in as an advertiser to start a conversation.");
   });
 }document.addEventListener("DOMContentLoaded", () => {
   document.getElementById("sendContactMessage").addEventListener("click", () => {
@@ -631,7 +631,7 @@ function contactPilot(pilotEmail) {
     const message = document.getElementById("contactMessage").value.trim();
 
     if (!message) {
-      alert("Prosím napište zprávu.");
+      alert("Please write a message.");
       return;
     }
 
@@ -641,14 +641,14 @@ function contactPilot(pilotEmail) {
       body: JSON.stringify({ to: pilotEmail, message })
     })
     .then(res => {
-      if (!res.ok) throw new Error("Nepodařilo se odeslat zprávu.");
+      if (!res.ok) throw new Error("Message could not be sent.");
       return res.text();
     })
     .then(response => {
       alert(response);
       bootstrap.Modal.getInstance(document.getElementById('contactPilotModal')).hide();
     })
-    .catch(err => alert("❌ Chyba: " + err.message));
+    .catch(err => alert("❌ Error: " + err.message));
   });
 });
   </script>
@@ -661,13 +661,13 @@ function contactPilot(pilotEmail) {
     banner.className = "alert alert-warning text-center m-3 d-flex justify-content-center align-items-center";
     banner.innerHTML = `
       <div>
-        <strong>Přihlášen inzerent:</strong> ${advertiserEmail}
+        <strong>Advertiser logged in:</strong> ${advertiserEmail}
       </div>
     `;
 
     const logoutBtn = document.createElement("button");
     logoutBtn.className = "btn btn-sm btn-outline-dark ms-3";
-    logoutBtn.textContent = "Odhlásit se";
+    logoutBtn.textContent = "Log out";
     logoutBtn.onclick = () => {
       localStorage.removeItem("inzerentEmail");
       window.location.reload();
@@ -695,11 +695,11 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
                 <div class="d-flex justify-content-between">
                   <div>
                     <h5 class="mb-1">${conv.advertiser_name || conv.advertiser_email}</h5>
-                    <p class="mb-1 last-message">${conv.last_message || 'Žádné zprávy'}</p>
+                    <p class="mb-1 last-message">${conv.last_message || 'No messages yet'}</p>
                   </div>
                   <div class="text-end">
                     <span class="time-ago">${formatTimeAgo(conv.last_message_time)}</span>
-                    ${conv.unread ? '<span class="badge bg-primary ms-2">Nové</span>' : ''}
+                    ${conv.unread ? '<span class="badge bg-primary ms-2">New</span>' : ''}
                   </div>
                 </div>
               `;
@@ -709,20 +709,20 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
             container.innerHTML = `
               <div class="text-center py-5">
                 <i class="bi bi-envelope-open display-5 text-muted"></i>
-                <p class="mt-3">Zatím nemáte žádné zprávy</p>
-                <a href="/index.html" class="btn btn-primary mt-2">Najít zakázky</a>
+                <p class="mt-3">You have no messages yet</p>
+                <a href="/index.html" class="btn btn-primary mt-2">Find jobs</a>
               </div>
             `;
           }
         })
         .catch(err => {
-          console.error("Chyba při načítání konverzací:", err);
+          console.error("Failed to load conversations:", err);
           document.getElementById("conversations-list").innerHTML = `
             <div class="text-center py-5 text-danger">
               <i class="bi bi-exclamation-triangle display-5"></i>
-              <p class="mt-3">Nepodařilo se načíst konverzace</p>
+              <p class="mt-3">Could not load conversations</p>
               <button onclick="window.location.reload()" class="btn btn-outline-primary mt-2">
-                <i class="bi bi-arrow-repeat"></i> Zkusit znovu
+                <i class="bi bi-arrow-repeat"></i> Try again
               </button>
             </div>
           `;
@@ -735,7 +735,7 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
         const msgDate = new Date(timestamp);
         const diff = Math.floor((now - msgDate) / 1000); // difference in seconds
         
-        if (diff < 60) return "právě teď";
+        if (diff < 60) return "just now";
         if (diff < 3600) return `${Math.floor(diff/60)} min`;
         if (diff < 86400) return `${Math.floor(diff/3600)} h`;
         return `${Math.floor(diff/86400)} d`;
@@ -762,37 +762,37 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="contactPilotModalLabel">Napsat pilotovi</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+        <h5 class="modal-title" id="contactPilotModalLabel">Message the Pilot</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
-          <label for="contactMessage" class="form-label">Vaše zpráva</label>
-          <textarea id="contactMessage" class="form-control" rows="5" placeholder="Napište zde svou zprávu..."></textarea>
+          <label for="contactMessage" class="form-label">Your message</label>
+          <textarea id="contactMessage" class="form-control" rows="5" placeholder="Write your message here..."></textarea>
         </div>
         <input type="hidden" id="contactPilotEmail">
       </div>
 
-<!-- Modal pro souhlas se zveřejněním kontaktů -->
+<!-- Modal for public contact consent -->
 <div class="modal fade" id="publicContactConsentModal" tabindex="-1" aria-labelledby="publicContactConsentLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content border-warning">
       <div class="modal-header bg-warning">
-        <h5 class="modal-title" id="publicContactConsentLabel">Souhlas se zveřejněním kontaktů</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+        <h5 class="modal-title" id="publicContactConsentLabel">Consent to Publicly Show Contacts</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        Souhlasím, aby můj e‑mail a telefon byly veřejně zobrazeny na mém profilu.
+        I agree that my e-mail and phone number may be publicly displayed on my profile.
         <div class="form-check mt-3">
           <input class="form-check-input" type="checkbox" id="premiumConsentCheck">
           <label class="form-check-label" for="premiumConsentCheck">
-            Souhlasím se zveřejněním kontaktních údajů
+            I agree to publish my contact details
           </label>
         </div>
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
-        <button type="button" class="btn btn-warning" id="confirmPremiumConsent">Potvrdit</button>
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-warning" id="confirmPremiumConsent">Confirm</button>
       </div>
     </div>
   </div>
@@ -802,7 +802,7 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
 <script>
 document.getElementById('confirmPremiumConsent').addEventListener('click', function() {
   if (!document.getElementById('premiumConsentCheck').checked) {
-    alert("Musíte potvrdit souhlas se zveřejněním kontaktů.");
+    alert("You must confirm the consent to publish contacts.");
     return;
   }
 
@@ -811,13 +811,13 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       consent_type: 'public_contact',
-      consent_text: 'Souhlas se zveřejněním e-mailu a telefonu na veřejném profilu.',
+      consent_text: 'Consent to display e-mail and phone number on the public profile.',
       timestamp: new Date().toISOString()
     })
   })
   .then(res => {
-    if (!res.ok) throw new Error("Nepodařilo se uložit souhlas.");
-    alert("Souhlas byl uložen. Vaše kontakty budou nyní viditelné.");
+    if (!res.ok) throw new Error("Failed to save consent.");
+    alert("Consent saved. Your contacts will now be visible.");
     location.reload();
   })
   .catch(err => alert(err.message));
@@ -825,8 +825,8 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
 </script>
 
       <div class="modal-footer">
-        <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" data-bs-dismiss="modal">Zavřít</button>
-        <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" id="sendContactMessage">Odeslat</button>
+        <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" id="sendContactMessage">Send</button>
       </div>
     </div>
   </div>
@@ -836,41 +836,41 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
   <div class="container">
     <div class="row gy-3 justify-content-between">
       
-      <!-- Logo a popis -->
+      <!-- Logo & description -->
       <div class="col-md-4">
         <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
-          <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+          <img src="/icons/logo.png" alt="NajdiPilota logo" height="40" class="me-2" />
           <span class="fw-bold fs-5">NajdiPilota.cz</span>
         </a>
-        <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+        <p class="small text-muted">We connect clients with verified drone pilots across the Czech Republic. Quick, direct connection without middlemen.</p>
       </div>
 
-      <!-- Navigace -->
+      <!-- Navigation -->
       <div display="no" class="col-md-2">
-        <h6 class="fw-bold">Navigace</h6>
+        <h6 class="fw-bold">Navigation</h6>
         <ul class="list-unstyled">
-          <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
-          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
-          <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+          <li><a href="/index.html" class="text-decoration-none text-muted">Pilot Map</a></li>
+          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">About</a></li>
+          <li><a href="/kontakt.html" class="text-decoration-none text-muted">Contact</a></li>
         <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
         </ul>
       </div>
 
-      <!-- Právní -->
+      <!-- Legal / Info -->
       <div class="col-md-3">
-        <h6 class="fw-bold">Informace</h6>
+        <h6 class="fw-bold">Information</h6>
         <ul class="list-unstyled">
-          <li><a href="/gdpr.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+          <li><a href="/gdpr.html" class="text-decoration-none text-muted">Personal Data Processing</a></li>
           <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
-          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
-          <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Terms & Conditions</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Website bug report" class="text-decoration-none text-muted">Report an issue</a></li>
         </ul>
       </div>
 
-      <!-- Kontakt -->
+      <!-- Operator -->
       <div class="col-md-3">
-        <h6 class="fw-bold">Provozovatel</h6>
-        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: 08578591<br>Praha, Česká republika</p>
+        <h6 class="fw-bold">Operator</h6>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>Company ID (IČO): 08578591<br>Prague, Czech Republic</p>
         <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
       </div>
 
@@ -890,14 +890,14 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
 </footer>
 
 <script>
-  // Vloží aktuální rok do copyrightu
+  // Insert current year into copyright
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("year").textContent = new Date().getFullYear();
   });
 </script>
 
 <script>
-  // Pokud není stránka určena pro inzerenta, odhlásíme ho
+  // If the page is not intended for advertisers, log them out
   document.addEventListener("DOMContentLoaded", () => {
     if (localStorage.getItem("inzerentEmail")) {
       localStorage.removeItem("inzerentEmail");
@@ -906,7 +906,7 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
 </script>
 
 <script>
-  // Automatické přidání třídy 'active' na aktuální stránku v menu
+  // Automatically add 'active' class for current page in navbar
   document.addEventListener("DOMContentLoaded", () => {
     const currentPage = window.location.pathname;
     const navLinks = document.querySelectorAll('.navbar-nav .nav-item .nav-link');
@@ -920,7 +920,7 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
 </script>
 
 <script>
-  // badge do horní navigace (index.html)
+  // badge in top navigation (index.html)
   function renderUnreadBadgeIntoNav(count) {
     const li = document.getElementById('messages-nav-item');
     if (!li) return;
@@ -955,9 +955,9 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
   document.addEventListener('DOMContentLoaded', () => {
     const loggedEmail = localStorage.getItem('loggedEmail');
     if (loggedEmail) {
-      // jen pro přihlášené piloty
+      // only for logged-in pilots
       refreshUnreadNavBadge();
-      setInterval(refreshUnreadNavBadge, 60000); // refresh každou minutu
+      setInterval(refreshUnreadNavBadge, 60000); // refresh every minute
     }
   });
 </script>

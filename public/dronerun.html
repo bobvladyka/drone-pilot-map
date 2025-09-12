@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="utf-8" />
+  <title>DRONE RUN – minihra | NajdiPilota.cz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <style>
+    :root{
+      --hud-bg: rgba(0,0,0,0.55);
+      --hud-txt: #fff;
+      --accent: #ffe066;
+      --danger: #ff6b6b;
+      --ok: #51cf66;
+      --primary: #845ef7;
+    }
+    *{box-sizing:border-box}
+    body{ margin:0; font-family:system-ui, -apple-system, Segoe UI, Roboto, "Helvetica Neue", Arial; background:#f7f7fb; color:#222; }
+    header{ padding:14px 16px; background:#fff; border-bottom:1px solid #eee; display:flex; align-items:center; gap:12px; flex-wrap:wrap; }
+    header .title{ font-weight:700; font-size:18px; display:flex; align-items:center; gap:8px; }
+    header .actions{margin-left:auto; display:flex; align-items:center; gap:8px;}
+    .btn{ border:0; border-radius:10px; padding:10px 14px; cursor:pointer; font-weight:600; background:var(--primary); color:#fff; box-shadow:0 2px 8px rgba(0,0,0,.08); }
+    .btn.secondary{ background:#e9ecef; color:#222; }
+    .btn:disabled{opacity:.5; cursor:not-allowed}
+    #map{ width:100%; height: calc(100vh - 60px); }
+
+    .seg{ display:flex; gap:6px; padding:4px; background:#f1f3f5; border-radius:12px; border:1px solid #e9ecef; }
+    .seg button{ background:#fff; color:#222; border:1px solid #dee2e6; border-radius:10px; padding:8px 12px; font-weight:700; }
+    .seg button.active{ background:#845ef7; color:#fff; border-color:#845ef7; }
+
+    /* HUD */
+    .hud{ position:fixed; left:12px; top:72px; z-index:1000; display:flex; flex-direction:column; gap:8px; }
+    .card{ background:var(--hud-bg); color:var(--hud-txt); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border-radius:14px; padding:10px 12px; min-width: 240px; }
+    .row{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+    .stat{ display:flex; align-items:center; gap:8px; font-weight:600; }
+    .pill{ display:inline-block; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:700; background:#fff; color:#222; }
+    .bar{ height:12px; background:rgba(255,255,255,.18); border-radius:999px; overflow:hidden; outline:1px solid rgba(255,255,255,.15); }
+    .bar > span{ display:block; height:100%; width:100%; background:linear-gradient(90deg, #51cf66, #ffd43b, #ff6b6b); transform-origin:left center; }
+
+    .legend { display:flex; gap:10px; font-size:13px; opacity:.95; align-items:center; flex-wrap:wrap; }
+    .legend i{ font-size:16px; }
+    .legend .ok{ color: var(--ok); }
+    .legend .nfz{ color: var(--danger); }
+    .legend .wp{ color: var(--accent); text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+
+    /* Start/finish overlay */
+    .overlay{ position:fixed; inset:0; background:rgba(20,20,28,.72); display:none; align-items:center; justify-content:center; z-index:1100; color:#fff; backdrop-filter: blur(8px); }
+    .overlay .panel{ width:min(780px, 92vw); background:rgba(0,0,0,.5); border:1px solid rgba(255,255,255,.12); border-radius:16px; padding:22px; }
+    .panel h1{ margin:0 0 8px; font-size:26px }
+    .muted{ opacity:.85 }
+    ul.clean{margin:12px 0; padding-left:1rem}
+    ul.clean li{margin:6px 0}
+    .kbd{ background:#111; border:1px solid #333; padding:2px 8px; border-radius:6px; font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; }
+
+    /* On-screen controls */
+    .pad{
+      position:fixed; right:12px; bottom:12px; z-index:1000;
+      display:grid; grid-template-columns:56px 56px 56px; grid-template-rows:56px 56px 56px;
+      gap:8px; opacity:.95;
+    }
+    .pad button{ width:56px; height:56px; border-radius:14px; border:0; background:#ffffffcc; font-size:20px; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    .pad button:active{ transform: translateY(1px); }
+    .pad .blank{ opacity:0; pointer-events:none }
+    @media (hover:none) and (pointer:coarse){ .pad{ display:grid; } }
+    @media (hover:hover){ .pad{ display:none; } }
+
+    .altpad{
+      position:fixed; left:12px; bottom:12px; z-index:1000;
+      display:flex; flex-direction:column; gap:8px; opacity:.95;
+    }
+    .altpad button{ width:72px; height:44px; border-radius:12px; border:0; background:#ffffffcc; font-size:16px; font-weight:800; box-shadow:0 2px 8px rgba(0,0,0,.15); }
+    @media (hover:hover){ .altpad{ display:none; } }
+
+    /* Waypoint badge */
+    .wp-badge{
+      display:inline-block; background:#222; color:#ffe066; padding:4px 8px; border-radius:10px;
+      border:1px solid rgba(255,255,255,.2); font-weight:800; font-size:12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,.4); text-align:center; line-height:1.1;
+    }
+    .wp-badge small{ display:block; color:#fff; font-weight:700; opacity:.9; }
+  </style>
+</head>
+<body>
+<header>
+  <div class="title"><i class="bi bi-controller"></i> DRONE RUN – minihra</div>
+
+  <div class="seg" id="diffSeg">
+    <button data-diff="easy" class="active">Lehká</button>
+    <button data-diff="med">Střední</button>
+    <button data-diff="hard">Těžká</button>
+  </div>
+
+  <div class="actions">
+    <button id="btn-start" class="btn"><i class="bi bi-play-fill"></i> Začít</button>
+    <a href="/index.html" class="btn secondary"><i class="bi bi-arrow-left"></i> Zpět na mapu</a>
+  </div>
+</header>
+
+<div id="map"></div>
+
+<!-- HUD -->
+<div class="hud">
+  <div class="card">
+    <div class="row">
+      <div class="stat"><i class="bi bi-lightning-charge-fill"></i> Baterie</div>
+      <div class="pill" id="timeLeft">—</div>
+    </div>
+    <div class="bar"><span id="batteryBar" style="transform:scaleX(1)"></span></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="stat"><i class="bi bi-alt"></i> Výška</div>
+      <div class="pill"><span id="altVal">—</span></div>
+    </div>
+    <div class="muted" id="altHint" style="font-size:12px">Cíl: —</div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <div class="stat"><i class="bi bi-bullseye"></i> Checkpointy</div>
+      <div class="pill"><span id="collected">0</span>/<span id="total">0</span></div>
+    </div>
+  </div>
+
+  <div class="card legend">
+    <span class="ok"><i class="bi bi-caret-up-fill"></i> dron</span>
+    <span class="wp"><i class="bi bi-geo-alt-fill"></i> checkpoint (výška)</span>
+    <span class="nfz"><i class="bi bi-slash-circle"></i> zakázaná zóna = konec</span>
+  </div>
+</div>
+
+<!-- Start / Finish -->
+<div id="overlay" class="overlay">
+  <div class="panel">
+    <h1 id="ov-title">Připravit ke startu!</h1>
+    <p class="muted" id="ov-sub">
+      Posbírej všechny žluté checkpointy ve správné výšce a vyhni se červeným zónám. Vlet do červené = konec hry.
+    </p>
+
+    <ul class="clean">
+      <li>Ovládání: <span class="kbd">←</span> <span class="kbd">→</span> <span class="kbd">↑</span> <span class="kbd">↓</span> nebo <span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span></li>
+      <li>Výška: <span class="kbd">R</span> stoupat / <span class="kbd">F</span> klesat</li>
+      <li>Dotyk: směrový pad vpravo dole + ALT ▲/▼ vlevo dole</li>
+    </ul>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-top:10px">
+      <button id="ov-start" class="btn"><i class="bi bi-play-fill"></i> Start</button>
+      <button id="ov-restart" class="btn secondary" style="display:none"><i class="bi bi-arrow-counterclockwise"></i> Hrát znovu</button>
+      <span id="ov-best" class="muted" style="margin-left:auto"></span>
+    </div>
+  </div>
+</div>
+
+<!-- On-screen pad (mobile) -->
+<div class="pad" aria-hidden="true">
+  <button class="blank"></button>
+  <button data-dir="up"><i class="bi bi-caret-up-fill"></i></button>
+  <button class="blank"></button>
+  <button data-dir="left"><i class="bi bi-caret-left-fill"></i></button>
+  <button data-dir="down"><i class="bi bi-caret-down-fill"></i></button>
+  <button data-dir="right"><i class="bi bi-caret-right-fill"></i></button>
+  <button class="blank"></button>
+  <button class="blank"></button>
+  <button class="blank"></button>
+</div>
+
+<!-- On-screen altitude -->
+<div class="altpad" aria-hidden="true">
+  <button data-alt="up">▲ ALT</button>
+  <button data-alt="down">▼ ALT</button>
+</div>
+
+<script>
+(function(){
+  // ------------------ Map init ------------------
+  const map = L.map('map', { zoomControl: true }).setView([49.8, 15.5], 7);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    maxZoom: 18, attribution: '&copy; OpenStreetMap'
+  }).addTo(map);
+
+  // ------------------ Difficulty ------------------
+  const DIFF = {
+    easy: { time:150, wp:12, nfz:5, radius:80, altTol:15 },
+    med : { time:120, wp:18, nfz:7, radius:65, altTol:12 },
+    hard: { time:100, wp:24, nfz:9, radius:55, altTol:10 },
+  };
+  let difficulty = 'easy';
+  const seg = document.getElementById('diffSeg');
+  seg.querySelectorAll('button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      seg.querySelectorAll('button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.diff;
+    });
+  });
+
+  // ------------------ Game state ------------------
+  const state = {
+    running: false,
+    totalTime: 120,
+    timeLeft: 120,
+    step: 12,           // horizontální m/tick
+    tickMs: 60,         // tick fyziky
+    wind: {dx:0, dy:0},
+    pos: {lat:50.0755, lon:14.4378}, // Praha
+    alt: 50,            // výška dronu (m AGL)
+    altMin: 0,
+    altMax: 120,
+    altStep: 0.3,       // m/tick (≈5 m/s)
+    checkpoints: [],
+    nfz: [],
+    collected: 0,
+    targetRadius: 70,   // m (přepíše obtížnost)
+    altTol: 12,         // m (přepíše obtížnost)
+    reason: ''          // důvod ukončení
+  };
+
+  // ------------------ HUD refs ------------------
+  const batteryBar = document.getElementById('batteryBar');
+  const timeLeftEl = document.getElementById('timeLeft');
+  const altValEl = document.getElementById('altVal');
+  const altHintEl = document.getElementById('altHint');
+  const totalEl = document.getElementById('total');
+  const collectedEl = document.getElementById('collected');
+  const overlay = document.getElementById('overlay');
+  const ovTitle = document.getElementById('ov-title');
+  const ovSub = document.getElementById('ov-sub');
+  const ovStart = document.getElementById('ov-start');
+  const ovRestart = document.getElementById('ov-restart');
+  const ovBest = document.getElementById('ov-best');
+  const btnStart = document.getElementById('btn-start');
+
+  // ------------------ Utils ------------------
+  function metersToDegLat(m){ return m/111111; }
+  function metersToDegLon(m, lat){ return m/(111111*Math.cos(lat*Math.PI/180)); }
+  function randBetween(a,b){ return a + Math.random()*(b-a); }
+
+  function randomPointAround(lat, lon, radiusM){
+    const t = 2*Math.PI*Math.random();
+    const r = radiusM * Math.sqrt(Math.random());
+    return {
+      lat: lat + metersToDegLat(r * Math.sin(t)),
+      lon: lon + metersToDegLon(r * Math.cos(t), lat),
+    };
+  }
+
+  function distMeters(a,b){
+    const dLat = (b.lat - a.lat) * Math.PI/180;
+    const dLon = (b.lon - a.lon) * Math.PI/180;
+    const lat1 = a.lat * Math.PI/180;
+    const lat2 = b.lat * Math.PI/180;
+    const R = 6371000;
+    const x = dLon * Math.cos((lat1+lat2)/2);
+    return Math.sqrt(dLat*dLat + x*x) * R;
+  }
+
+  // ------------------ Layers ------------------
+  const drone = L.circleMarker([state.pos.lat, state.pos.lon],
+    { radius:8, color:'#111', weight:2, fill:true, fillColor:'#51cf66', fillOpacity:.9 })
+    .addTo(map)
+    .bindTooltip('Ty', {permanent:false});
+
+  const wpLayer = L.layerGroup().addTo(map);
+  const nfzLayer = L.layerGroup().addTo(map);
+
+  function drawDrone(){ drone.setLatLng([state.pos.lat, state.pos.lon]); }
+
+  function spawnWorld(){
+    const cfg = DIFF[difficulty];
+    state.totalTime = cfg.time;
+    state.timeLeft = cfg.time;
+    state.targetRadius = cfg.radius;
+    state.altTol = cfg.altTol;
+
+    wpLayer.clearLayers();
+    nfzLayer.clearLayers();
+    state.checkpoints = [];
+    state.nfz = [];
+    state.collected = 0;
+    state.alt = 50;
+    state.reason = '';
+    collectedEl.textContent = '0';
+    altHintEl.textContent = 'Cíl: —';
+
+    // Start někde v ČR
+    const startLat = randBetween(49.0, 50.3);
+    const startLon = randBetween(14.0, 16.7);
+    state.pos = {lat:startLat, lon:startLon};
+    drawDrone();
+    map.setView([state.pos.lat, state.pos.lon], 12);
+
+    // Vítr
+    state.wind = { dx: randBetween(-0.4,0.4), dy: randBetween(-0.4,0.4) };
+
+    // Checkpointy s požadovanou výškou (20–110 m)
+    const WP_COUNT = cfg.wp;
+    for (let i=0;i<WP_COUNT;i++){
+      const p = randomPointAround(state.pos.lat, state.pos.lon, randBetween(800, 2000));
+      const needAlt = Math.round(randBetween(20, 110));
+      const icon = L.divIcon({
+        className:'', html:`<span class="wp-badge">${i+1}<small>${needAlt} m</small></span>`
+      });
+      const m = L.marker([p.lat, p.lon], {icon}).addTo(wpLayer);
+      state.checkpoints.push({lat:p.lat, lon:p.lon, marker:m, hit:false, needAlt});
+    }
+    totalEl.textContent = String(WP_COUNT);
+
+    // No-fly zóny (okamžitá prohra)
+    const NFZ_COUNT = cfg.nfz;
+    for (let i=0;i<NFZ_COUNT;i++){
+      const p = randomPointAround(state.pos.lat, state.pos.lon, randBetween(600, 1900));
+      const r = randBetween(140, 280); // m
+      const c = L.circle([p.lat,p.lon], {
+        radius:r, color:'#ff6b6b', fillColor:'#ff6b6b', fillOpacity:0.35, weight:2
+      }).addTo(nfzLayer);
+      state.nfz.push({lat:p.lat, lon:p.lon, r});
+    }
+  }
+
+  // ------------------ Input ------------------
+  const keys = {up:false,down:false,left:false,right:false, ascend:false, descend:false};
+  const keyMap = {
+    ArrowUp:'up', ArrowDown:'down', ArrowLeft:'left', ArrowRight:'right',
+    w:'up', s:'down', a:'left', d:'right', W:'up', S:'down', A:'left', D:'right',
+    r:'ascend', R:'ascend', f:'descend', F:'descend'
+  };
+  window.addEventListener('keydown', (e)=>{
+    const k = keyMap[e.key];
+    if (k){ keys[k] = true; e.preventDefault(); }
+  }, {passive:false});
+  window.addEventListener('keyup', (e)=>{
+    const k = keyMap[e.key];
+    if (k){ keys[k] = false; e.preventDefault(); }
+  }, {passive:false});
+
+  // Mobile pads
+  document.querySelectorAll('.pad [data-dir]').forEach(btn=>{
+    const dir = btn.getAttribute('data-dir'); let hold=false;
+    btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); keys[dir]=true; });
+    btn.addEventListener('touchend',   (e)=>{ e.preventDefault(); keys[dir]=false; });
+    btn.addEventListener('mousedown', ()=>{ keys[dir]=true; hold=true; });
+    btn.addEventListener('mouseup',   ()=>{ keys[dir]=false; hold=false; });
+    btn.addEventListener('mouseleave',()=>{ if(hold){ keys[dir]=false; hold=false; } });
+  });
+  document.querySelectorAll('.altpad [data-alt]').forEach(btn=>{
+    const dir = btn.getAttribute('data-alt'); let hold=false;
+    const key = (dir==='up'?'ascend':'descend');
+    btn.addEventListener('touchstart', (e)=>{ e.preventDefault(); keys[key]=true; });
+    btn.addEventListener('touchend',   (e)=>{ e.preventDefault(); keys[key]=false; });
+    btn.addEventListener('mousedown', ()=>{ keys[key]=true; hold=true; });
+    btn.addEventListener('mouseup',   ()=>{ keys[key]=false; hold=false; });
+    btn.addEventListener('mouseleave',()=>{ if(hold){ keys[key]=false; hold=false; } });
+  });
+
+  // ------------------ Game loop ------------------
+  let loop=null, timer=null;
+
+  function updateHUD(){
+    const t = Math.max(0, state.timeLeft);
+    timeLeftEl.textContent = `${t.toFixed(0)} s`;
+    const ratio = Math.max(0, Math.min(1, t/state.totalTime));
+    batteryBar.style.transform = `scaleX(${ratio})`;
+    altValEl.textContent = `${Math.round(state.alt)} m`;
+    // ukázat target výšku nejbližšího neodebraného WP
+    const next = state.checkpoints.find(cp => !cp.hit);
+    if (next) altHintEl.textContent = `Cíl: ${next.needAlt} m (±${state.altTol} m)`;
+    else altHintEl.textContent = 'Cíl: —';
+  }
+
+  function step(){
+    if (!state.running) return;
+
+    // horizont
+    let dx = 0, dy = 0;
+    if (keys.left)  dx -= state.step;
+    if (keys.right) dx += state.step;
+    if (keys.up)    dy -= state.step;
+    if (keys.down)  dy += state.step;
+    dx += state.wind.dx; dy += state.wind.dy;
+
+    if (dx || dy){
+      state.pos.lat += metersToDegLat(dy);
+      state.pos.lon += metersToDegLon(dx, state.pos.lat);
+      drawDrone();
+    }
+
+    // výška
+    if (keys.ascend) state.alt += state.altStep;
+    if (keys.descend) state.alt -= state.altStep;
+    if (state.alt < state.altMin) state.alt = state.altMin;
+    if (state.alt > state.altMax) state.alt = state.altMax;
+
+    // kolize s NFZ -> okamžitý konec
+    for (const z of state.nfz){
+      const d = distMeters(state.pos, z);
+      if (d <= z.r){
+        finish(false, 'Vletěl jsi do zakázané zóny.');
+        return;
+      }
+    }
+
+    // sběr checkpointů (horizont + výška)
+    for (const cp of state.checkpoints){
+      if (cp.hit) continue;
+      const d = distMeters(state.pos, cp);
+      if (d <= state.targetRadius && Math.abs(state.alt - cp.needAlt) <= state.altTol){
+        cp.hit = true;
+        wpLayer.removeLayer(cp.marker);
+        state.collected++;
+        collectedEl.textContent = String(state.collected);
+        break;
+      }
+    }
+
+    // hotovo?
+    if (state.collected === state.checkpoints.length){
+      finish(true);
+    }
+
+    updateHUD();
+  }
+
+  function tickTime(){
+    if (!state.running) return;
+    state.timeLeft -= 1;
+    updateHUD();
+    if (state.timeLeft <= 0){
+      finish(false, 'Baterie je vyčerpaná.');
+    }
+  }
+
+  function start(){
+    state.running = true;
+    spawnWorld();
+    updateHUD();
+    overlay.style.display = 'none';
+    ovRestart.style.display = 'none';
+    loop = setInterval(step, state.tickMs);
+    timer = setInterval(tickTime, 1000);
+    btnStart.disabled = true;
+  }
+
+  function finish(won, reason=''){
+    state.running = false;
+    clearInterval(loop); loop=null;
+    clearInterval(timer); timer=null;
+    btnStart.disabled = false;
+
+    const key = 'droneGameBest_' + difficulty;
+    const score = Math.max(0, Math.floor(state.timeLeft)) + state.collected*25 + (won?50:0);
+    const best = Number(localStorage.getItem(key)||0);
+    if (score > best) localStorage.setItem(key, String(score));
+
+    ovTitle.textContent = won ? 'Mise splněna! 🎉' : 'Konec mise';
+    ovSub.innerHTML =
+      (reason ? `<div style="margin-bottom:6px" class="muted">${reason}</div>` : '') +
+      `Skóre: <b>${score}</b> · nasbíráno ${state.collected}/${state.checkpoints.length}
+       ${won ? '– skvělý výkon!' : ''}`;
+    ovStart.textContent = 'Hrát znovu';
+    ovRestart.style.display = 'inline-block';
+    const newBest = Number(localStorage.getItem(key)||0);
+    ovBest.textContent = `Nejlepší skóre (${difficulty}): ${newBest}`;
+    overlay.style.display = 'flex';
+  }
+
+  // ------------------ UI wiring ------------------
+  function showStart(){
+    const key = 'droneGameBest_' + difficulty;
+    const best = Number(localStorage.getItem(key)||0);
+    ovTitle.textContent = 'Připravit ke startu!';
+    ovSub.innerHTML = 'Posbírej všechny žluté checkpointy ve správné výšce a vyhni se červeným zónám. Vlet do červené = konec hry.';
+    ovBest.textContent = best ? `Nejlepší skóre (${difficulty}): ${best}` : '';
+    overlay.style.display = 'flex';
+  }
+
+  document.getElementById('btn-start').addEventListener('click', showStart);
+  document.getElementById('ov-start').addEventListener('click', start);
+  document.getElementById('ov-restart').addEventListener('click', start);
+  document.addEventListener('DOMContentLoaded', showStart);
+})();
+</script>
+</body>
+</html>

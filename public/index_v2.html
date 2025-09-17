@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- =====================
+       PRIMARY SEO TAGS
+  ====================== -->
+  <title>Najdi pilota dronu v Česku | Dronová mapa pilotů – NajdiPilota.cz</title>
+  <meta name="description" content="Hledáte pilota dronu? Najděte ověřené piloty v celé ČR podle regionu a specializace: natáčení, inspekce, mapování, fotogrammetrie. Přidejte se na NajdiPilota.cz." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.najdipilota.cz/" />
+  <link rel="sitemap" type="application/xml" href="/sitemap.xml" />
+  <link rel="alternate" href="https://www.najdipilota.cz/index.html" hreflang="cs" />
+  <link rel="alternate" href="https://www.najdipilota.cz/index_en.html" hreflang="en" />
+  <link rel="alternate" href="https://www.najdipilota.cz/" hreflang="x-default" />
+
+  <!-- =====================
+       OPEN GRAPH / SOCIAL
+  ====================== -->
+  <meta property="og:title" content="Najdi pilota dronu v Česku – Dronová mapa pilotů" />
+  <meta property="og:description" content="Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Vyhledejte pilota podle regionu a specializace nebo se přidejte do komunity." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.najdipilota.cz/" />
+  <meta property="og:image" content="/icons/og-image.jpg" />
+  <meta property="og:locale" content="cs_CZ" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <!-- =====================
+       VERIFICATION
+  ====================== -->
+  <meta name="google-site-verification" content="yxzi02d6ahPBVtx31lx_Mwg07khOFlY_fWUFdkyrsUE" />
+
+  <!-- =====================
+       STYLES
+  ====================== -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+
+  <!-- =====================
+       FAVICONS
+  ====================== -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/icons/site.webmanifest">
+  <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+
+  <!-- =====================
+       STRUCTURED DATA
+  ====================== -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "NajdiPilota.cz",
+    "url": "https://www.najdipilota.cz/",
+    "logo": "https://www.najdipilota.cz/icons/logo.png",
+    "email": "mailto:dronadmin@seznam.cz",
+    "sameAs": [
+      "https://www.facebook.com/",
+      "https://www.instagram.com/",
+      "https://www.linkedin.com/"
+    ]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "NajdiPilota.cz",
+    "url": "https://www.najdipilota.cz/",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://www.najdipilota.cz/?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Jak najdu pilota dronu ve svém okolí?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Otevřete mapu, zadejte lokalitu nebo klikněte na značku v regionu. Následně kontaktujte pilota přímo z profilu."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Kolik stojí služby pilota dronu?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cena závisí na typu zakázky (natáčení, inspekce, mapování) a regionu. Domluvte se přímo s pilotem."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Mohu se jako pilot přidat na mapu?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ano, registrujte se, vyplňte profil a po ověření se zobrazíte na mapě."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <!-- =====================
+       ANALYTICS
+  ====================== -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-3KQTXQ496Y"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);} 
+    gtag('js', new Date());
+    gtag('config', 'G-3KQTXQ496Y');
+  </script>
+</head>
+<body>
+  <!-- =====================
+       NAVIGATION
+  ====================== -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom" aria-label="Hlavní navigace">
+    <div class="container">
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
+        <img src="/icons/logo.png" alt="Logo NajdiPilota.cz" height="60" class="me-2" loading="lazy" />
+        <span class="fs-4">NajdiPilota.cz</span>
+      </a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Přepnout navigaci">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item" id="inzerent-nav-item" style="display:none;">
+            <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
+              <i class="bi bi-megaphone-fill me-1" aria-hidden="true"></i>Pro inzerenty
+            </a>
+          </li>
+          <li class="nav-item"><a class="nav-link" href="/index.html">Mapa</a></li>
+          <li class="nav-item" id="messages-nav-item" style="display:none;"><a class="nav-link" href="/moje-zpravy.html"><i class="bi bi-envelope me-1" aria-hidden="true"></i>Moje zprávy</a></li>
+          <li class="nav-item" id="poptavky-nav-item" style="display:none;"><a class="nav-link" href="/poptavky.html"><i class="bi bi-briefcase-fill me-1" aria-hidden="true"></i>Poptávky</a></li>
+          <li class="nav-item"><a class="nav-link" href="/o-projektu.html">O projektu</a></li>
+          <li class="nav-item"><a class="nav-link" href="/kontakt.html">Kontakt</a></li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">🌐 Jazyk</a>
+            <ul class="dropdown-menu" aria-labelledby="langDropdown">
+              <li><a class="dropdown-item" href="/index.html">Čeština</a></li>
+              <li><a class="dropdown-item" href="/index_en.html">Angličtina</a></li>
+            </ul>
+          </li>
+        </ul>
+        <button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2" aria-haspopup="dialog">
+          <i class="bi bi-person-badge me-2" aria-hidden="true"></i>
+          <span id="login-toggle">Přihlásit se jako pilot</span>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- =====================
+       HERO / INTRO
+  ====================== -->
+  <div class="container py-4">
+    <header class="text-center mb-4">
+      <h1 class="mb-2"><i class="bi bi-map-fill me-2" aria-hidden="true"></i>Dronová mapa pilotů v Česku</h1>
+      <p id="user-status" class="fw-bold mb-0" aria-live="polite"></p>
+    </header>
+
+    <!-- CTA login/register (hidden for advertisers) -->
+    <div id="pilot-login-wrapper" class="d-flex flex-wrap align-items-center gap-2 justify-content-center"></div>
+
+    <!-- Inzerent Modal -->
+    <div class="modal fade" id="inzerentModal" tabindex="-1" aria-labelledby="inzerentModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-warning">
+          <div class="modal-header bg-warning">
+            <h5 class="modal-title" id="inzerentModalLabel"><i class="bi bi-building me-2" aria-hidden="true"></i>Pro firmy a inzerenty</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+          </div>
+          <div class="modal-body">
+            <p>Hledáte pilota pro natáčení, inspekci nebo mapování? Vyberte si z ověřených pilotů podle regionu a specializace.</p>
+          </div>
+          <div class="modal-footer">
+            <a href="/inzerent.html" class="btn btn-outline-warning">
+              <i class="bi bi-person-badge-fill me-1" aria-hidden="true"></i> Přihlásit se jako inzerent
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Intro copy for SEO (visually hidden hint + readable text) -->
+    <p class="visually-hidden">Interaktivní mapa ověřených pilotů dronů v ČR. Najděte pilota podle lokality, vybavení a specializace. Rychlé spojení bez zprostředkovatelů.</p>
+
+    <section class="mb-5">
+      <p><strong>Hledáte pilota dronu ve svém okolí?</strong> Nebo sám/sama létáte a chcete být vidět?</p>
+      <p>Tato mapa propojuje zákazníky s piloty. Vyhledejte spolehlivého pilota podle místa, vybavení nebo specializace – anebo se zaregistrujte a získejte nové příležitosti k létání i výdělku.</p>
+      <ul>
+        <li><strong>Rychlé spojení</strong> bez zbytečných formulářů</li>
+        <li><strong>Ověření piloti</strong> s profilem a kontakty</li>
+        <li><strong>Možnost přivýdělku</strong> pro každého pilota</li>
+      </ul>
+      <p class="mb-0"><strong>Začněte kliknutím na pilota na mapě nebo se přihlaste a přidejte se!</strong></p>
+    </section>
+
+    <!-- =====================
+         HOW IT WORKS (SEO section)
+    ====================== -->
+    <section class="mb-5">
+      <h2 class="h4"><i class="bi bi-lightning-charge-fill me-2" aria-hidden="true"></i>Jak funguje NajdiPilota.cz?</h2>
+      <ol class="mb-3">
+        <li><strong>Vyhledejte pilota</strong> podle lokality nebo specializace (inspekce, natáčení, mapování).</li>
+        <li><strong>Otevřete profil</strong> a zkontrolujte vybavení, zkušenosti a dostupnost.</li>
+        <li><strong>Kontaktujte pilota</strong> a domluvte termín i cenu přímo.</li>
+      </ol>
+      <p>Pro firmy máme rychlou registraci inzerenta. <a href="/inzerent.html">Přihlásit se jako inzerent</a>.</p>
+    </section>
+
+    <!-- =====================
+         USE CASES (SEO section)
+    ====================== -->
+    <section class="mb-5">
+      <h2 class="h4"><i class="bi bi-camera-video-fill me-2" aria-hidden="true"></i>Nejčastější využití dronů</h2>
+      <div class="row g-3">
+        <div class="col-md-6">
+          <ul class="mb-0">
+            <li>Letecké natáčení a fotografie akcí, realit a cestovního ruchu</li>
+            <li>Inspekce střech, fasád a průmyslových areálů</li>
+            <li>Mapování a <strong>fotogrammetrie</strong> (ortomapy, 3D modely)</li>
+          </ul>
+        </div>
+        <div class="col-md-6">
+          <ul class="mb-0">
+            <li>Geodézie a stavebnictví (monitoring stavby)</li>
+            <li>Zemědělství (monitoring porostu)</li>
+            <li>Záchranné a bezpečnostní složky (průzkum, pátrání)</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- =====================
+         MAP + LIST
+    ====================== -->
+    <section class="mb-4">
+      <h2 class="h4"><i class="bi bi-geo-alt-fill text-danger me-2" aria-hidden="true"></i>Seznam pilotů na mapě</h2>
+      <p>Na mapě níže vidíte dostupné piloty. Klikněte na ikonu a otevřete profil s vybavením, specializací a kontaktem. Přihlášení uživatelé uvidí rozšířené informace.</p>
+
+      <div id="login-modal-backdrop" aria-hidden="true"></div>
+
+      <!-- Login box (initially hidden) -->
+      <div id="login-box" style="display: none; position: relative;" role="dialog" aria-labelledby="loginBoxTitle" aria-modal="true">
+        <button type="button" class="btn-close close-btn" aria-label="Zavřít" onclick="document.getElementById('login-box').style.display='none';"></button>
+        <h3 id="loginBoxTitle">Přihlášení pilota</h3>
+        <form id="login-form" onsubmit="pilotLogin(event)">
+          <div class="mb-3">
+            <label for="email" class="form-label">E‑mail</label>
+            <input type="email" id="email" name="email" class="form-control" required />
+          </div>
+          <div class="mb-3">
+            <label for="password" class="form-label">Heslo</label>
+            <input type="password" id="password" name="password" class="form-control" required />
+          </div>
+          <button type="submit" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100">
+            <i class="bi bi-box-arrow-in-right me-2" aria-hidden="true"></i>Přihlásit se
+          </button>
+        </form>
+        <p id="login-status" class="mt-3"></p>
+        <a href="/register.html" class="link">Nejsem ještě registrován – chci se zaregistrovat</a>
+        <a href="/forgot.html" class="link">Zapomenuté heslo?</a>
+      </div>
+
+      <div id="map" class="mt-4" role="region" aria-label="Mapa pilotů" style="min-height: 520px;"></div>
+      <noscript>
+        <div class="alert alert-info mt-3" role="status">Pro zobrazení interaktivní mapy povolte JavaScript. Mezitím můžete kontaktovat inzerci na <a href="/kontakt.html">/kontakt.html</a> nebo přejít na <a href="/poptavky.html">/poptavky.html</a>.</div>
+      </noscript>
+    </section>
+
+    <!-- =====================
+         CITY SHORTCUTS (Internal links)
+    ====================== -->
+    <section class="mb-5">
+      <h2 class="h5"><i class="bi bi-geo me-2" aria-hidden="true"></i>Rychlé odkazy podle města</h2>
+      <p class="mb-1">Hledáte pilota v konkrétní lokalitě? Zkuste:</p>
+      <p class="mb-0">
+        <a href="/index.html?q=Praha">Praha</a> ·
+        <a href="/index.html?q=Brno">Brno</a> ·
+        <a href="/index.html?q=Ostrava">Ostrava</a> ·
+        <a href="/index.html?q=Plzeň">Plzeň</a> ·
+        <a href="/index.html?q=Liberec">Liberec</a>
+      </p>
+    </section>
+
+    <!-- =====================
+         FAQ (visible content aligns with JSON-LD)
+    ====================== -->
+    <section class="mb-5">
+      <h2 class="h4"><i class="bi bi-question-circle-fill me-2" aria-hidden="true"></i>Časté dotazy</h2>
+      <div class="accordion" id="faq">
+        <div class="accordion-item">
+          <h3 class="accordion-header" id="faq1h"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq1" aria-expanded="false" aria-controls="faq1">Jak najdu pilota dronu ve svém okolí?</button></h3>
+          <div id="faq1" class="accordion-collapse collapse" aria-labelledby="faq1h" data-bs-parent="#faq"><div class="accordion-body">Otevřete mapu, zadejte lokalitu nebo klikněte na značku v regionu. Poté kontaktujte pilota přímo z profilu.</div></div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header" id="faq2h"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2" aria-expanded="false" aria-controls="faq2">Kolik stojí služby pilota dronu?</button></h3>
+          <div id="faq2" class="accordion-collapse collapse" aria-labelledby="faq2h" data-bs-parent="#faq"><div class="accordion-body">Cena se liší dle typu zakázky (natáčení, inspekce, mapování) a regionu. Podrobnosti vyřešíte přímo s pilotem.</div></div>
+        </div>
+        <div class="accordion-item">
+          <h3 class="accordion-header" id="faq3h"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3" aria-expanded="false" aria-controls="faq3">Mohu se jako pilot přidat na mapu?</button></h3>
+          <div id="faq3" class="accordion-collapse collapse" aria-labelledby="faq3h" data-bs-parent="#faq"><div class="accordion-body">Ano, registrujte se, vyplňte profil a po ověření se zobrazíte na mapě.</div></div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- =====================
+       CONTACT PILOT MODAL
+  ====================== -->
+  <div class="modal fade" id="contactPilotModal" tabindex="-1" aria-labelledby="contactPilotModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="contactPilotModalLabel">Napsat pilotovi</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="contactMessage" class="form-label">Vaše zpráva</label>
+            <textarea id="contactMessage" class="form-control" rows="5" placeholder="Napište zde svou zprávu..."></textarea>
+          </div>
+          <input type="hidden" id="contactPilotEmail">
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" data-bs-dismiss="modal">Zavřít</button>
+          <button type="button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" id="sendContactMessage">Odeslat</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================
+       PUBLIC CONTACT CONSENT MODAL
+  ====================== -->
+  <div class="modal fade" id="publicContactConsentModal" tabindex="-1" aria-labelledby="publicContactConsentLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content border-warning">
+        <div class="modal-header bg-warning">
+          <h5 class="modal-title" id="publicContactConsentLabel">Souhlas se zveřejněním kontaktů</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zavřít"></button>
+        </div>
+        <div class="modal-body">
+          Souhlasím, aby můj e‑mail a telefon byly veřejně zobrazeny na mém profilu.
+          <div class="form-check mt-3">
+            <input class="form-check-input" type="checkbox" id="premiumConsentCheck">
+            <label class="form-check-label" for="premiumConsentCheck">Souhlasím se zveřejněním kontaktních údajů</label>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Zrušit</button>
+          <button type="button" class="btn btn-warning" id="confirmPremiumConsent">Potvrdit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =====================
+       FOOTER
+  ====================== -->
+  <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+    <div class="container">
+      <div class="row gy-3 justify-content-between">
+        <div class="col-md-4">
+          <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+            <img src="/icons/logo.png" alt="Logo NajdiPilota.cz" height="40" loading="lazy" class="me-2" />
+            <span class="fw-bold fs-5">NajdiPilota.cz</span>
+          </a>
+          <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+        </div>
+        <div class="col-md-2">
+          <h6 class="fw-bold">Navigace</h6>
+          <ul class="list-unstyled">
+            <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+            <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
+            <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+            <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h6 class="fw-bold">Informace</h6>
+          <ul class="list-unstyled">
+            <li><a href="/gdpr.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+            <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
+            <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+            <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+          </ul>
+        </div>
+        <div class="col-md-3">
+          <h6 class="fw-bold">Provozovatel</h6>
+          <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: 08578591<br>Praha, Česká republika</p>
+          <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+        </div>
+      </div>
+      <hr class="my-4">
+      <div class="d-flex justify-content-between align-items-center small text-muted">
+        <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+        <div>
+          <a href="/v-procesu.html" class="text-muted me-3" aria-label="Facebook"><i class="bi bi-facebook" aria-hidden="true"></i></a>
+          <a href="/v-procesu.html" class="text-muted me-3" aria-label="Instagram"><i class="bi bi-instagram" aria-hidden="true"></i></a>
+          <a href="/v-procesu.html" class="text-muted" aria-label="LinkedIn"><i class="bi bi-linkedin" aria-hidden="true"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- =====================
+       SCRIPTS
+  ====================== -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // Init year
+    document.addEventListener('DOMContentLoaded', () => {
+      const yearEl = document.getElementById('year');
+      if (yearEl) yearEl.textContent = new Date().getFullYear();
+    });
+  </script>
+
+  <script>
+    // Map init
+    const map = L.map('map').setView([49.8, 15.5], 7);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+      maxZoom: 18
+    }).addTo(map);
+
+    const markers = L.markerClusterGroup();
+    const pilotCircles = [];
+
+    // Fetch pilots for map
+    fetch('/pilots')
+      .then(res => res.json())
+      .then(data => {
+        const fakeNames = [
+          'Rychlý Sysel','Létající Brambor','Dronislav Nebešťák','Turbo Rákosník','Bezpilotní Emil','Pískající Páv','Pilotka Haluz','František Vrtulník','Levý Joystick','Kapitán Stín','Dr. Rotor','Pan Točivý','Letuška Landová','Střemhlavý Franta','Nadzvukový Ježek','Létající Čenda','Rotorová Róza','Šumící Fanda','Bezpečný Béďa','Maják z Oblak','Droný Karel','Letec Šmatla','Startér Staník','Přistávací Pepa','Helikoptérník Honza','Navigátor Novák','Senzorová Soňa','Pán Mraků','Letící Lojza','Kamera Kamil','Rotor Ríša','Výškoměr Vašek','Vzdušný Vojta','Tichý Šumák','Drnčivý Dan','Mlha Milda','Optika Otakar','Ztracený Signál','Mistr Gimbal','Anténa Anička','Vrtulka Věrka','Letmo Lída','Flyboy Felix','Vzdušná Víla','Navigační Norbert','Modrá Letka','Křídlatý Karel','Polní Přízrak','Mapový Mirek','Kličkující Kuba'
+        ];
+
+        data.forEach(p => {
+          if (p.visible !== 'ANO') return;
+          if (p.latitude == null || p.longitude == null) return;
+
+          const circleOptions = (() => {
+            const base = {
+              radius: 2000,
+              fillOpacity: 0.2,
+              color: p.available === 'ANO' ? 'green' : 'gray',
+              fillColor: p.available === 'ANO' ? '#4CAF50' : '#CCCCCC',
+              weight: 1
+            };
+            if (p.type_account === 'Free') {
+              return { ...base, color: 'lightgreen', fillOpacity: 0.2 };
+            }
+            if (p.type_account === 'Basic') {
+              return { ...base, color: 'darkgreen', fillOpacity: 0.5, fillColor: 'darkgreen' };
+            }
+            if (p.type_account === 'Premium') {
+              return { ...base, color: 'purple', fillColor: 'purple', fillOpacity: 0.8, radius: 10000, weight: 3 };
+            }
+            return base;
+          })();
+
+          const circle = L.circle([p.latitude, p.longitude], circleOptions).bindPopup(() => {
+            const loggedIn = localStorage.getItem('loggedEmail') || localStorage.getItem('inzerentEmail');
+            const isAvailable = p.available === 'ANO';
+            const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+            const hasBuildBadge = p.id && Number(p.id) <= 80;
+            const buildBadge = hasBuildBadge ? '<img src="/icons/build50_v1.png" alt="Build 50 odznak" width="64" height="64" class="ms-2 align-middle" title="Build 50">' : '';
+
+            const hasPublicConsent = (() => {
+              const v = (p.hasPublicConsent ?? p.granted ?? false);
+              if (typeof v === 'boolean') return v;
+              const s = String(v).trim().toLowerCase();
+              return s === 'true' || s === 't' || s === '1' || s === 'ano' || s === 'yes';
+            })();
+
+            const nameSafe = (p.name || '').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+            // No consent → anonymizovaný profil
+            if (!hasPublicConsent) {
+              return `
+                <div class="pilot-card">
+                  <h3><i class="bi bi-person-circle me-1" aria-hidden="true"></i>${fakeName}${buildBadge}</h3>
+                  <div class="d-flex flex-wrap gap-2 mb-2">
+                    ${p.volunteer === 'ANO' ? '<span class="badge-volunteer">Dobrovolník</span>' : ''}
+                    <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
+                  </div>
+                  ${p.specialization ? `<p><i class='bi bi-puzzle-fill me-1'></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+                </div>`;
+            }
+
+            let html = `<div class="pilot-card">`;
+            const verified = p.registrationnumber && p.registrationnumber.startsWith('CZE') && p.registrationnumber.length === 16
+              ? '<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="ms-2">' : '';
+
+            const header = `
+              <div class="d-flex justify-content-between align-items-center mb-1">
+                <h3 class="mb-0"><i class="bi bi-person-circle me-1" aria-hidden="true"></i>${nameSafe || fakeName}</h3>
+                ${verified}
+                ${buildBadge}
+              </div>`;
+
+            const common = `
+              ${p.volunteer === 'ANO' ? '<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>' : ''}
+              ${p.drones ? `<p><i class='bi bi-drone me-1'></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+              ${p.specialization ? `<p><i class='bi bi-puzzle-fill me-1'></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}`;
+
+            if (isAvailable && loggedIn) {
+              if (p.type_account === 'Free') {
+                html += header + common + '</div>';
+              } else if (p.type_account === 'Basic') {
+                html += header + `
+                  ${p.note ? `<p><i class='bi bi-chat-left-text me-1'></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+                  ${p.travel ? `<p><i class='bi bi-signpost me-1'></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+                  ${p.licenses ? `<p><i class='bi bi-award me-1'></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+                  ${common}
+                  <div class="mt-3">
+                    <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">✉️ Napsat pilotovi</button>
+                  </div>
+                </div>`;
+              } else if (p.type_account === 'Premium') {
+                html += header + `
+                  ${p.email ? `<p><i class='bi bi-envelope-at me-1'></i><a href='mailto:${p.email}'>${p.email}</a></p>` : ''}
+                  ${p.phone ? `<p><i class='bi bi-telephone-fill me-1'></i><a href='tel:${p.phone}'>${p.phone}</a></p>` : ''}
+                  ${p.travel ? `<p><i class='bi bi-signpost me-1'></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+                  ${p.licenses ? `<p><i class='bi bi-award me-1'></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+                  ${common}
+                </div>`;
+              }
+            } else if (!isAvailable) {
+              html += `
+                <h3><i class="bi bi-person-circle me-1" aria-hidden="true"></i>${fakeName}${buildBadge}</h3>
+                ${p.volunteer === 'ANO' ? '<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>' : ''}
+                <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1" aria-hidden="true"></i>Tento pilot momentálně není k dispozici</p>
+                ${p.specialization ? `<p><i class='bi bi-puzzle-fill me-1'></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+              `;
+            } else {
+              html += `
+                <h3><i class="bi bi-person-circle me-1" aria-hidden="true"></i>${fakeName}${buildBadge}</h3>
+                ${p.volunteer === 'ANO' ? '<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>' : ''}
+                <p><i class="bi bi-envelope-at me-1" aria-hidden="true"></i><span class="text-muted">[e‑mail po přihlášení]</span></p>
+                ${p.phone ? '<p><i class="bi bi-telephone-fill me-1" aria-hidden="true"></i><span class="text-muted">[telefon skryt]</span></p>' : ''}
+                ${p.specialization ? `<p><i class='bi bi-puzzle-fill me-1'></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+                ${p.travel ? `<p><i class='bi bi-signpost me-1'></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+                <p class="text-muted"><em>Přihlaste se jako inzerent pro více informací o pilotovi.</em></p>
+              `;
+            }
+            html += '</div>';
+            return html;
+          });
+
+          markers.addLayer(circle);
+          pilotCircles.push(circle);
+        });
+
+        map.addLayer(markers);
+        if (markers.getBounds().isValid()) {
+          map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+        }
+      });
+
+    // Responsive radius & opacity on zoom
+    map.on('zoomend', () => {
+      const zoom = map.getZoom();
+      pilotCircles.forEach(circle => {
+        const maxZoom = 14, minZoom = 7, minRadius = 100, maxRadius = 2000;
+        let accountMinRadius = minRadius, accountMaxRadius = maxRadius;
+        if (circle.options.fillColor === 'darkgreen') { accountMinRadius = 100; accountMaxRadius = 4000; }
+        else if (circle.options.fillColor === 'purple') { accountMinRadius = 100; accountMaxRadius = 10000; }
+        const ratio = (zoom - minZoom) / (maxZoom - minZoom);
+        const radius = Math.max(accountMinRadius, accountMaxRadius - (accountMaxRadius - accountMinRadius) * ratio);
+        circle.setRadius(radius);
+        const opacity = 0.2 + 0.2 * (1 - ratio);
+        circle.setStyle({ fillOpacity: opacity });
+      });
+    });
+  </script>
+
+  <script>
+    // Auth & UI state
+    document.addEventListener('DOMContentLoaded', () => {
+      const loginBox = document.getElementById('login-box');
+      const toggle = document.getElementById('login-toggle');
+      const status = document.getElementById('user-status');
+      const editBtn = document.getElementById('edit-profile-btn');
+      const messagesNavItem = document.getElementById('messages-nav-item');
+      const inzerentNavItem = document.getElementById('inzerent-nav-item');
+
+      const loggedEmail = localStorage.getItem('loggedEmail');
+      const inzerentEmail = localStorage.getItem('inzerentEmail');
+
+      if (!loggedEmail && inzerentNavItem) inzerentNavItem.style.display = 'block';
+
+      if (loggedEmail) {
+        if (loginBox) loginBox.style.display = 'none';
+        if (toggle) toggle.textContent = 'Odhlásit';
+        if (status) status.textContent = 'Přihlášen jako: ' + loggedEmail;
+        if (messagesNavItem) messagesNavItem.style.display = 'block';
+
+        // Show poptávky for Basic/Premium
+        const poptavkyNavItem = document.getElementById('poptavky-nav-item');
+        if (poptavkyNavItem) {
+          fetch('/get-my-pilot', { credentials: 'include' })
+            .then(r => r.ok ? r.json() : null)
+            .then(me => {
+              const t = (me?.type_account || '').toLowerCase();
+              poptavkyNavItem.style.display = (t === 'basic' || t === 'premium') ? 'block' : 'none';
+            })
+            .catch(() => { poptavkyNavItem.style.display = 'none'; });
+        }
+
+        toggle?.addEventListener('click', () => {
+          localStorage.removeItem('loggedEmail');
+          window.location.reload();
+        });
+      } else {
+        toggle?.addEventListener('click', () => {
+          if (!loginBox) return;
+          loginBox.style.display = loginBox.style.display === 'none' ? 'block' : 'none';
+        });
+      }
+
+      // Hide pilot login area for advertisers
+      const loginWrapper = document.getElementById('pilot-login-wrapper');
+      if (inzerentEmail && loginWrapper) {
+        loginWrapper.style.display = 'none';
+      }
+
+      // Remove inzerent session on non-inzerent pages (kept as in source)
+      if (localStorage.getItem('inzerentEmail')) {
+        // Commented out to avoid unexpected logout on index. Uncomment if desired.
+        // localStorage.removeItem('inzerentEmail');
+      }
+
+      // Active nav link
+      const currentPage = window.location.pathname;
+      document.querySelectorAll('.navbar-nav .nav-item .nav-link').forEach(link => {
+        if (link.getAttribute('href') === currentPage) {
+          link.parentElement.classList.add('active');
+        }
+      });
+    });
+
+    // Login submit
+    function pilotLogin(event) {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const statusBox = document.getElementById('login-status');
+
+      fetch('/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      })
+        .then(res => { if (!res.ok) throw new Error('Neplatný e‑mail nebo heslo.'); return res.text(); })
+        .then(msg => {
+          localStorage.setItem('loggedEmail', email);
+          statusBox.style.color = 'green';
+          statusBox.textContent = msg;
+          window.location.href = '/account.html?email=' + encodeURIComponent(email);
+        })
+        .catch(err => {
+          statusBox.style.color = 'red';
+          statusBox.textContent = err.message;
+        });
+    }
+    window.pilotLogin = pilotLogin;
+
+    // Contact pilot
+    function contactPilot(pilotEmail) {
+      const currentUserEmail = localStorage.getItem('loggedEmail') || localStorage.getItem('inzerentEmail');
+      const currentUserType = localStorage.getItem('loggedEmail') ? 'pilot' : 'inzerent';
+      if (!currentUserEmail) {
+        alert('Pro komunikaci s piloty se musíte přihlásit.');
+        return;
+      }
+      Promise.all([
+        fetch(`/get-user-id?email=${encodeURIComponent(currentUserEmail)}&type=${currentUserType}`).then(res => res.json()),
+        fetch(`/get-user-id?email=${encodeURIComponent(pilotEmail)}&type=pilot`).then(res => res.json())
+      ])
+        .then(([currentUser, partner]) => {
+          return fetch('/create-conversation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ pilotEmail, advertiserEmail: currentUserType === 'inzerent' ? currentUserEmail : null })
+          }).then(res => res.json());
+        })
+        .then(({ success, conversationId }) => {
+          if (!success) throw new Error('Nepodařilo se vytvořit konverzaci.');
+          window.location.href = `/chat.html?conversationId=${conversationId}`;
+        })
+        .catch(err => {
+          console.error('Chyba při vytváření konverzace:', err);
+          alert('Pro navázání konverzace se přihlaste jako inzerent.');
+        });
+    }
+    window.contactPilot = contactPilot;
+
+    // Send contact message (modal)
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('sendContactMessage');
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const pilotEmail = document.getElementById('contactPilotEmail').value;
+        const message = document.getElementById('contactMessage').value.trim();
+        if (!message) { alert('Prosím napište zprávu.'); return; }
+        fetch('/contact-pilot', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ to: pilotEmail, message })
+        })
+          .then(res => { if (!res.ok) throw new Error('Nepodařilo se odeslat zprávu.'); return res.text(); })
+          .then(response => {
+            alert(response);
+            const modalEl = document.getElementById('contactPilotModal');
+            if (modalEl) bootstrap.Modal.getInstance(modalEl)?.hide();
+          })
+          .catch(err => alert('❌ Chyba: ' + err.message));
+      });
+    });
+
+    // Consent save
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('confirmPremiumConsent');
+      if (!btn) return;
+      btn.addEventListener('click', function() {
+        if (!document.getElementById('premiumConsentCheck').checked) {
+          alert('Musíte potvrdit souhlas se zveřejněním kontaktů.');
+          return;
+        }
+        fetch('/save-consent', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            consent_type: 'public_contact',
+            consent_text: 'Souhlas se zveřejněním e‑mailu a telefonu na veřejném profilu.',
+            timestamp: new Date().toISOString()
+          })
+        })
+          .then(res => { if (!res.ok) throw new Error('Nepodařilo se uložit souhlas.'); alert('Souhlas byl uložen. Vaše kontakty budou nyní viditelné.'); location.reload(); })
+          .catch(err => alert(err.message));
+      });
+    });
+
+    // Unread badge refresh
+    async function refreshUnreadNavBadge() {
+      const email = localStorage.getItem('loggedEmail');
+      if (!email) return;
+      try {
+        const r = await fetch('/unread-count?pilotEmail=' + encodeURIComponent(email));
+        const data = await r.json();
+        renderUnreadBadgeIntoNav(data.count || 0);
+      } catch {}
+    }
+    function renderUnreadBadgeIntoNav(count) {
+      const li = document.getElementById('messages-nav-item');
+      if (!li) return;
+      const a = li.querySelector('a.nav-link');
+      if (!a) return;
+      let badge = a.querySelector('#unread-badge');
+      if (!badge) {
+        badge = document.createElement('span');
+        badge.id = 'unread-badge';
+        badge.className = 'badge rounded-pill bg-danger ms-2';
+        a.appendChild(badge);
+      }
+      badge.textContent = String(count);
+      badge.style.display = count > 0 ? '' : 'none';
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (localStorage.getItem('loggedEmail')) {
+        refreshUnreadNavBadge();
+        setInterval(refreshUnreadNavBadge, 60000);
+      }
+    });
+  </script>
+</body>
+</html>

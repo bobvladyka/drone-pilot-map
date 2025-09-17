@@ -399,6 +399,16 @@ if (pilot.type_account === "Basic") {
   });
 }
 
+// Po načtení pilota (tam, kde je currentPilot = pilot)
+if (!pilot.latitude || !pilot.longitude) {
+  const warning = document.createElement("div");
+  warning.className = "alert alert-danger mt-3";
+  warning.innerHTML = "⚠️ Vaše poloha se nezobrazuje správně. Prosím, upravte adresu.";
+  const form = document.getElementById("account-form");
+  form.parentNode.insertBefore(warning, form);
+}
+
+
 
 // GDPR – nové UI s tlačítkem
 (function initGdprToggle() {

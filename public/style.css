@@ -674,6 +674,11 @@ button.accordion-button:not(.collapsed) {
     .conv-last{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
   }
 
+/* Modal gradient header (navazuje na tvoji paletu) */
+.bg-gradient-sky {
+  background: linear-gradient(90deg, var(--primary), var(--accent));
+}
+
 
 
 

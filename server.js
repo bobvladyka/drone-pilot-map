@@ -276,8 +276,8 @@ function escapeHtml(s) {
 }
 
 
-const membershipExpiry7DaysEmail = (refEmail) => {
-  const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refEmail)}`;
+const membershipExpiry7DaysEmail = (refCode) => {
+  const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refCode)}`;
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
       <h2 style="color: #0077B6;">⏳ Vaše členství na NajdiPilota.cz brzy vyprší</h2>
@@ -285,75 +285,55 @@ const membershipExpiry7DaysEmail = (refEmail) => {
         Zbývá už jen <strong>7 dní</strong> do vypršení platnosti vašeho členství. 
         Aby váš profil zůstal viditelný pro klienty a inzerenty, doporučujeme ho včas prodloužit.
       </p>
-
-      <p style="font-size: 16px; color: #495057;"><strong>Jak prodloužit členství?</strong></p>
-      <ol style="font-size: 16px; color: #495057; padding-left: 20px;">
+      <p><strong>Jak prodloužit členství?</strong></p>
+      <ol>
         <li>Přihlaste se na svůj účet pilota.</li>
-        <li>V profilu pilota klikněte na tlačítko <strong style="color: #0077B6;">"Prodloužit členství"</strong>.</li>
+        <li>V profilu pilota klikněte na <strong>"Prodloužit členství"</strong>.</li>
       </ol>
-
-      <p style="font-size: 16px; color: #495057;">
-        Podrobné informace o typech účtů a možnostech prodloužení najdete zde:<br>
-        <a href="https://www.najdipilota.cz/subscription.html" style="color: #0077B6;">Možnosti předplatného</a>
+      <p>Možnosti a ceny: 
+        <a href="https://www.najdipilota.cz/subscription.html">Možnosti předplatného</a>
       </p>
-
-      <hr style="margin: 20px 0;">
-
+      <hr>
       <h3 style="color: #258f01;">🎁 Získejte 7 dní navíc zdarma!</h3>
-      <p style="font-size: 16px; color: #495057;">
-        Pozvěte svého kamaráda k registraci a získejte <strong>+7 dní členství zdarma</strong>.  
-        Stačí mu poslat tento odkaz:
-      </p>
-      <div style="background: #f1f1f1; padding: 10px; font-size: 16px; text-align: center; border-radius: 6px; word-break: break-all;">
+      <p>Pozvěte kamaráda a získejte <strong>+7 dní členství zdarma</strong>. 
+         Stačí mu poslat tento odkaz:</p>
+      <div style="background: #f1f1f1; padding: 10px; text-align: center; border-radius: 6px; word-break: break-all;">
         ${refUrl}
       </div>
-
-      <p style="font-size: 14px; color: #6c757d; margin-top: 10px;">
-        Jakmile se váš kamarád zaregistruje přes tento odkaz, automaticky se vám přičte 7 dní k aktuálnímu členství.
+      <p style="font-size: 14px; color: #6c757d;">
+        Jakmile se kamarád zaregistruje přes odkaz, automaticky se vám přičte 7 dní.
       </p>
-
-      <p style="font-size: 16px; color: #495057;">S pozdravem,<br>Tým NajdiPilota.cz</p>
+      <p>S pozdravem,<br>Tým NajdiPilota.cz</p>
     </div>
   `;
 };
 
-const membershipExpiry3DaysEmail = (refEmail) => {
-  const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refEmail)}`;
+const membershipExpiry3DaysEmail = (refCode) => {
+  const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refCode)}`;
   return `
     <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
       <h2 style="color: red;">⚠️ Poslední 3 dny pro prodloužení členství!</h2>
-      <p style="font-size: 16px; color: #495057;">
-        Vaše členství na <strong>NajdiPilota.cz</strong> vyprší už za <strong>3 dny</strong>. 
-        Po tomto datu bude váš účet automaticky převeden na typ <strong style="color: #b0f759;">Free</strong> s omezenými funkcemi.
-      </p>
-
-      <p style="font-size: 16px; color: #495057;"><strong>Prodloužení je snadné:</strong></p>
-      <ol style="font-size: 16px; color: #495057; padding-left: 20px;">
+      <p>Vaše členství na <strong>NajdiPilota.cz</strong> vyprší už za <strong>3 dny</strong>. 
+         Po tomto datu bude účet převeden na typ <strong style="color: #b0f759;">Free</strong>.</p>
+      <p><strong>Prodloužení je snadné:</strong></p>
+      <ol>
         <li>Přihlaste se na svůj účet pilota.</li>
-        <li>Klikněte v profilu pilota na <strong style="color: #0077B6;">"Prodloužit členství"</strong>.</li>
+        <li>Klikněte v profilu na <strong>"Prodloužit členství"</strong>.</li>
       </ol>
-
-      <p style="font-size: 16px; color: #495057;">
-        Všechny varianty a ceny najdete zde:<br>
-        <a href="https://www.najdipilota.cz/subscription.html" style="color: #0077B6;">Možnosti předplatného</a>
+      <p>Možnosti a ceny: 
+        <a href="https://www.najdipilota.cz/subscription.html">Možnosti předplatného</a>
       </p>
-
-      <hr style="margin: 20px 0;">
-
+      <hr>
       <h3 style="color: #258f01;">🎁 Prodlužte zdarma o 7 dní!</h3>
-      <p style="font-size: 16px; color: #495057;">
-        Nezapomeňte – můžete získat <strong>+7 dní členství zdarma</strong>, když pozvete kamaráda.  
-        Pošlete mu tento odkaz:
-      </p>
-      <div style="background: #f1f1f1; padding: 10px; font-size: 16px; text-align: center; border-radius: 6px; word-break: break-all;">
+      <p>Získejte <strong>+7 dní členství zdarma</strong>, když pozvete kamaráda. 
+         Pošlete mu tento odkaz:</p>
+      <div style="background: #f1f1f1; padding: 10px; text-align: center; border-radius: 6px; word-break: break-all;">
         ${refUrl}
       </div>
-
-      <p style="font-size: 14px; color: #6c757d; margin-top: 10px;">
-        Jakmile se zaregistruje přes tento odkaz, ihned se vám přičte 7 dní k vašemu členství.
+      <p style="font-size: 14px; color: #6c757d;">
+        Jakmile se zaregistruje přes odkaz, ihned se vám přičte 7 dní.
       </p>
-
-      <p style="font-size: 16px; color: #495057;">S pozdravem,<br>Tým NajdiPilota.cz</p>
+      <p>S pozdravem,<br>Tým NajdiPilota.cz</p>
     </div>
   `;
 };
@@ -2243,23 +2223,25 @@ cron.schedule(
           console.log(`⏭ Už odesláno dnes (${daysLeft} dní): ${pilot.email}`);
           continue;
         }
-
+        
         // Odeslání e-mailu
-        if (daysLeft === 7) {
-          await transporter.sendMail({
-            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-            to: pilot.email,
-            subject: 'Vaše členství vyprší za 7 dní',
-            html: membershipExpiry7DaysEmail(pilot.email)
-          });
-        } else if (daysLeft === 3) {
-          await transporter.sendMail({
-            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-            to: pilot.email,
-            subject: 'Vaše členství vyprší za 3 dny',
-            html: membershipExpiry3DaysEmail(pilot.email)
-          });
-        }
+const refCode = makeRefCode(pilot.id); // 🔑 stejný kód jako vrací /ref-code
+
+if (daysLeft === 7) {
+  await transporter.sendMail({
+    from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+    to: pilot.email,
+    subject: 'Vaše členství vyprší za 7 dní',
+    html: membershipExpiry7DaysEmail(refCode)   // sem jde referral kód
+  });
+} else if (daysLeft === 3) {
+  await transporter.sendMail({
+    from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+    to: pilot.email,
+    subject: 'Vaše členství vyprší za 3 dny',
+    html: membershipExpiry3DaysEmail(refCode)   // sem jde referral kód
+  });
+}
 
         // Zaloguj odeslání
         await pool.query(
@@ -2362,6 +2344,129 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
+
+
+
+
+// Testovací SKRIPTA
+
+// Testovací endpoint pro expirační e-mail
+app.get('/test-expiry-email', async (req, res) => {
+  const { email, days } = req.query;
+  if (!email || !days) {
+    return res.status(400).send("Použij ?email=...&days=7 nebo 3");
+  }
+
+  try {
+    let subject, html, text;
+
+    if (days === '7') {
+      subject = "Test: Vaše členství vyprší za 7 dní";
+      html = membershipExpiry7DaysEmail("Testovací Pilot");
+      text = "Testovací text – členství vyprší za 7 dní";
+    } else if (days === '3') {
+      subject = "Test: Vaše členství vyprší za 3 dny";
+      html = membershipExpiry3DaysEmail("Testovací Pilot");
+      text = "Testovací text – členství vyprší za 3 dny";
+    } else {
+      return res.status(400).send("days musí být 7 nebo 3");
+    }
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: email,
+      subject,
+      html,
+      text
+    });
+
+    res.send(`📨 Testovací expirační e-mail (${days} dní) poslán na ${email}`);
+  } catch (err) {
+    console.error("Chyba v /test-expiry-email:", err);
+    res.status(500).send("Nepodařilo se odeslat testovací mail");
+  }
+});
+
+
+// Testovací endpoint pro okamžité odeslání digestu
+app.get('/test-digest', async (req, res) => {
+  const { email } = req.query;
+  if (!email) return res.status(400).send("Chybí email pilota");
+
+  try {
+    // Najdi pilota
+    const pilotRes = await pool.query(
+      'SELECT id, name, email FROM pilots WHERE LOWER(email) = LOWER($1)',
+      [email]
+    );
+    if (pilotRes.rowCount === 0) {
+      return res.status(404).send("Pilot nenalezen");
+    }
+    const pilot = pilotRes.rows[0];
+
+    // Nepřečtené zprávy
+    const unreadRes = await pool.query(`
+      WITH last_msgs AS (
+        SELECT DISTINCT ON (c.advertiser_id)
+               c.advertiser_id,
+               m.message    AS lastMessage,
+               m.created_at AS lastTime
+        FROM messages m
+        JOIN conversations c ON c.id = m.conversation_id
+        WHERE c.pilot_id = $1
+          AND m.sender_id = c.advertiser_id
+        ORDER BY c.advertiser_id, m.created_at DESC
+      ),
+      unread_counts AS (
+        SELECT a.id AS advertiser_id,
+               COUNT(*) AS unreadCount
+        FROM messages m
+        JOIN conversations c ON c.id = m.conversation_id
+        JOIN advertisers a ON a.id = c.advertiser_id
+        LEFT JOIN conversation_views cv
+          ON cv.conversation_id = c.id AND cv.user_id = c.pilot_id
+        WHERE c.pilot_id = $1
+          AND m.sender_id = c.advertiser_id
+          AND m.created_at > COALESCE(cv.last_seen, '1970-01-01'::timestamp)
+        GROUP BY a.id
+      )
+      SELECT a.name  AS advertiserName,
+             a.email AS advertiserEmail,
+             uc.unreadCount,
+             lm.lastMessage,
+             lm.lastTime
+      FROM unread_counts uc
+      JOIN advertisers a ON a.id = uc.advertiser_id
+      LEFT JOIN last_msgs lm ON lm.advertiser_id = uc.advertiser_id
+      ORDER BY lm.lastTime DESC NULLS LAST;
+    `, [pilot.id]);
+
+    if (unreadRes.rowCount === 0) {
+      return res.send("✅ Žádné nepřečtené zprávy – e-mail se neposlal.");
+    }
+
+    const items = unreadRes.rows.map(r => ({
+      advertiserName: r.advertisername,
+      advertiserEmail: r.advertiseremail,
+      unreadCount: r.unreadcount,
+      lastMessage: r.lastmessage,
+      lastTime: r.lasttime
+    }));
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: pilot.email,
+      subject: "Souhrn nepřečtených zpráv – testovací odeslání",
+      html: buildUnreadDigestEmail(pilot.name, items),
+      text: buildUnreadDigestText(pilot.name, items)
+    });
+
+    res.send(`📨 Digest byl odeslán na ${pilot.email} (${items.length} konverzací).`);
+  } catch (err) {
+    console.error("Chyba v /test-digest:", err);
+    res.status(500).send("Chyba při odesílání digestu");
+  }
+});
 
 
 app.get('/', (req, res) => {

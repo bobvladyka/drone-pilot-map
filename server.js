@@ -1540,6 +1540,30 @@ app.post('/create-conversation', async (req, res) => {
   }
 });
 
+app.post("/send-contact", async (req, res) => {
+  const { name, email, message } = req.body;
+  if (!name || !email || !message) {
+    return res.status(400).send("Vyplňte všechna pole.");
+  }
+
+  try {
+    await transporter.sendMail({
+  from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+  to: "dronadmin@seznam.cz",
+  subject: "Nová zpráva z kontaktního formuláře",
+  text: `Od: ${name} <${email}>\n\n${message}`,
+  replyTo: email
+});
+    res.send("✅ Zpráva byla odeslána.");
+  } catch (err) {
+    console.error("❌ Chyba při odesílání:", err);
+    res.status(500).send("Nepodařilo se odeslat zprávu: " + err.message);
+  }
+});
+
+
+
+
 app.get('/blog/article/:id', async (req, res) => {
   const articleId = req.params.id;
   try {

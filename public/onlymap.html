@@ -58,14 +58,17 @@ html {
   <span class="fs-4">NajdiPilota.cz | Sekce pro inzerenty</span>
 
   <div class="ms-auto d-none d-md-flex">
-      <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm">
+      <a href="onlymap.html" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-map me-1"></i>Mapa
+      </a>
+      <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm ms-2">
         <i class="bi bi-envelope me-1"></i>Moje zprávy
       </a>
       <a href="poptavky.html" class="btn btn-outline-secondary btn-sm ms-2">
         <i class="bi bi-clipboard-plus me-1"></i>Poptávky
       </a>
-    </div>
-  </div>
+</div>
+
 </nav>
 
 
@@ -585,20 +588,24 @@ fetch('/chat.html')
 
 <script>
   document.addEventListener("DOMContentLoaded", () => {
-    const advertiserEmail = localStorage.getItem("inzerentEmail");
-    const banner = document.getElementById("advertiser-banner");
+  const advertiserEmail = localStorage.getItem("inzerentEmail");
+  const advertiserId = localStorage.getItem("inzerentId"); // taky zkontrolujeme ID
+  const banner = document.getElementById("advertiser-banner");
 
-    if (advertiserEmail && banner) {
-      document.getElementById("advertiser-text").innerHTML = `Přihlášen jako: <strong>${advertiserEmail}</strong>`;
-      banner.style.display = "flex";
+    if (advertiserEmail && advertiserId && banner) {
+    document.getElementById("advertiser-text").innerHTML = `Přihlášen jako: <strong>${advertiserEmail}</strong>`;
+    banner.style.display = "flex";
 
-      const logoutBtn = document.getElementById("logout-btn");
-      logoutBtn.addEventListener("click", () => {
-        localStorage.removeItem("inzerentEmail");
-        window.location.href = "/index.html";
-      });
-    }
-  });
+    const logoutBtn = document.getElementById("logout-btn");
+    logoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("inzerentId");
+      localStorage.removeItem("inzerentEmail");
+      window.location.href = "/inzerent.html";
+    });
+  } else {
+    console.log("❌ Inzerent není přihlášen nebo chybí ID");
+  }
+});
 
 // Vytvoření ovládacího prvku pro tlačítko s šipkou
 const centerMapButton = L.control({ position: 'topright' });

@@ -581,12 +581,21 @@ if (loggedEmail && editBtn) {
           if (!res.ok) throw new Error("Neplatný e-mail nebo heslo.");
           return res.text();
         })
-        .then(msg => {
-          localStorage.setItem("loggedEmail", email);
-          statusBox.style.color = "green";
-          statusBox.textContent = msg;
-          window.location.href = "/account.html?email=" + encodeURIComponent(email);
-        })
+        .then(async msg => {
+  // Dotaz na server, který vrátí id pilota
+  const res = await fetch(`/get-user-id?email=${encodeURIComponent(email)}&type=pilot`);
+  const data = await res.json();
+
+  if (data.success) {
+    localStorage.setItem("pilotId", data.id);      // uloží ID pilota
+    localStorage.setItem("pilotEmail", data.email);
+  }
+
+  localStorage.setItem("loggedEmail", email);
+  statusBox.style.color = "green";
+  statusBox.textContent = msg;
+  window.location.href = "/account.html?email=" + encodeURIComponent(email);
+})
         .catch(err => {
           statusBox.style.color = "red";
           statusBox.textContent = err.message;

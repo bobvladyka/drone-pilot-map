@@ -565,7 +565,12 @@ app.post('/login', async (req, res) => {
     req.session.email = user.email;
     req.session.typeAccount = newAccountType;
 
-    res.send("Přihlášení úspěšné");
+    res.json({
+      success: true,
+      id: user.id,
+      email: user.email,
+      typeAccount: newAccountType
+    });
 
   } catch (err) {
     console.error("Chyba při přihlášení:", err);
@@ -993,7 +998,11 @@ req.session.userId = advertiser.id;     // volitelné, ale hodí se
 req.session.email  = advertiser.email;  // důležité – čte se v /get-my-advertiser a /poptavky
 req.session.role   = 'advertiser';
 
-return res.json({ success: true, message: "Přihlášení proběhlo úspěšně." });
+return res.json({             // ✅ tady
+      success: true,
+      id: advertiser.id,
+      email: advertiser.email
+    });
 
 
     res.json({ success: true, message: "Přihlášení proběhlo úspěšně." });
@@ -1665,23 +1674,54 @@ app.get('/get-pilot-conversations', async (req, res) => {
 });
 
 // Mark conversation as read
-app.post('/mark-conversation-read', async (req, res) => {
+app.post('/mark-as-read', async (req, res) => {
+  const { conversationId, userEmail } = req.body;
+  if (!conversationId || !userEmail) {
+    return res.status(400).json({ success: false, message: "Missing params" });
+  }
+
+  try {
+    // Označíme všechny zprávy v konverzaci, které NEJSOU od uživatele
+    await pool.query(`
+      UPDATE messages
+      SET read = TRUE
+      WHERE conversation_id = $1
+        AND sender_email <> $2
+        AND read = FALSE
+    `, [conversationId, userEmail]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Chyba při mark-as-read:", err);
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/mark-as-seen', async (req, res) => {
   const { conversationId, userId } = req.body;
-  
+  console.log("📩 mark-as-seen:", conversationId, userId);   // DEBUG
+
+  if (!conversationId || !userId) {
+    return res.status(400).json({ success: false, message: "Missing params" });
+  }
+
   try {
     await pool.query(`
       INSERT INTO conversation_views (conversation_id, user_id, last_seen)
       VALUES ($1, $2, NOW())
-      ON CONFLICT (conversation_id, user_id) 
-      DO UPDATE SET last_seen = NOW()
+      ON CONFLICT (conversation_id, user_id)
+      DO UPDATE SET last_seen = EXCLUDED.last_seen
     `, [conversationId, userId]);
-    
+
     res.json({ success: true });
   } catch (err) {
-    console.error("Error marking conversation as read:", err);
-    res.status(500).json({ success: false });
+    console.error("❌ Chyba při mark-as-seen:", err);
+    res.status(500).json({ success: false, error: err.message });
   }
 });
+
+
+
 
 // Změna hesla (pilot)
 app.post('/change-password', changePassLimiter, async (req, res) => {

@@ -43,37 +43,40 @@
 
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      const form = document.getElementById("login-form");
+  const form = document.getElementById("login-form");
 
-      form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
 
-        const email = document.getElementById("email").value;
-        const password = document.getElementById("password").value;
-        const status = document.getElementById("login-status");
-        status.innerHTML = "";
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const status = document.getElementById("login-status");
+    status.innerHTML = "";
 
-        try {
-          const response = await fetch("/inzerent", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ email, password })
-          });
-
-          const msg = await response.text();
-          if (response.ok) {
-            localStorage.setItem("inzerentEmail", email);
-            localStorage.removeItem("loggedEmail");
-            window.location.href = "/onlymap.html";
-          } else {
-            status.textContent = msg || "Chyba při přihlášení.";
-          }
-        } catch (err) {
-          console.error("Chyba při přihlášení:", err);
-          status.textContent = "Nepodařilo se přihlásit. Zkus to znovu.";
-        }
+    try {
+      const response = await fetch("/inzerent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password })
       });
-    });
+
+      const data = await response.json();
+
+      if (data.success) {
+        localStorage.setItem("inzerentId", data.id);      // ✅ rovnou z odpovědi
+        localStorage.setItem("inzerentEmail", data.email);
+        localStorage.removeItem("loggedEmail"); // pro jistotu smažeme pilotí login
+        window.location.href = "/onlymap.html";
+      } else {
+        status.textContent = data.message || "Chyba při přihlášení.";
+      }
+    } catch (err) {
+      console.error("Chyba při přihlášení:", err);
+      status.textContent = "Nepodařilo se přihlásit. Zkus to znovu.";
+    }
+  });
+});
+
   </script>
 </body>
 </html>

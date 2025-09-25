@@ -201,6 +201,21 @@ document.addEventListener("DOMContentLoaded", function() {
   // Získání přihlášeného e-mailu z localStorage
 const loggedEmail = localStorage.getItem('inzerentEmail') || localStorage.getItem('loggedEmail');
 
+
+// Pokud máme userId v localStorage, označíme konverzaci jako přečtenou
+const loggedUserId = localStorage.getItem("pilotId") || localStorage.getItem("inzerentId");
+
+if (conversationId && loggedUserId) {
+  fetch('/mark-as-seen', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      conversationId,
+      userId: loggedUserId
+    })
+  }).catch(err => console.error("Chyba při označení jako přečtené:", err));
+}
+
   
   if (!loggedEmail) {
     alert("Chyba: Uživatel není přihlášen.");

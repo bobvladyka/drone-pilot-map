@@ -23,24 +23,22 @@
       </button>
       
       <div class="collapse navbar-collapse" id="mainNavbar">
-        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-          <li class="nav-item">
-            <a class="nav-link" href="/index.html?inzerent=1">Mapa</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link active" href="/moje-zpravy-inzerent.html">Moje zprávy</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/o-projektu.html?inzerent=1">O projektu</a>
-          </li>
-          <li class="nav-item">
-            <a class="nav-link" href="/kontakt.html?inzerent=1">Kontakt</a>
-          </li>
-        </ul>
-        <button id="logout-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
-          <i class="bi bi-box-arrow-right me-2"></i>Odhlásit
-        </button>
-      </div>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+  <div class="ms-auto d-flex">
+    <a href="onlymap.html" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-map me-1"></i>Mapa
+    </a>
+    <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm ms-2 active">
+      <i class="bi bi-envelope me-1"></i>Moje zprávy
+    </a>
+    <a href="poptavky.html" class="btn btn-outline-secondary btn-sm ms-2">
+      <i class="bi bi-clipboard-plus me-1"></i>Poptávky
+    </a>
+  </div>
+  <button id="logout-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 ms-3">
+    <i class="bi bi-box-arrow-right me-2"></i>Odhlásit
+  </button>
+</div>
     </div>
   </nav>
 
@@ -66,14 +64,14 @@
     document.addEventListener("DOMContentLoaded", function() {
       const advertiserEmail = localStorage.getItem("inzerentEmail");
       if (!advertiserEmail) {
-        window.location.href = "/index.html?inzerent=1";
+        window.location.href = "/index.html";
         return;
       }
 
       // Logout button
       document.getElementById("logout-button").addEventListener("click", function() {
         localStorage.removeItem("inzerentEmail");
-        window.location.href = "/index.html?inzerent=1";
+        window.location.href = "/index.html";
       });
 
       // Load advertiser's conversations

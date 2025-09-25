@@ -45,11 +45,11 @@
       align-items: center;
       padding: 60px 0;
       background: 
-        linear-gradient(135deg, rgba(248, 249, 250, 0.95) 0%, rgba(233, 236, 239, 0.95) 100%),
-        url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23f8f9fa"/><path d="M0 0L100 100M100 0L0 100" stroke="%23dee2e6" stroke-width="0.5"/><path d="M50 0V100M0 50H100" stroke="%23dee2e6" stroke-width="0.5"/></svg>');
-      background-size: cover, 200px 200px;
-      position: relative;
-    }
+    linear-gradient(rgba(255, 255, 255, 0.75), rgba(255, 255, 255, 0.75)),
+    url('/icons/bg-map.png'); /* sem dej cestu k mapě */
+  background-size: cover;
+  background-position: center;
+}
     
     .landing-hero::before {
       content: "";
@@ -277,6 +277,9 @@
     
     .accordion-button:focus {
       box-shadow: 0 0 0 0.25rem rgba(0, 119, 182, 0.25);
+    }
+    a {
+    text-decoration: none;
     }
     
     @media (max-width: 768px) {

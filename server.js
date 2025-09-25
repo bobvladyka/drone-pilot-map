@@ -573,6 +573,8 @@ app.post('/login', async (req, res) => {
   }
 });
 
+
+
 // Vrácení všech pilotů
 app.get('/pilots', async (req, res) => {
   try {
@@ -624,6 +626,36 @@ const transporter = nodemailer.createTransport({
     pass: 'letamsdrony12'
   }
 });
+
+app.post("/change-email", async (req, res) => {
+  const { oldEmail, newEmail } = req.body;
+  if (!oldEmail || !newEmail) {
+    return res.status(400).send("Chybí e-mail.");
+  }
+
+  try {
+    const result = await pool.query("SELECT id FROM pilots WHERE email = $1", [oldEmail]);
+    if (!result.rowCount) {
+      return res.status(404).send("Uživatel nenalezen.");
+    }
+
+    await pool.query("UPDATE pilots SET email = $1 WHERE email = $2", [newEmail, oldEmail]);
+
+    // Odeslání potvrzovacího e-mailu na původní adresu
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: oldEmail,
+      subject: "Změna e-mailové adresy",
+      html: buildChangeEmailEmail(oldEmail, newEmail)
+    });
+
+    res.send("✅ E-mail byl úspěšně změněn.");
+  } catch (err) {
+    console.error("Chyba při změně e-mailu:", err);
+    res.status(500).send("Chyba při změně e-mailu.");
+  }
+});
+
 
 app.post('/reset-password', async (req, res) => {
   const { email } = req.body;
@@ -1792,6 +1824,40 @@ app.get('/db-fingerprint', async (req, res) => {
   res.json({ meta: meta.rows[0], categories_count: cnt.rows[0].n, sample: sample.rows });
 });
 
+
+// Změna mailu
+function buildChangeEmailEmail(oldEmail, newEmail) {
+  return `
+    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+      <h2 style="color: #0077B6;">✉️ Změna e-mailové adresy</h2>
+      <p style="font-size: 16px; color: #495057;">
+        Dobrý den,
+      </p>
+      <p style="font-size: 16px; color: #495057;">
+        právě byla provedena změna e-mailu vašeho účtu na <strong style="color:#0077B6;">NajdiPilota.cz</strong>.
+      </p>
+
+      <p style="font-size: 16px; color: #495057;">
+        <strong>Starý e-mail:</strong> ${oldEmail}<br>
+        <strong>Nový e-mail:</strong> ${newEmail}
+      </p>
+
+      <p style="font-size: 16px; color: #495057;">
+        Pokud jste tuto změnu provedli vy, není potřeba žádná další akce.  
+        Pokud jste změnu neprovedli, <strong style="color:red;">ihned nás kontaktujte</strong> na 
+        <a href="mailto:dronadmin@seznam.cz" style="color:#0077B6;">dronadmin@seznam.cz</a>.
+      </p>
+
+      <hr style="margin:20px 0;">
+
+      <p style="font-size: 14px; color: #6c757d;">
+        Tento e-mail byl odeslán automaticky. Prosíme, neodpovídejte na něj přímo.
+      </p>
+
+      <p style="font-size: 16px; color: #495057;">S pozdravem,<br>Tým NajdiPilota.cz</p>
+    </div>
+  `;
+}
 
 
 

@@ -70,17 +70,17 @@ fetch('/check-admin-session')
 
   <table>
   <thead>
-    <tr>
-      <th><input type="checkbox" onclick="toggleAll(this)"></th>
-      <th>ID</th>
-      <th>Jméno</th>
-      <th>E-mail</th>
-      <th>Typ účtu</th> <!-- Nový sloupec pro Typ účtu -->
-      <th>Město</th>
-      <th>Viditelný do</th>
-      <th>Viditelný</th>
-    </tr>
-  </thead>
+  <tr>
+    <th><input type="checkbox" onclick="toggleAll(this)"></th>
+    <th>ID</th>
+    <th>E-mail</th>
+    <th>GPS</th>
+    <th>Typ účtu</th>
+    <th>Viditelný do</th>
+    <th>Akce</th>
+  </tr>
+</thead>
+
   <tbody id="pilot-table"></tbody>
 </table>
 
@@ -176,31 +176,39 @@ fetch('/check-admin-session', {
       table.innerHTML = '';  // Vyčistí stávající řádky tabulky
 
       data.forEach(p => {
-        const row = document.createElement('tr');
-        
-        // Výpočet času do vypršení viditelnosti
-        let daysLeft = getDaysLeft(p.visible_valid);
+  const row = document.createElement('tr');
 
-        // Vytvoření řádku tabulky s požadovanými informacemi
-        row.innerHTML = `
-          <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
-          <td>${p.id}</td>
-          <td>${p.name || ''}</td>
-          <td>${p.email || ''}</td>
-          <td>${p.type_account || ''}</td> <!-- Zobrazení typu účtu -->
-          <td>${p.city || ''}</td>
-          <td class="${getVisibilityClass(p.visible_valid)}">
-            ${p.visible_valid ? `Viditelný do: ${daysLeft} dní` : 'NE'}
-          </td>
-          <td>${p.visible === 'ANO' ? 'Ano' : 'Ne'}</td>
-          <td>
-            <button class="edit-btn" onclick='edit(${JSON.stringify(p).replace(/'/g, "\\'")})'>
-              Upravit
-            </button>
-          </td>
-        `;
-        table.appendChild(row);
-      });
+  // Výpočet času do vypršení viditelnosti
+  let daysLeft = getDaysLeft(p.visible_valid);
+
+  // ✅ / ❗ pro GPS
+  let gpsStatus = (p.latitude && p.longitude) ? '✅' : '❗';
+
+  row.innerHTML = `
+  <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
+  <td>${p.id}</td>
+  <td>${p.email || ''}</td>
+  <td style="text-align:center;">${gpsStatus}</td>
+  <td>${p.type_account || ''}</td>
+  <td class="${getVisibilityClass(p.visible_valid)}">
+    ${p.visible_valid ? `Viditelný do: ${daysLeft} dní` : 'NE'}
+  </td>
+  <td>
+    <button class="edit-btn" onclick="sendMembershipEmail(${p.id}, '1m')">+1M</button>
+    <button class="edit-btn" onclick="sendMembershipEmail(${p.id}, '6m')">+6M</button>
+    <button class="edit-btn" onclick="sendMembershipEmail(${p.id}, '12m')">+12M</button>
+    <select onchange="changeAccountType(${p.id}, this.value)" style="margin-left:5px;">
+      <option value="">Změnit účet</option>
+      <option value="Free">Free</option>
+      <option value="Basic">Basic</option>
+      <option value="Premium">Premium</option>
+    </select>
+  </td>
+`;
+
+  table.appendChild(row);
+});
+
     });
 }
 
@@ -370,7 +378,57 @@ function getVisibilityClass(validDateStr) {
     }
 
 
+
     loadPilots();
+
+function sendMembershipEmail(id, period) {
+  let url = '';
+  if (period === '1m') url = `/send-membership-email-1m?id=${id}`;
+  if (period === '6m') url = `/send-membership-email-6m?id=${id}`;
+  if (period === '12m') url = `/send-membership-email-12m?id=${id}`;
+
+  fetch(url)
+    .then(res => res.text())
+    .then(msg => {
+      document.getElementById('status').textContent = msg;
+      loadPilots();
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = "Chyba: " + err;
+    });
+}
+
+function changeAccountType(id, type) {
+  if (!type) return;
+  if (!confirm(`Opravdu změnit účet pilota ${id} na ${type}?`)) return;
+
+  fetch('/update-membership', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email: getEmailById(id), membership_type: type })
+  })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('status').textContent = `✅ Účet změněn na ${type}`;
+        loadPilots();
+      } else {
+        document.getElementById('status').textContent = "❌ Chyba: " + data.message;
+      }
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = "❌ Chyba: " + err;
+    });
+}
+
+// pomocná funkce – najde email podle ID ze zobrazené tabulky
+function getEmailById(id) {
+  const row = [...document.querySelectorAll('#pilot-table tr')]
+    .find(r => r.children[1] && r.children[1].textContent == id);
+  return row ? row.children[2].textContent : null;
+}
+
+
   </script>
 
 

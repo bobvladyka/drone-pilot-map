@@ -670,6 +670,38 @@ app.post('/reset-password', async (req, res) => {
   }
 });
 
+async function geocodeLocation({ street, city, zip, region }) {
+  const queries = [];
+
+  if (street && city && zip && region) queries.push([street, city, zip, region].join(", "));
+  if (street && city && zip) queries.push([street, city, zip].join(", "));
+  if (street && city) queries.push([street, city].join(", "));
+  if (city && zip) queries.push([city, zip].join(", "));
+  if (city) queries.push(city);
+  if (zip) queries.push(zip);
+
+  for (const q of queries) {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q)}&limit=1`,
+        { headers: { "User-Agent": "DronMapApp/1.0" } }
+      );
+      const data = await res.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return {
+          lat: parseFloat(data[0].lat),
+          lon: parseFloat(data[0].lon),
+          usedQuery: q
+        };
+      }
+    } catch (err) {
+      console.error("❌ Chyba při geokódování dotazu:", q, err);
+    }
+  }
+
+  return { lat: null, lon: null, usedQuery: null };
+}
+
 app.post("/update", async (req, res) => {
   console.log("Přijatá data:", req.body);
 
@@ -764,24 +796,18 @@ app.post("/update", async (req, res) => {
   if (!visible_valid)   visible_valid   = oldPilotData.visible_valid;
   if (!visible_payment) visible_payment = oldPilotData.visible_payment;
 
-  // Geokódování
-  const location = [street, city, zip, region].filter(Boolean).join(", ");
-  let lat = null, lon = null;
-  try {
-    const response = await fetch(
-      `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`,
-      { headers: { "User-Agent": "DronMapApp/1.0" } }
-    );
-    const data = await response.json();
-    if (Array.isArray(data) && data.length > 0) {
-      lat = parseFloat(data[0].lat);
-      lon = parseFloat(data[0].lon);
-    } else {
-      console.warn("❗Adresa se nepodařilo geokódovat:", location);
-    }
-  } catch (err) {
-    console.error("Chyba při geokódování:", err);
-  }
+  // Geokódování s fallbackem
+let { lat, lon, usedQuery } = await geocodeLocation({ street, city, zip, region });
+
+// Pokud nic, nech staré souřadnice
+if (!lat || !lon) {
+  console.warn("❗Nepodařilo se geokódovat adresu, ponechávám staré souřadnice.");
+  lat = oldPilotData.latitude;
+  lon = oldPilotData.longitude;
+} else {
+  console.log(`✅ Geokódováno na (${lat}, ${lon}) pomocí dotazu: ${usedQuery}`);
+}
+
 
   // LOG pro kontrolu
   console.log("Hodnoty pro update:", {
@@ -2259,6 +2285,139 @@ if (daysLeft === 7) {
   },
   { timezone: 'Europe/Prague' }
 );
+
+// === emaily prodloužení
+// === 1 MĚSÍC ===
+app.get('/send-membership-email-1m', async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.status(400).send("Chybí ID pilota.");
+
+  try {
+    const result = await pool.query(
+      "SELECT email, name, visible_valid, visible_payment, type_account FROM pilots WHERE id = $1",
+      [id]
+    );
+    if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
+
+    const pilot = result.rows[0];
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #258f01;">✅ Členství bylo prodlouženo o 1 měsíc</h2>
+        <p>Dobrý den, ${pilot.name || ""},</p>
+        <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.  
+           Platnost nyní končí dne <strong>${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}</strong>.</p>
+        <p>Vaše poslední platba proběhla <strong>${pilot.visible_payment 
+          ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
+          : "N/A"}</strong>.</p>
+        
+        <p>S přátelským pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: pilot.email,
+      bcc: 'drboom@seznam.cz',
+      subject: 'Vaše členství bylo prodlouženo o 1 měsíc',
+      html
+    });
+
+    res.send(`✅ Email (1 měsíc) byl odeslán na ${pilot.email} (BCC: drboom@seznam.cz).`);
+  } catch (err) {
+    console.error("❌ Chyba při odesílání emailu:", err);
+    res.status(500).send("Nepodařilo se odeslat email.");
+  }
+});
+
+
+// === 6 MĚSÍCŮ ===
+app.get('/send-membership-email-6m', async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.status(400).send("Chybí ID pilota.");
+
+  try {
+    const result = await pool.query(
+      "SELECT email, name, visible_valid, visible_payment, type_account FROM pilots WHERE id = $1",
+      [id]
+    );
+    if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
+
+    const pilot = result.rows[0];
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #258f01;">✅ Členství bylo prodlouženo o 6 měsíců</h2>
+        <p>Dobrý den, ${pilot.name || ""},</p>
+        <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.  
+           Platnost nyní končí dne <strong>${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}</strong>.</p>
+        <p>Vaše poslední platba proběhla <strong>${pilot.visible_payment 
+          ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
+          : "N/A"}</strong>.</p>
+       
+        <p>S přátelským pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: pilot.email,
+      bcc: 'drboom@seznam.cz',
+      subject: 'Vaše členství bylo prodlouženo o 6 měsíců',
+      html
+    });
+
+    res.send(`✅ Email (6 měsíců) byl odeslán na ${pilot.email} (BCC: drboom@seznam.cz).`);
+  } catch (err) {
+    console.error("❌ Chyba při odesílání emailu:", err);
+    res.status(500).send("Nepodařilo se odeslat email.");
+  }
+});
+
+
+// === 12 MĚSÍCŮ ===
+app.get('/send-membership-email-12m', async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.status(400).send("Chybí ID pilota.");
+
+  try {
+    const result = await pool.query(
+      "SELECT email, name, visible_valid, visible_payment, type_account FROM pilots WHERE id = $1",
+      [id]
+    );
+    if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
+
+    const pilot = result.rows[0];
+    const html = `
+      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+        <h2 style="color: #8f06bd;">🎉 Členství bylo prodlouženo o 12 měsíců</h2>
+        <p>Dobrý den, ${pilot.name || ""},</p>
+        <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.  
+           Platnost nyní končí dne <strong>${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}</strong>.</p>
+        <p>Vaše poslední platba proběhla <strong>${pilot.visible_payment 
+          ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
+          : "N/A"}</strong>.</p>
+        <p>S přátelským pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: pilot.email,
+      bcc: 'drboom@seznam.cz',
+      subject: 'Vaše členství bylo prodlouženo o 12 měsíců',
+      html
+    });
+
+    res.send(`✅ Email (12 měsíců) byl odeslán na ${pilot.email} (BCC: drboom@seznam.cz).`);
+  } catch (err) {
+    console.error("❌ Chyba při odesílání emailu:", err);
+    res.status(500).send("Nepodařilo se odeslat email.");
+  }
+});
+
+
+
+
+
 
 // ──────────────────────────────────────────────────────────────
 // CRON: Denní souhrn nepřečtených zpráv (Europe/Prague) – 07:30

@@ -2192,6 +2192,13 @@ if (daysLeft === 7) {
     subject: 'Vaše členství vyprší za 3 dny',
     html: membershipExpiry3DaysEmail(refCode)   // sem jde referral kód
   });
+} else if (daysLeft === 0) {
+  await transporter.sendMail({
+    from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+    to: pilot.email,
+    subject: 'Vaše členství dnes vyprší',
+    html: membershipExpiry0DaysEmail(refCode)
+  });
 }
 
         // Zaloguj odeslání
@@ -2503,7 +2510,7 @@ cron.schedule(
 app.get('/test-expiry-email', async (req, res) => {
   const { email, days } = req.query;
   if (!email || !days) {
-    return res.status(400).send("Použij ?email=...&days=7 nebo 3");
+    return res.status(400).send("Použij ?email=...&days=7, 3 nebo 0");
   }
 
   try {
@@ -2517,8 +2524,12 @@ app.get('/test-expiry-email', async (req, res) => {
       subject = "Test: Vaše členství vyprší za 3 dny";
       html = membershipExpiry3DaysEmail("Testovací Pilot");
       text = "Testovací text – členství vyprší za 3 dny";
+    } else if (days === '0') {
+      subject = "Test: Vaše členství dnes vyprší";
+      html = membershipExpiry0DaysEmail("Testovací Pilot");
+      text = "Testovací text – členství vyprší dnes";
     } else {
-      return res.status(400).send("days musí být 7 nebo 3");
+      return res.status(400).send("days musí být 7, 3 nebo 0");
     }
 
     await transporter.sendMail({
@@ -2535,6 +2546,7 @@ app.get('/test-expiry-email', async (req, res) => {
     res.status(500).send("Nepodařilo se odeslat testovací mail");
   }
 });
+
 
 
 // Testovací endpoint pro okamžité odeslání digestu
@@ -2720,7 +2732,7 @@ function membershipExpiry7DaysEmail(refCode) {
     </ol>
     <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Možnosti předplatného</a></p>
     <hr>
-    <h3 style="color:#258f01;">🎁 Získejte +7 dní zdarma!</h3>
+    <h3 style="color:#258f01;">🎁 Přiveďte kamarád a získejte +7 dní zdarma!</h3>
     <p>Pozvěte kamaráda přes tento odkaz:</p>
     <div style="background:#f1f1f1;padding:10px;text-align:center;border-radius:6px;">${refUrl}</div>
   `;
@@ -2738,11 +2750,29 @@ function membershipExpiry3DaysEmail(refCode) {
        <strong style="color:#b0f759;">Free</strong>.</p>
     <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Prodloužit členství</a></p>
     <hr>
-    <h3 style="color:#258f01;">🎁 Získejte +7 dní zdarma!</h3>
+    <h3 style="color:#258f01;">🎁 Přiveďte kamarád a získejte +7 dní zdarma!</h3>
     <div style="background:#f1f1f1;padding:10px;text-align:center;border-radius:6px;">${refUrl}</div>
   `;
   return wrapEmailContent(content, "Upomínka členství");
 }
+
+// ---------------------------------------------------------------------
+// Upomínka – 0 dny do vypršení
+// ---------------------------------------------------------------------
+function membershipExpiry0DaysEmail(refCode) {
+  const refUrl = `https://najdipilota.cz/register.html?ref=${encodeURIComponent(refCode)}`;
+  const content = `
+    <h2 style="color:red;">⚠️ Členství vyprší dnes!</h2>
+    <p>Vaše členství vyprší <strong>dnes</strong>. Pokud si jej neprodloužíte,
+       účet bude převeden na <strong style="color:#b0f759;">Free</strong>.</p>
+    <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Prodloužit členství</a></p>
+    <hr>
+    <h3 style="color:#258f01;">🎁 Přiveďte kamarád a získejte +7 dní zdarma!</h3>
+    <div style="background:#f1f1f1;padding:10px;text-align:center;border-radius:6px;">${refUrl}</div>
+  `;
+  return wrapEmailContent(content, "Upomínka členství");
+}
+
 
 // ---------------------------------------------------------------------
 // Přehled nepřečtených zpráv
@@ -2870,22 +2900,20 @@ app.get('/test-send-all-emails', allowLocalhostOnly, async (req, res) => {
     }
   ];
 
-  // referral / test kód
   const refCode = 'TEST-ABC123';
 
-  // Pomocná funkce: obal HTML (pokud máš wrapEmailContent)
   const wrapIfPossible = (inner, title) => {
     try {
       if (typeof wrapEmailContent === 'function') {
         return wrapEmailContent(inner, title);
       }
     } catch {}
-    return inner; // fallback
+    return inner;
   };
 
   const results = [];
   try {
-    // 1) Onboarding (zachovává původní barvy účtů) – POSÍLÁME TAK, JAK JE
+    // 1) Onboarding
     await transporter.sendMail({
       from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
       to,
@@ -2912,7 +2940,16 @@ app.get('/test-send-all-emails', allowLocalhostOnly, async (req, res) => {
     });
     results.push('✅ Expirace 3 dny odeslána');
 
-    // 4) Digest nepřečtených zpráv (HTML + TEXT)
+    // 3b) Expirace 0 dní (DNES)
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to,
+      subject: 'TEST: Členství vyprší dnes',
+      html: membershipExpiry0DaysEmail(refCode)
+    });
+    results.push('✅ Expirace 0 dní odeslána');
+
+    // 4) Digest nepřečtených zpráv
     const digestHtmlInner = (typeof buildUnreadDigestEmail === 'function')
       ? buildUnreadDigestEmail('Testovací Pilot', sampleUnreadItems)
       : '<p>Digest HTML není dostupný.</p>';
@@ -2930,7 +2967,7 @@ app.get('/test-send-all-emails', allowLocalhostOnly, async (req, res) => {
     });
     results.push('✅ Digest nepřečtených zpráv odeslán');
 
-    // 5) Digest nových poptávek (HTML + TEXT)
+    // 5) Digest nových poptávek
     const demandsHtmlInner = (typeof buildNewDemandsDigestEmailFancy === 'function')
       ? buildNewDemandsDigestEmailFancy('Testovací Pilot', sampleDemands)
       : '<p>Poptávky HTML není dostupný.</p>';

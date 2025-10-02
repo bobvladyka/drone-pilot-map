@@ -136,7 +136,59 @@ function requireAdminLogin(req, res, next) {
 }
 
 
+// TESTOVACÍ struktura MAILU //
+app.get('/test-unified-email', async (req, res) => {
+  try {
+    const html = `
+<div style="font-family:'Poppins','Segoe UI',sans-serif;background:#F8F9FA;padding:0;margin:0;">
+  <!-- Header -->
+  <div style="background:#0077B6;color:#fff;padding:16px 20px;text-align:center;">
+    <h1 style="margin:0;font-size:20px;font-weight:600;">NajdiPilota.cz</h1>
+  </div>
 
+  <!-- Obsah -->
+  <div style="background:#fff;padding:20px;color:#495057;font-size:15px;line-height:1.6;">
+    <p>Dobrý den, DrBoom,</p>
+    <p>
+      Lorem ipsum dolor sit amet, consectetur adipiscing elit.  
+      Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.
+    </p>
+    <p>
+      Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
+    </p>
+
+    <!-- Flat button -->
+    <p style="margin:24px 0;">
+      <a href="https://www.najdipilota.cz/"
+         style="background:#0077B6;color:#fff;text-decoration:none;
+                padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+        Otevřít web
+      </a>
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background:#F1F1F1;color:#6c757d;font-size:12px;padding:12px;text-align:center;">
+    © 2025 NajdiPilota.cz – Automatická notifikace
+  </div>
+</div>
+    `;
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: 'drboom@seznam.cz',
+      subject: 'TEST: Jednotný e-mailový vzhled',
+      html
+    });
+
+    res.send("✅ Testovací e-mail poslán na drboom@seznam.cz");
+  } catch (err) {
+    console.error("❌ Chyba v /test-unified-email:", err);
+    res.status(500).send("Nepodařilo se odeslat testovací e-mail");
+  }
+});
+
+// TESTOVACÍ struktura MAILU //
 
 /*
 app.get("/", (req, res) => {
@@ -146,59 +198,72 @@ app.get("/", (req, res) => {
 
 const onboardingEmailContent = () => {
   return `
-    <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-      <h2 style="color: #0077B6;">Vítejte na NajdiPilota.cz!</h2>
-      <p style="font-size: 16px; color: #495057;">Děkujeme, že jste se zaregistrovali na <strong style="color: #0077B6;">NajdiPilota.cz</strong>! Jsme rádi, že se připojujete k naší komunitě profesionálních pilotů dronů.</p>
-      <p style="font-size: 16px; color: #495057;"><strong>Zde je rychlý průvodce, jak začít:</strong></p>
-      <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
-        <li><strong>Dokončete svůj profil:</strong> Ujistěte se, že máte všechny údaje aktuální. Pomůže to klientům snadněji vás najít.</li>
-        <li><strong>Zůstaňte viditelní:</strong> Jakmile bude váš profil dokončen, můžete aktivovat viditelnost svého účtu a zajistit, aby vaše služby byly dostupné těm, kteří hledají kvalifikovaného pilota.</li>
-        <li><strong>Využijte exkluzivní nabídky:</strong> Jako registrovaný pilot máte přístup k exkluzivním nabídkám a slevám od našich partnerů.</li>
-      </ul>
+<div style="font-family:'Poppins','Segoe UI',sans-serif;background:#F8F9FA;margin:0;padding:0;">
+  <!-- Header -->
+  <div style="background:#0077B6;color:#fff;padding:16px 20px;text-align:center;">
+    <h1 style="margin:0;font-size:20px;font-weight:600;">Vítejte na NajdiPilota.cz!</h1>
+  </div>
 
-      <p style="font-size: 16px; color: #495057;"><strong>Co to znamená pro vás?</strong></p>
-      <p style="font-size: 16px; color: #495057;">Váš účet byl nastaven na typ <strong style="color: #258f01">Basic</strong>, což vám přináší následující výhody:</p>
-      <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
-        <li><strong style="color: #258f01">Viditelnost a přehlednost:</strong> Vaše jméno a status dobrovolníka jsou viditelné pro inzerenty, kteří vás mohou snadněji najít.</li>
-        <li><strong style="color: #258f01">2 Drony a 2 Specializace:</strong> Můžete mít až 2 drony a 2 specializace pro různé zakázky.</li>
-        <li><strong style="color: #258f01">Aktuální dostupnost a ochota dojíždět:</strong> Vaše dostupnost je viditelná pro potenciální klienty.</li>
-        <li><strong style="color: #258f01">Ověřený provozovatel:</strong> Pokud jste ověřený, vaše důvěryhodnost bude vyšší a přitahujete více klientů.</li>
-        <li><strong style="color: #258f01">Napiš pilotovi:</strong> Inzerenti vás mohou kontaktovat přímo na platformě.</li>
-        
-      </ul>
+  <!-- Content -->
+  <div style="background:#fff;padding:20px;color:#495057;font-size:15px;line-height:1.6;">
 
-      <p style="font-size: 16px; color: #495057;"><strong>Co kdybych měl Premium účet?</strong></p>
-      <p style="font-size: 16px; color: #495057;">Pokud chcete plný přístup k funkcím a neomezené možnosti, <strong style="color: #8f06bd">Premium účet</strong> je pro vás ideální volbou:</p>
-      <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
-        <li><strong style="color: #8f06bd;">Neomezený počet dronů:</strong> Už žádné limity, můžete mít tolik dronů, kolik budete potřebovat.</li>
-        <li><strong style="color: #8f06bd;">Neomezený počet specializací:</strong> Můžete si přidat libovolný počet specializací.</li>
-        <li><strong style="color: #8f06bd">Viditelné kontakty:</strong> E-mail a telefon jsou viditelné pro inzerenty, což znamená rychlý a přímý kontakt.</li>
-        <li><strong style="color: #8f06bd">Výrazné fialové označení na mapě:</strong> Vaše profilová značka bude výrazně <span style= "color: #8f06bd">fialová</span>, což vás zviditelní mezi ostatními.</li>
-       
-        <li><strong style="color: #8f06bd">Přímá komunikace s inzerenty:</strong> Inzerent uvidí vaše kontaktní údaje a může vás oslovit napřímo.</li>
-      </ul>
+    <p>Děkujeme, že jste se zaregistrovali na <strong style="color:#0077B6;">NajdiPilota.cz</strong>! 
+       Jsme rádi, že se připojujete k naší komunitě profesionálních pilotů dronů.</p>
 
-      <p style="font-size: 16px; color: #495057;"><strong>Co se stane, když mi vyprší členství?</strong></p>
-      <p style="font-size: 16px; color: #495057;">Pokud vám členství vyprší, automaticky přejdete na typ účtu <strong style="color: #b0f759">Free</strong>, což znamená značná omezení:</p>
-      <ul style="font-size: 16px; color: #495057; padding-left: 20px;">
-        <li>Vidíte pouze omezené informace o ostatních pilotech (jméno, dobrovolník, 1 dron, 1 specializace).</li>
-        <li>Nemáte přístup k kontaktům (email, telefon) ani k dalším dronům nebo specializacím.</li>
-        
-      </ul>
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Jak začít?</h2>
+    <ul style="padding-left:20px;">
+      <li><strong>Dokončete svůj profil:</strong> Aktuální údaje pomohou klientům vás snadněji najít.</li>
+      <li><strong>Zůstaňte viditelní:</strong> Aktivujte viditelnost účtu a nabídněte své služby.</li>
+      <li><strong>Využijte nabídky:</strong> Jako pilot získáte přístup k exkluzivním akcím a slevám.</li>
+    </ul>
 
-      <p style="font-size: 16px; color: #495057;">Pokud budete potřebovat prodloužit své členství, můžete to udělat v sekci, kde upravujete informace o pilotovi. Zde také najdete kód, který můžete poslat kamarádům. Když se zaregistrují, získáte 7 dní členství Basic zdarma, nebo prodloužíte své Premium o 7 dní, pokud jste už v tomto typu účtu.</p>
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Váš aktuální účet</h2>
+    <p>Váš účet je nastaven na typ <strong style="color:#258f01;">Basic</strong>, což přináší tyto výhody:</p>
+    <ul style="padding-left:20px;">
+      <li><span style="color:#258f01;font-weight:600;">Viditelnost:</span> Vaše jméno a status jsou dostupné inzerentům.</li>
+      <li><span style="color:#258f01;font-weight:600;">2 drony a 2 specializace:</span> Flexibilní nabídka služeb.</li>
+      <li><span style="color:#258f01;font-weight:600;">Dostupnost a dojezd:</span> Klienti vidí, kdy a kde můžete pracovat.</li>
+      <li><span style="color:#258f01;font-weight:600;">Ověřený provozovatel:</span> Vyšší důvěryhodnost a více zakázek.</li>
+    </ul>
 
-      <p style="font-size: 16px; color: #495057;"><strong>Co dál?</strong></p>
-      <p style="font-size: 16px; color: #495057;">Teď je čas začít <strong>aktivně spravovat svůj profil</strong> a přitahovat více inzerentů! Pokud máte zájem o <strong style="color: #8f06bd;">upgradování na Premium účet</strong>, zvažte všechny skvělé výhody, které přináší.</p>
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Co nabízí Premium?</h2>
+    <p>Pokud chcete plný přístup ke všem funkcím, <strong style="color:#8f06bd;">Premium účet</strong> je pro vás ideální:</p>
+    <ul style="padding-left:20px;">
+      <li><span style="color:#8f06bd;font-weight:600;">Neomezený počet dronů a specializací</span></li>
+      <li><span style="color:#8f06bd;font-weight:600;">Viditelné kontakty:</span> E-mail i telefon viditelné inzerentům.</li>
+      <li><span style="color:#8f06bd;font-weight:600;">Fialová značka na mapě:</span> výrazné zvýraznění vašeho profilu.</li>
+      <li><span style="color:#8f06bd;font-weight:600;">Přímá komunikace:</span> inzerenti vás mohou oslovit napřímo.</li>
+    </ul>
 
-      <p style="font-size: 16px; color: #495057;">Pokud máte jakékoli dotazy nebo potřebujete pomoc, neváhejte se na nás obrátit na <a href="mailto:dronadmin@seznam.cz" style="color: #0077B6;">dronadmin@seznam.cz</a>.</p>
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Pokud členství vyprší</h2>
+    <p>Po vypršení členství se váš účet změní na <strong style="color:#b0f759;">Free</strong> s omezeními:</p>
+    <ul style="padding-left:20px;">
+      <li>Pouze základní informace (jméno, 1 dron, 1 specializace)</li>
+      <li>Bez přístupu ke kontaktům a rozšířeným funkcím</li>
+    </ul>
 
-      <p style="font-size: 16px; color: #495057;">Těšíme se, že s námi budete růst a létat!</p>
+    <p>Členství můžete kdykoliv prodloužit v nastavení profilu.  
+       Navíc můžete sdílet svůj referral kód – získáte 7 dní Basic zdarma nebo Premium navíc.</p>
 
-      <p style="font-size: 16px; color: #495057;" class="footer">S pozdravem,<br />Tým NajdiPilota.cz</p>
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Co dál?</h2>
+    <p>Začněte aktivně spravovat svůj profil a přitahujte více inzerentů.  
+       Pokud chcete růst ještě rychleji, zvažte <strong style="color:#8f06bd;">přechod na Premium účet</strong>.</p>
 
-      <p style="font-size: 16px; color: #495057;">Pro více informací navštivte naše <a href="https://www.najdipilota.cz/o-projektu.html" style="color: #0077B6;">O projektu</a> a <a href="https://www.najdipilota.cz/faq.html" style="color: #0077B6;">FAQ</a> stránky.</p>
-    </div>
+    <p>V případě dotazů pište na <a href="mailto:dronadmin@seznam.cz" style="color:#0077B6;">dronadmin@seznam.cz</a>.</p>
+
+    <p style="margin-top:30px;">S pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
+
+    <p style="font-size:13px;color:#6c757d;">Více informací najdete na stránkách 
+      <a href="https://www.najdipilota.cz/o-projektu.html" style="color:#0077B6;">O projektu</a> 
+      a <a href="https://www.najdipilota.cz/faq.html" style="color:#0077B6;">FAQ</a>.
+    </p>
+  </div>
+
+  <!-- Footer -->
+  <div style="background:#F1F1F1;color:#6c757d;font-size:12px;padding:12px;text-align:center;">
+    © 2025 NajdiPilota.cz – Automatická notifikace
+  </div>
+</div>
   `;
 };
 
@@ -273,6 +338,82 @@ function escapeHtml(s) {
     .replace(/</g,'&lt;')
     .replace(/>/g,'&gt;')
     .replace(/"/g,'&quot;');
+}
+
+function buildNewDemandsDigestEmailFancy(pilotName, demands) {
+  const rows = demands.map(d => `
+    <tr>
+      <td style="padding:12px;border-bottom:1px solid #eee;">
+        <div style="font-size:16px;font-weight:600;color:#2c3e50;">
+          ${escapeHtml(d.title || 'Bez názvu')}
+        </div>
+        <div style="font-size:13px;color:#7f8c8d;margin-top:4px;">
+          ${escapeHtml(d.location || d.region || '')}
+        </div>
+        <div style="font-size:14px;margin-top:6px;color:#34495e;">
+          ${(d.description || '').slice(0, 160)}${(d.description || '').length > 160 ? '…' : ''}
+        </div>
+        <div style="font-size:12px;color:#999;margin-top:6px;">
+          📅 ${new Date(d.created_at).toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' })}
+        </div>
+      </td>
+      <td style="padding:12px;border-bottom:1px solid #eee;white-space:nowrap;font-weight:bold;color:#27ae60;">
+        ${d.budget != null ? (d.budget + ' Kč') : '—'}
+      </td>
+    </tr>
+  `).join('');
+
+  return `
+    <div style="font-family:Arial,sans-serif;background:#f9f9f9;padding:20px;">
+      <div style="max-width:600px;margin:0 auto;background:#fff;border-radius:8px;
+                  box-shadow:0 2px 6px rgba(0,0,0,0.1);overflow:hidden;">
+        
+        <div style="background:#2c3e50;color:#fff;padding:20px;text-align:center;">
+          <h1 style="margin:0;font-size:22px;">📢 Nové poptávky na NajdiPilota.cz</h1>
+          <p style="margin:8px 0 0;font-size:14px;">Přehled za posledních 24 hodin</p>
+        </div>
+        
+        <div style="padding:20px;">
+          <p style="font-size:15px;color:#333;margin:0 0 16px;">
+            Dobrý den, <strong>${escapeHtml(pilotName || 'pilote')}</strong> 👋<br>
+            přinášíme vám seznam nejnovějších poptávek. Reagujte co nejrychleji a získejte náskok před konkurencí.
+          </p>
+          <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;font-size:14px;">
+            <thead>
+              <tr style="background:#ecf0f1;color:#2c3e50;">
+                <th align="left" style="padding:12px;">Poptávka</th>
+                <th align="right" style="padding:12px;">Rozpočet</th>
+              </tr>
+            </thead>
+            <tbody>${rows}</tbody>
+          </table>
+          <div style="text-align:center;margin-top:24px;">
+            <a href="https://www.najdipilota.cz/poptavky.html" 
+               style="display:inline-block;background:#27ae60;color:#fff;text-decoration:none;
+                      padding:12px 20px;border-radius:6px;font-weight:bold;">
+              👉 Zobrazit všechny poptávky
+            </a>
+          </div>
+        </div>
+        
+        <div style="background:#f4f4f4;padding:12px;text-align:center;font-size:12px;color:#888;">
+          Tento přehled chodí automaticky každý den v 10:00, pokud byly přidány nové poptávky.
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+
+function buildNewDemandsDigestText(pilotName, demands) {
+  const lines = demands.map(d => (
+    `• ${d.title || 'Bez názvu'} (${d.location || d.region || '—'})` +
+    (d.budget != null ? ` — ${d.budget} Kč` : '') +
+    `\n  ${(d.description || '').slice(0,150)}${(d.description || '').length > 150 ? '…' : ''}` +
+    `\n  Vytvořeno: ${new Date(d.created_at).toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' })}`
+  )).join('\n\n');
+
+  return `Dobrý den, ${pilotName || 'pilote'},\n\nNové poptávky:\n\n${lines}\n\nVíce na: https://www.najdipilota.cz/poptavky.html`;
 }
 
 
@@ -2031,6 +2172,7 @@ app.get('/send-expiry-emails', async (req, res) => {
         await transporter.sendMail({
           from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
           to: pilot.email,
+          bcc: 'drboom@seznam.cz',
           subject: "Vaše členství vyprší za 7 dní",
           html: membershipExpiry7DaysEmail(pilot.email)
         });
@@ -2040,6 +2182,7 @@ app.get('/send-expiry-emails', async (req, res) => {
         await transporter.sendMail({
           from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
           to: pilot.email,
+          bcc: 'drboom@seznam.cz',
           subject: "Vaše členství vyprší za 3 dny",
           html: membershipExpiry3DaysEmail(pilot.email)
         });
@@ -2488,6 +2631,7 @@ cron.schedule(
         await transporter.sendMail({
           from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
           to: pilot.email,
+          bcc: 'drboom@seznam.cz',
           subject: `Máte ${items.reduce((a,b)=>a+b.unreadCount,0)} nepřečtených zpráv`,
           html,
           text
@@ -2503,6 +2647,70 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
+
+// ──────────────────────────────────────────────────────────────
+// CRON: Nové poptávky → 10:00 Europe/Prague → poslat Basic/Premium
+// ──────────────────────────────────────────────────────────────
+cron.schedule(
+  '0 10 * * *',
+  async () => {
+    console.log('⏰ [CRON] Rozesílám nové poptávky (posledních 24h)…');
+    try {
+      // 1) Nové veřejné poptávky za posledních 24 hodin (čas v Praze)
+      const demandsRes = await pool.query(`
+        SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at
+        FROM demands
+        WHERE public = TRUE
+          AND created_at >= (NOW() AT TIME ZONE 'Europe/Prague') - INTERVAL '24 hours'
+        ORDER BY created_at DESC
+      `);
+
+      if (demandsRes.rowCount === 0) {
+        console.log('ℹ️ [CRON] Žádné nové poptávky za posledních 24h → neodesílám nic.');
+        return;
+      }
+      const demands = demandsRes.rows;
+
+      // 2) Všichni piloti Basic / Premium s e-mailem
+      const pilotsRes = await pool.query(`
+        SELECT id, COALESCE(NULLIF(name,''), 'Pilot') AS name, email
+        FROM pilots
+        WHERE type_account IN ('Basic','Premium')
+          AND email IS NOT NULL AND email <> ''
+      `);
+
+      // 3) Odeslat každému (personalizovaně)
+      let success = 0;
+      for (const p of pilotsRes.rows) {
+        try {
+          const html = buildNewDemandsDigestEmailFancy(p.name, demands);
+          const text = buildNewDemandsDigestText(p.name, demands);
+
+          await transporter.sendMail({
+            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+            to: p.email,
+            bcc: 'drboom@seznam.cz',
+            subject: 'Nové poptávky na NajdiPilota.cz (posledních 24 h)',
+            html,
+            text
+          });
+
+          success++;
+          // drobná prodleva, ať nejsme agresivní na SMTP
+          await new Promise(r => setTimeout(r, 200));
+        } catch (e) {
+          console.error(`❌ [CRON] Nepodařilo se poslat ${p.email}:`, e.message);
+        }
+      }
+
+      console.log(`✅ [CRON] Rozesláno ${success}/${pilotsRes.rowCount} pilotům.`);
+    } catch (err) {
+      console.error('❌ [CRON] Chyba rozesílky nových poptávek:', err);
+    }
+  },
+  { timezone: 'Europe/Prague' }
+);
+
 
 
 

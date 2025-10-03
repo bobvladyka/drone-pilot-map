@@ -2232,19 +2232,20 @@ app.get('/send-membership-email-1m', async (req, res) => {
     if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
 
     const pilot = result.rows[0];
-    const html = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <h2 style="color: #258f01;">✅ Členství bylo prodlouženo o 1 měsíc</h2>
-        <p>Dobrý den, ${pilot.name || ""},</p>
-        <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.  
-           Platnost nyní končí dne <strong>${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}</strong>.</p>
-        <p>Vaše poslední platba proběhla <strong>${pilot.visible_payment 
-          ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
-          : "N/A"}</strong>.</p>
-        
-        <p>S přátelským pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
-      </div>
+    const content = `
+      <h2 style="color:#258f01;">✅ Členství prodlouženo o 1 měsíc</h2>
+      <p>Dobrý den, ${pilot.name || ""},</p>
+      <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.</p>
+      <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
+         <strong>Poslední platba:</strong> ${pilot.visible_payment 
+           ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
+           : "N/A"}</p>
+      <hr>
+      <h3 style="color:#0077B6;">ℹ️ Tip: Sledujte svůj profil</h3>
+      <p>V profilu vždy najdete možnost prodloužení i aktuální stav svého členství.</p>
+      <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Možnosti předplatného</a></p>
     `;
+    const html = wrapEmailContent(content, "Prodloužení členství o 1 měsíc");
 
     await transporter.sendMail({
       from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
@@ -2275,19 +2276,20 @@ app.get('/send-membership-email-6m', async (req, res) => {
     if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
 
     const pilot = result.rows[0];
-    const html = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <h2 style="color: #258f01;">✅ Členství bylo prodlouženo o 6 měsíců</h2>
-        <p>Dobrý den, ${pilot.name || ""},</p>
-        <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.  
-           Platnost nyní končí dne <strong>${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}</strong>.</p>
-        <p>Vaše poslední platba proběhla <strong>${pilot.visible_payment 
-          ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
-          : "N/A"}</strong>.</p>
-       
-        <p>S přátelským pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
-      </div>
+    const content = `
+      <h2 style="color:#258f01;">✅ Členství prodlouženo o 6 měsíců</h2>
+      <p>Dobrý den, ${pilot.name || ""},</p>
+      <p>vážíme si toho, že jste si prodloužil své členství na <strong>NajdiPilota.cz</strong>.</p>
+      <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
+         <strong>Poslední platba:</strong> ${pilot.visible_payment 
+           ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
+           : "N/A"}</p>
+      <hr>
+      <h3 style="color:#0077B6;">💡 Tip pro vás</h3>
+      <p>Využijte všech výhod dlouhodobého členství – váš profil je viditelný pro zájemce nepřetržitě.</p>
+      <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Možnosti předplatného</a></p>
     `;
+    const html = wrapEmailContent(content, "Prodloužení členství o 6 měsíců");
 
     await transporter.sendMail({
       from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
@@ -2318,18 +2320,22 @@ app.get('/send-membership-email-12m', async (req, res) => {
     if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
 
     const pilot = result.rows[0];
-    const html = `
-      <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-        <h2 style="color: #8f06bd;">🎉 Členství bylo prodlouženo o 12 měsíců</h2>
-        <p>Dobrý den, ${pilot.name || ""},</p>
-        <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.  
-           Platnost nyní končí dne <strong>${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}</strong>.</p>
-        <p>Vaše poslední platba proběhla <strong>${pilot.visible_payment 
-          ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
-          : "N/A"}</strong>.</p>
-        <p>S přátelským pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
+    const content = `
+      <h2 style="color:#8f06bd;">🎉 Členství prodlouženo o 12 měsíců</h2>
+      <p>Dobrý den, ${pilot.name || ""},</p>
+      <p>děkujeme, že jste s námi! Vaše členství na <strong>NajdiPilota.cz</strong> bylo úspěšně prodlouženo.</p>
+      <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
+         <strong>Poslední platba:</strong> ${pilot.visible_payment 
+           ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
+           : "N/A"}</p>
+      <hr>
+      <h3 style="color:#258f01;">🎁 Přiveďte kamaráda a získejte +7 dní zdarma!</h3>
+      <p>Pozvěte kamaráda přes tento odkaz:</p>
+      <div style="background:#f1f1f1;padding:10px;text-align:center;border-radius:6px;">
+        https://www.najdipilota.cz/register.html?ref=${encodeURIComponent(pilot.id)}
       </div>
     `;
+    const html = wrapEmailContent(content, "Prodloužení členství o 12 měsíců");
 
     await transporter.sendMail({
       from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
@@ -2345,6 +2351,7 @@ app.get('/send-membership-email-12m', async (req, res) => {
     res.status(500).send("Nepodařilo se odeslat email.");
   }
 });
+
 
 
 

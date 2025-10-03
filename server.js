@@ -429,6 +429,20 @@ await transporter.sendMail({
    html: onboardingEmailContent()  // Odeslání onboardingového e-mailu
 });
 
+// Po onboarding mailu novému pilotovi:
+const notifyContent = `
+  <h2 style="color:#0077B6;">🧑‍✈️ Nový pilot na palubě!</h2>
+  <p><strong>Jméno:</strong> ${escapeHtml(name)}</p>
+  <p><strong>E-mail:</strong> ${escapeHtml(email)}</p>
+  <p><strong>Místo:</strong> ${escapeHtml(city || "")}, ${escapeHtml(region || "")}</p>
+`;
+await transporter.sendMail({
+  from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+  to: "drboom@seznam.cz",
+  subject: "🧑‍✈️ Nový pilot na palubě",
+  html: wrapEmailContent(notifyContent, "Nový pilot")
+});
+
 console.log(`✅ Onboarding e-mail odeslán na: ${email}`);
 res.redirect('/'); 
 
@@ -893,6 +907,19 @@ app.post("/inzerent-register", async (req, res) => {
   [name, email, hashedPassword]
 );
 console.log("Vloženo do DB:", result.rows[0]);
+
+const notifyContent = `
+  <h2 style="color:#0077B6;">📢 Nový inzerent se registroval!</h2>
+  <p><strong>Jméno / firma:</strong> ${escapeHtml(name)}</p>
+  <p><strong>E-mail:</strong> ${escapeHtml(email)}</p>
+`;
+await transporter.sendMail({
+  from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+  to: "drboom@seznam.cz",
+  subject: "📢 Nový inzerent na NajdiPilota.cz",
+  html: wrapEmailContent(notifyContent, "Nový inzerent")
+});
+console.log("📧 Notifikace o novém inzerentovi odeslána adminovi");
 
 console.log("Záznam uložen do databáze.");
 

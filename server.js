@@ -1007,6 +1007,30 @@ app.get('/admin.html', allowLocalhostOnly, requireAdminLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'admin.html'));
 });
 
+app.post('/mark-payment-today', async (req, res) => {
+  const { id } = req.body;
+  if (!id) return res.status(400).send("Chybí ID pilota.");
+
+  try {
+    const r = await pool.query(
+      `UPDATE pilots 
+       SET visible_payment = CURRENT_DATE
+       WHERE id = $1
+       RETURNING id`,
+      [id]
+    );
+
+    if (r.rowCount === 0) {
+      return res.status(404).send("Pilot nenalezen.");
+    }
+    res.send("✅ Platba uložena s dnešním datem.");
+  } catch (err) {
+    console.error("Chyba v /mark-payment-today:", err);
+    res.status(500).send("Chyba při ukládání platby.");
+  }
+});
+
+
 // Alternativní /admin -> stejná ochrana
 app.get('/admin', allowLocalhostOnly, requireAdminLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'admin.html'));
@@ -2245,32 +2269,31 @@ if (daysLeft === 7) {
   { timezone: 'Europe/Prague' }
 );
 
-// === emaily prodloužení
-// === 1 MĚSÍC ===
+// === PRODLOUŽENÍ ČLENSTVÍ + EMAIL ===
+
+// 1 MĚSÍC
 app.get('/send-membership-email-1m', async (req, res) => {
   const { id } = req.query;
   if (!id) return res.status(400).send("Chybí ID pilota.");
 
   try {
-    const result = await pool.query(
-      "SELECT email, name, visible_valid, visible_payment, type_account FROM pilots WHERE id = $1",
+    const update = await pool.query(
+      `UPDATE pilots 
+       SET visible_valid   = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '1 month',
+           visible_payment = CURRENT_DATE
+       WHERE id = $1
+       RETURNING email, name, visible_valid, visible_payment, type_account`,
       [id]
     );
-    if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
+    if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
 
-    const pilot = result.rows[0];
+    const pilot = update.rows[0];
     const content = `
       <h2 style="color:#258f01;">✅ Členství prodlouženo o 1 měsíc</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
-         <strong>Poslední platba:</strong> ${pilot.visible_payment 
-           ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
-           : "N/A"}</p>
-      <hr>
-      <h3 style="color:#0077B6;">ℹ️ Tip: Sledujte svůj profil</h3>
-      <p>V profilu vždy najdete možnost prodloužení i aktuální stav svého členství.</p>
-      <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Možnosti předplatného</a></p>
+         <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
     `;
     const html = wrapEmailContent(content, "Prodloužení členství o 1 měsíc");
 
@@ -2282,39 +2305,37 @@ app.get('/send-membership-email-1m', async (req, res) => {
       html
     });
 
-    res.send(`✅ Email (1 měsíc) byl odeslán na ${pilot.email} (BCC: drboom@seznam.cz).`);
+    res.send(`✅ Členství (1M) bylo prodlouženo a e-mail odeslán na ${pilot.email}.`);
   } catch (err) {
-    console.error("❌ Chyba při odesílání emailu:", err);
-    res.status(500).send("Nepodařilo se odeslat email.");
+    console.error("❌ Chyba při prodlužování 1M:", err);
+    res.status(500).send("Nepodařilo se prodloužit členství o 1M.");
   }
 });
 
 
-// === 6 MĚSÍCŮ ===
+// 6 MĚSÍCŮ
 app.get('/send-membership-email-6m', async (req, res) => {
   const { id } = req.query;
   if (!id) return res.status(400).send("Chybí ID pilota.");
 
   try {
-    const result = await pool.query(
-      "SELECT email, name, visible_valid, visible_payment, type_account FROM pilots WHERE id = $1",
+    const update = await pool.query(
+      `UPDATE pilots 
+       SET visible_valid   = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '6 months',
+           visible_payment = CURRENT_DATE
+       WHERE id = $1
+       RETURNING email, name, visible_valid, visible_payment, type_account`,
       [id]
     );
-    if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
+    if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
 
-    const pilot = result.rows[0];
+    const pilot = update.rows[0];
     const content = `
       <h2 style="color:#258f01;">✅ Členství prodlouženo o 6 měsíců</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>vážíme si toho, že jste si prodloužil své členství na <strong>NajdiPilota.cz</strong>.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
-         <strong>Poslední platba:</strong> ${pilot.visible_payment 
-           ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
-           : "N/A"}</p>
-      <hr>
-      <h3 style="color:#0077B6;">💡 Tip pro vás</h3>
-      <p>Využijte všech výhod dlouhodobého členství – váš profil je viditelný pro zájemce nepřetržitě.</p>
-      <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Možnosti předplatného</a></p>
+         <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
     `;
     const html = wrapEmailContent(content, "Prodloužení členství o 6 měsíců");
 
@@ -2326,35 +2347,37 @@ app.get('/send-membership-email-6m', async (req, res) => {
       html
     });
 
-    res.send(`✅ Email (6 měsíců) byl odeslán na ${pilot.email} (BCC: drboom@seznam.cz).`);
+    res.send(`✅ Členství (6M) bylo prodlouženo a e-mail odeslán na ${pilot.email}.`);
   } catch (err) {
-    console.error("❌ Chyba při odesílání emailu:", err);
-    res.status(500).send("Nepodařilo se odeslat email.");
+    console.error("❌ Chyba při prodlužování 6M:", err);
+    res.status(500).send("Nepodařilo se prodloužit členství o 6M.");
   }
 });
 
 
-// === 12 MĚSÍCŮ ===
+// 12 MĚSÍCŮ
 app.get('/send-membership-email-12m', async (req, res) => {
   const { id } = req.query;
   if (!id) return res.status(400).send("Chybí ID pilota.");
 
   try {
-    const result = await pool.query(
-      "SELECT email, name, visible_valid, visible_payment, type_account FROM pilots WHERE id = $1",
+    const update = await pool.query(
+      `UPDATE pilots 
+       SET visible_valid   = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '12 months',
+           visible_payment = CURRENT_DATE
+       WHERE id = $1
+       RETURNING email, name, visible_valid, visible_payment, type_account, id`,
       [id]
     );
-    if (result.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
+    if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
 
-    const pilot = result.rows[0];
+    const pilot = update.rows[0];
     const content = `
       <h2 style="color:#8f06bd;">🎉 Členství prodlouženo o 12 měsíců</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>děkujeme, že jste s námi! Vaše členství na <strong>NajdiPilota.cz</strong> bylo úspěšně prodlouženo.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
-         <strong>Poslední platba:</strong> ${pilot.visible_payment 
-           ? new Date(pilot.visible_payment).toLocaleDateString("cs-CZ") 
-           : "N/A"}</p>
+         <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
       <hr>
       <h3 style="color:#258f01;">🎁 Přiveďte kamaráda a získejte +7 dní zdarma!</h3>
       <p>Pozvěte kamaráda přes tento odkaz:</p>
@@ -2372,10 +2395,10 @@ app.get('/send-membership-email-12m', async (req, res) => {
       html
     });
 
-    res.send(`✅ Email (12 měsíců) byl odeslán na ${pilot.email} (BCC: drboom@seznam.cz).`);
+    res.send(`✅ Členství (12M) bylo prodlouženo a e-mail odeslán na ${pilot.email}.`);
   } catch (err) {
-    console.error("❌ Chyba při odesílání emailu:", err);
-    res.status(500).send("Nepodařilo se odeslat email.");
+    console.error("❌ Chyba při prodlužování 12M:", err);
+    res.status(500).send("Nepodařilo se prodloužit členství o 12M.");
   }
 });
 

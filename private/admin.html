@@ -218,6 +218,7 @@ fetch('/check-admin-session', {
     <button class="edit-btn" onclick="sendMembershipEmail(${p.id}, '1m')">+1M</button>
     <button class="edit-btn" onclick="sendMembershipEmail(${p.id}, '6m')">+6M</button>
     <button class="edit-btn" onclick="sendMembershipEmail(${p.id}, '12m')">+12M</button>
+    <button class="edit-btn" onclick="markPaymentToday(${p.id})">💳 Platba dnes</button>
     <select onchange="changeAccountType(${p.id}, this.value)" style="margin-left:5px;">
       <option value="">Změnit účet</option>
       <option value="Free">Free</option>
@@ -226,6 +227,7 @@ fetch('/check-admin-session', {
     </select>
   </td>
 `;
+
 
   table.appendChild(row);
 });
@@ -237,6 +239,24 @@ fetch('/check-admin-session', {
 function formatDate(dateString) {
   const date = new Date(dateString);
   return date.toLocaleDateString('cs-CZ');
+}
+
+function markPaymentToday(id) {
+  if (!confirm("Označit dnešní datum platby pro pilota " + id + "?")) return;
+
+  fetch('/mark-payment-today', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ id })
+  })
+    .then(res => res.text())
+    .then(msg => {
+      document.getElementById('status').textContent = msg;
+      loadPilots();
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = "Chyba: " + err;
+    });
 }
 
     

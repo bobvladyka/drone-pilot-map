@@ -2535,7 +2535,6 @@ cron.schedule(
           await transporter.sendMail({
             from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
             to: p.email,
-            bcc: 'drboom@seznam.cz',
             subject: 'Nové poptávky na NajdiPilota.cz (posledních 48 h)', // ✅ oprava
             html,
             text
@@ -2912,6 +2911,55 @@ function buildNewDemandsDigestEmailFancy(pilotName, demands) {
   `;
   return wrapEmailContent(content, "Nové poptávky");
 }
+
+// ---------------------------------------------------------------------
+// GPS fix e-mail
+// ---------------------------------------------------------------------
+function gpsFixEmailContent() {
+  const content = `
+    <p>Dobrý den,</p>
+    <p>ve Vašem profilu na <strong style="color:#0077B6;">NajdiPilota.cz</strong> 
+       chybí správné GPS souřadnice. Díky nim se zobrazíte na mapě a inzerenti vás snáz najdou.</p>
+
+    <p>Pro správné zobrazení prosím doplňte nebo opravte svou adresu v účtu:</p>
+
+    <p style="margin:24px 0;">
+      <a href="https://www.najdipilota.cz/login.html"
+         style="background:#0077B6;color:#fff;text-decoration:none;
+                padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+        Přihlásit se do účtu
+      </a>
+    </p>
+
+    <p style="margin-top:30px;">S pozdravem,<br>
+       <strong>Tým NajdiPilota.cz</strong></p>
+  `;
+  return wrapEmailContent(content, "GPS nastavení");
+}
+
+// ---------------------------------------------------------------------
+// Endpoint: Odeslání GPS fix e-mailu
+// ---------------------------------------------------------------------
+app.post('/send-gps-fix-email', async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).send("❌ Chybí e-mail.");
+
+  try {
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: email,
+      bcc: 'drboom@seznam.cz',   // 📌 skrytá kopie pro admina
+      subject: "Upozornění: GPS v profilu není správně nastavena",
+      html: gpsFixEmailContent() // využití vaší funkce s jednotným designem
+    });
+
+    res.send("✅ E-mail o GPS nastavení odeslán.");
+  } catch (err) {
+    console.error("❌ Chyba při odesílání GPS e-mailu:", err);
+    res.status(500).send("Chyba při odesílání e-mailu.");
+  }
+});
+
 
 // ⬇️ TEST: pošli všechny e-maily na jednu adresu (jen z localhostu)
 app.get('/test-send-all-emails', allowLocalhostOnly, async (req, res) => {

@@ -679,6 +679,28 @@ button.accordion-button:not(.collapsed) {
   background: linear-gradient(90deg, var(--primary), var(--accent));
 }
 
+/* --- Admin panel buttony --- */
+.admin-btn,
+.edit-btn {
+  font-size: 12px !important;     /* menší písmo */
+  padding: 3px 6px !important;    /* menší padding */
+  min-width: auto !important;     /* žádná pevná šířka */
+  font-weight: normal !important;
+  color: #000 !important;         /* černý text */
+  background-color: #f0f0f0 !important; /* decentní šedé pozadí */
+  border: 1px solid #ccc !important;
+  border-radius: 4px;
+  box-shadow: none !important;
+  cursor: pointer;
+}
+
+.admin-btn:hover,
+.edit-btn:hover {
+  background-color: #e0e0e0 !important; /* tmavší šedá při hoveru */
+}
+
+
+
 
 
 

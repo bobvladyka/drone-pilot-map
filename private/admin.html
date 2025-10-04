@@ -81,11 +81,10 @@ fetch('/check-admin-session')
 </script>
   <h1>Admin – Správa pilotů</h1>
 
-  <button onclick="deleteAll()">🗑️ Smazat všechny záznamy</button>
-  <button onclick="deleteSelected()">🗑️ Odstranit vybrané</button>
-  
-  <!-- Add this button near the other action buttons -->
-<button onclick="sendGdprReminder()">✉️ Odeslat GDPR připomínku</button>
+  <button class="admin-btn" onclick="deleteAll()">🗑️ Smazat všechny záznamy</button>
+<button class="admin-btn" onclick="deleteSelected()">🗑️ Odstranit vybrané</button>
+<button class="admin-btn" onclick="sendGdprReminder()">✉️ Odeslat GDPR připomínku</button>
+
 
   <p id="status"></p>
 
@@ -203,7 +202,13 @@ fetch('/check-admin-session', {
   let daysLeft = getDaysLeft(p.visible_valid);
 
   // ✅ / ❗ pro GPS
-  let gpsStatus = (p.latitude && p.longitude) ? '✅' : '❗';
+  let gpsStatus = '';
+if (p.latitude && p.longitude) {
+  gpsStatus = '✅';
+} else {
+  gpsStatus = '❗ <button onclick="sendGpsFixEmail(\'' + p.email + '\')">✉️</button>';
+}
+
 
   row.innerHTML = `
   <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
@@ -438,6 +443,24 @@ function sendMembershipEmail(id, period) {
       document.getElementById('status').textContent = "Chyba: " + err;
     });
 }
+
+function sendGpsFixEmail(email) {
+  if (!confirm(`Opravdu chcete poslat upozornění pilotovi ${email}?`)) return;
+
+  fetch('/send-gps-fix-email', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ email })
+  })
+    .then(res => res.text())
+    .then(msg => {
+      document.getElementById('status').textContent = msg;
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = "Chyba: " + err;
+    });
+}
+
 
 function changeAccountType(id, type) {
   if (!type) return;

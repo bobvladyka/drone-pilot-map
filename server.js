@@ -1789,10 +1789,19 @@ app.get('/poptavky', async (req, res) => {
 // POST /poptavky – vložení poptávky inzerentem
 app.post('/poptavky', async (req, res) => {
   try {
-     const { title, description, location, region, budget, deadline, public: isPublic } = req.body;
+    const { title, description, location, region, budget, deadline, public: isPublic } = req.body;
     const advertiser_email = (req.session?.email || '').toLowerCase();
+
     if (!advertiser_email) return res.status(401).send('Nepřihlášený inzerent.');
     if (!title || !location) return res.status(400).send('Chybí povinná pole (název a lokalita).');
+
+    // 🔧 úprava budget
+    let budgetValue = null;
+    if (budget === 'dohodou') {
+      budgetValue = 'dohodou';
+    } else if (budget !== null && budget !== '' && !isNaN(budget)) {
+      budgetValue = Number(budget);
+    }
 
     const inserted = await pool.query(
       `INSERT INTO demands
@@ -1804,7 +1813,7 @@ app.post('/poptavky', async (req, res) => {
         description || null,
         location || null,
         region || null,
-        Number.isFinite(+budget) ? +budget : null,
+        budgetValue,     // 📌 už ne Number(), ale naše logika výše
         deadline || null,
         isPublic !== false, // default true
         advertiser_email
@@ -1817,6 +1826,7 @@ app.post('/poptavky', async (req, res) => {
     res.status(500).send('Chyba serveru při ukládání poptávky');
   }
 });
+
 
 app.get('/__dbinfo', async (req,res) => {
   const r = await pool.query(`SELECT current_database(), current_user, inet_server_addr(), inet_server_port()`);

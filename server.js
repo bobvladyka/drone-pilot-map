@@ -2498,21 +2498,21 @@ cron.schedule(
 // CRON: Nové poptávky → 10:00 Europe/Prague → poslat Basic/Premium
 // ──────────────────────────────────────────────────────────────
 cron.schedule(
-  '0 10 * * *',
+  '0 12 * * *',
   async () => {
-    console.log('⏰ [CRON] Rozesílám nové poptávky (posledních 24h)…');
+    console.log('⏰ [CRON] Rozesílám nové poptávky (posledních 48h)…');
     try {
-      // 1) Nové veřejné poptávky za posledních 24 hodin (čas v Praze)
+      // 1) Nové veřejné poptávky za posledních 48 hodin (UTC)
       const demandsRes = await pool.query(`
         SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at
         FROM demands
         WHERE public = TRUE
-          AND created_at >= (NOW() AT TIME ZONE 'Europe/Prague') - INTERVAL '24 hours'
+          AND created_at >= NOW() - INTERVAL '48 hours'
         ORDER BY created_at DESC
       `);
 
       if (demandsRes.rowCount === 0) {
-        console.log('ℹ️ [CRON] Žádné nové poptávky za posledních 24h → neodesílám nic.');
+        console.log('ℹ️ [CRON] Žádné nové poptávky za posledních 48h → neodesílám nic.');
         return;
       }
       const demands = demandsRes.rows;
@@ -2536,13 +2536,12 @@ cron.schedule(
             from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
             to: p.email,
             bcc: 'drboom@seznam.cz',
-            subject: 'Nové poptávky na NajdiPilota.cz (posledních 24 h)',
+            subject: 'Nové poptávky na NajdiPilota.cz (posledních 48 h)', // ✅ oprava
             html,
             text
           });
 
           success++;
-          // drobná prodleva, ať nejsme agresivní na SMTP
           await new Promise(r => setTimeout(r, 200));
         } catch (e) {
           console.error(`❌ [CRON] Nepodařilo se poslat ${p.email}:`, e.message);
@@ -2685,6 +2684,8 @@ app.get('/test-digest', async (req, res) => {
     res.status(500).send("Chyba při odesílání digestu");
   }
 });
+
+
 
 
 // ---------------------------------------------------------------------

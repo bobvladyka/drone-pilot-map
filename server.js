@@ -12,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 const iconv = require('iconv-lite');
 
 const cron = require('node-cron');
+const { parsePhoneNumberFromString } = require('libphonenumber-js');
 
 const app = express();
 
@@ -50,6 +51,33 @@ app.get('/ref-code', async (req, res) => {
     res.status(500).json({ error: 'Failed to make ref code' });
   }
 });
+
+// 🧹 Automatické skrytí e-mailů a telefonních čísel v poznámce
+function sanitizeNote(text, defaultCountry = 'CZ') {
+  if (!text) return text;
+
+  // Schovej e-maily
+  text = text.replace(
+    /[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,
+    '[skryto]'
+  );
+
+  // Schovej telefonní čísla (včetně +420, závorek, mezer apod.)
+  const tokens = text.split(/(\s+|[.,;:()"\-\/])/);
+  for (let i = 0; i < tokens.length; i++) {
+    const t = tokens[i].replace(/[^\d+\s().\-]/g, '').trim();
+    if (!t) continue;
+    const phone = parsePhoneNumberFromString(t, defaultCountry);
+    if (phone && phone.isValid && phone.isValid()) {
+      tokens[i] = tokens[i].replace(t, '[skryto]');
+    }
+  }
+
+  // Záchytný fallback – čisté sekvence 7–15 číslic (např. 603947177)
+  text = tokens.join('').replace(/\b\d{7,15}\b/g, '[skryto]');
+
+  return text;
+}
 
 
 
@@ -510,6 +538,7 @@ app.get('/pilots', async (req, res) => {
         volunteer, registrationnumber,
         available, visible, visible_payment, visible_valid, type_account
       FROM pilots
+      ORDER BY id ASC
     `);
 
    const pilots = [];
@@ -663,6 +692,11 @@ app.post("/update", async (req, res) => {
     visible_payment,
     visible_valid
   } = req.body;
+
+// 🧹 Očisti poznámku (schovej kontaktní údaje)
+if (note) {
+  note = sanitizeNote(note, 'CZ');
+}
 
   // natáhni stará data (kvůli omezením a defaultům)
   const oldDataResult = await pool.query(

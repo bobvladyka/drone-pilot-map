@@ -574,7 +574,20 @@ button.accordion-button:not(.collapsed) {
   .navbar-nav {
     justify-content: center;
   }
+  
 }
+
+@media (max-width: 768px) {
+  #edit-profile-btn,
+  #login-button {
+    display: block;        /* aby šly pod sebe */
+    margin: 6px auto;      /* vycentrování na střed */
+    width: fit-content;    /* šířka podle obsahu (ikona+text) */
+    min-width: 120px;      /* nebo pevné minimum, ať to nevypadá divně */
+    text-align: center;
+  }
+}
+
 /* Zvýraznění aktivní položky navigace */
 .navbar-nav .nav-item.active .nav-link {
   font-weight: 600;  /* Tučnější text pro aktivní položku */
@@ -679,6 +692,22 @@ button.accordion-button:not(.collapsed) {
   background: linear-gradient(90deg, var(--primary), var(--accent));
 }
 
+/* Zarovnání tlačítek "Můj účet" a "Odhlásit" */
+#edit-profile-btn,
+#login-button {
+  display: inline-flex;               /* stejné chování */
+  align-items: center;                /* zarovnání ikon a textu */
+  justify-content: center;
+  font-size: 16px;                    /* stejné písmo */
+  padding: 8px 16px;                  /* stejné odsazení */
+  min-height: 40px;                   /* sjednocená výška */
+  width: auto;                   /* sjednocená šířka */
+  margin: 0 4px;                      /* malá mezera mezi nimi */
+  border-radius: var(--radius);
+}
+
+
+
 /* --- Admin panel buttony --- */
 .admin-btn,
 .edit-btn {
@@ -697,6 +726,36 @@ button.accordion-button:not(.collapsed) {
 .admin-btn:hover,
 .edit-btn:hover {
   background-color: #e0e0e0 !important; /* tmavší šedá při hoveru */
+}
+
+/* --- Tlačítka účtu --- */
+.account-buttons {
+  display: flex;
+  justify-content: flex-end;  /* defaultně vpravo na PC */
+  align-items: center;
+  gap: 8px;
+}
+
+@media (max-width: 768px) {
+  .account-buttons {
+    flex-direction: column;   /* pod sebe */
+    align-items: center;      /* vycentrovat */
+    justify-content: center;
+    margin-top: 10px;
+  }
+
+  .account-buttons button {
+    width: fit-content;
+    min-width: 120px;
+    margin: 4px 0;
+    text-align: center;
+  }
+}
+
+@media (min-width: 992px) {
+  .navbar-nav {
+    margin-right: 10px; /* posune menu blíž k tlačítku */
+  }
 }
 
 

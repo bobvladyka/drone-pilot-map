@@ -57,80 +57,62 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
   <div class="container">
     <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
-  <img src="/icons/logo.png" alt="Logo NajdiPilota.cz" height="60" class="me-2" loading="lazy" aria-hidden="true" />
-  <span class="fs-4">NajdiPilota.cz</span>
-</a>
+      <img src="/icons/logo.png" alt="Logo NajdiPilota.cz" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+      <span class="fs-4">NajdiPilota.cz</span>
+    </a>
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     
-    <div class="collapse navbar-collapse" id="mainNavbar">
+    <div class="collapse navbar-collapse justify-content-end align-items-center" id="mainNavbar">
+      <!-- Navigace -->
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-	<li class="nav-item" id="inzerent-nav-item" style="display:none;">
-  <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
-    <i class="bi bi-megaphone-fill me-1"></i>Pro inzerenty
-  </a>
-</li>
+        <li class="nav-item" id="inzerent-nav-item" style="display:none;">
+          <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
+            <i class="bi bi-megaphone-fill me-1"></i>Pro inzerenty
+          </a>
+        </li>
         <li class="nav-item">
           <a class="nav-link" href="/index.html">Mapa</a>
         </li>
-
-         <li class="nav-item" id="messages-nav-item" style="display:none;">
-          <a class="nav-link" href="/moje-zpravy.html">
-            <i class="bi bi-envelope me-1"></i>Moje zprávy
-          </a>
+        <li class="nav-item" id="messages-nav-item" style="display:none;">
+          <a class="nav-link" href="/moje-zpravy.html"><i class="bi bi-envelope me-1"></i>Moje zprávy</a>
         </li>
-        
         <li class="nav-item" id="poptavky-nav-item" style="display:none;">
-  <a class="nav-link" href="/poptavky.html">
-    <i class="bi bi-briefcase-fill me-1"></i>Poptávky
-  </a>
-</li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="/o-projektu.html">O projektu</a>
+          <a class="nav-link" href="/poptavky.html"><i class="bi bi-briefcase-fill me-1"></i>Poptávky</a>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/kontakt.html">Kontakt</a>
-        </li>
-
+        <li class="nav-item"><a class="nav-link" href="/o-projektu.html">O projektu</a></li>
+        <li class="nav-item"><a class="nav-link" href="/kontakt.html">Kontakt</a></li>
         <li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    🌐 Jazyk
-  </a>
-  <ul class="dropdown-menu" aria-labelledby="langDropdown">
-            <li>
-  <a class="dropdown-item" href="/index.html">
-    <span class="fi fi-cz me-2"></span>Česky
-  </a>
-</li>
-<li>
-  <a class="dropdown-item" href="/index_en.html">
-    <span class="fi fi-gb me-2"></span>English
-  </a>
-</li>
-<!--
-<li>
-  <a class="dropdown-item" href="/index_ua.html">
-    <span class="fi fi-ua me-2"></span>Українська
-  </a>
-</li>
--->
-
+          <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            🌐 Jazyk
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="langDropdown">
+            <li><a class="dropdown-item" href="/index.html"><span class="fi fi-cz me-2"></span>Česky</a></li>
+            <li><a class="dropdown-item" href="/index_en.html"><span class="fi fi-gb me-2"></span>English</a></li>
+            <!-- <li><a class="dropdown-item" href="/index_ua.html"><span class="fi fi-ua me-2"></span>Українська</a></li> -->
           </ul>
-</li>
-          
-<li class="nav-item">
-
-</li>
+        </li>
       </ul>
-<button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
-  <i class="bi bi-person-badge me-2"></i>
-  <span id="login-toggle">Přihlásit se jako pilot</span>
-</button>
+
+      <!-- Tlačítka účtu -->
+      <div class="account-buttons ms-lg-3">
+        <span id="logged-info" class="fw-bold small"></span>
+
+        <button id="edit-profile-btn" style="display:none;" class="pilot-login-btn">
+          <i class="bi bi-pencil-square me-1"></i> <span>Můj účet</span>
+        </button>
+
+        <button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
+          <i class="bi bi-person-badge me-2"></i>
+          <span id="login-toggle">Přihlásit se jako pilot</span>
+        </button>
+      </div>
     </div>
   </div>
 </nav>
+
 
   <div class="container py-4">
     <h1 class="text-center">
@@ -166,10 +148,7 @@
 </div>
 
 
-  <span id="logged-info" class="fw-bold small"></span>
-  <button id="edit-profile-btn" style="display:none;" class="pilot-login-btn w-100">
-    <i class="bi bi-pencil-square me-1"></i>Upravit
-  </button>
+  
 </div>
     
 
@@ -541,7 +520,7 @@ if (loggedEmail) {
   loginBox.style.display = "none";
   editBtn.style.display = "inline-block";
   toggle.textContent = "Odhlásit";
-  status.textContent = "Přihlášen jako: " + loggedEmail;
+  
   
   // Zobrazení "Moje zprávy" pro přihlášené uživatele
   const messagesNavItem = document.getElementById("messages-nav-item");

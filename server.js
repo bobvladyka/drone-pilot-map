@@ -1820,6 +1820,32 @@ app.post('/poptavky', async (req, res) => {
       ]
     );
 
+    const demand = inserted.rows[0];
+
+    // 2) Najít Premium piloty
+    const pilotsRes = await pool.query(`
+      SELECT id, COALESCE(NULLIF(name,''), 'Pilot') AS name, email
+      FROM pilots
+      WHERE type_account = 'Premium'
+        AND email IS NOT NULL AND email <> ''
+    `);
+
+    // 3) Poslat upozornění každému Premium pilotovi
+    for (const p of pilotsRes.rows) {
+      try {
+        const html = buildNewDemandAlertEmail(p.name, demand);
+        await transporter.sendMail({
+          from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+          to: p.email,
+          bcc: 'drboom@seznam.cz',
+          subject: 'Nová poptávka na NajdiPilota.cz',
+          html
+        });
+      } catch (e) {
+        console.error(`❌ Nepodařilo se poslat Premium alert ${p.email}:`, e.message);
+      }
+    }
+
     res.status(201).json(inserted.rows[0]);
   } catch (err) {
     console.error('Chyba při ukládání poptávky:', err);
@@ -2505,7 +2531,7 @@ cron.schedule(
 );
 
 // ──────────────────────────────────────────────────────────────
-// CRON: Nové poptávky → 10:00 Europe/Prague → poslat Basic/Premium
+// CRON: Nové poptávky → 12:00 Europe/Prague → poslat Basic/Premium
 // ──────────────────────────────────────────────────────────────
 cron.schedule(
   '0 12 * * *',
@@ -2902,7 +2928,7 @@ function buildNewDemandsDigestEmailFancy(pilotName, demands) {
 
   const content = `
     <p>Dobrý den, <strong>${escapeHtml(pilotName || 'pilote')}</strong> 👋</p>
-    <p>Přinášíme vám nové poptávky z posledních 24 hodin:</p>
+    <p>Přinášíme vám nové poptávky z posledních 48 hodin:</p>
     <table style="width:100%;border-collapse:collapse;font-size:14px;">
       <thead>
         <tr style="background:#ecf0f1;">
@@ -2921,6 +2947,36 @@ function buildNewDemandsDigestEmailFancy(pilotName, demands) {
   `;
   return wrapEmailContent(content, "Nové poptávky");
 }
+
+// ---------------------------------------------------------------------
+// Nová poptávka přidána – zachovány všechny barvy účtů
+// ---------------------------------------------------------------------
+
+function buildNewDemandAlertEmail(pilotName, demand) {
+  return wrapEmailContent(`
+    <p>Dobrý den ${pilotName},</p>
+    <p>Na <strong style="color:#0077B6;">NajdiPilota.cz</strong> byla právě vložena nová poptávka:</p>
+    <ul>
+      <li><strong>${escapeHtml(demand.title)}</strong></li>
+      <li>Lokalita: ${escapeHtml(demand.location)}${demand.region ? ', ' + escapeHtml(demand.region) : ''}</li>
+      ${demand.budget ? `<li>Rozpočet: ${demand.budget === 'dohodou' ? 'Dohodou' : demand.budget + ' Kč'}</li>` : ''}
+      ${demand.deadline ? `<li>Termín: ${demand.deadline}</li>` : ''}
+    </ul>
+    <p>
+      <a href="https://www.najdipilota.cz/poptavky.html"
+         style="background:#0077B6;color:#fff;text-decoration:none;padding:10px 18px;
+                border-radius:6px;font-size:14px;font-weight:500;">
+        Zobrazit poptávku
+      </a>
+    </p>
+    <p style="color:#8f06bd;font-weight:600;margin-top:25px;">
+      Toto upozornění se odesílá pouze účtům Premium
+    </p>
+    <p style="margin-top:30px;">S pozdravem,<br><strong>Tým NajdiPilota.cz</strong></p>
+  `, "Nová poptávka na NajdiPilota.cz");
+}
+
+
 
 // ---------------------------------------------------------------------
 // GPS fix e-mail
@@ -2946,6 +3002,8 @@ function gpsFixEmailContent() {
   `;
   return wrapEmailContent(content, "GPS nastavení");
 }
+
+
 
 // ---------------------------------------------------------------------
 // Endpoint: Odeslání GPS fix e-mailu

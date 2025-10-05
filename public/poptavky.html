@@ -215,19 +215,19 @@ function getQueryParam(key, fallback = '') {
 // -------------------------------------------
 // Úvodní zpráva, která se pošle inzerentovi
 // -------------------------------------------
-function buildIntroMessage(d) {
-  const rows = [
-    `Dobrý den,`,
-    `reaguji na Vaši poptávku „${d.title ?? ''}“.`,
-    '',
-    `• Lokalita: ${d.location ?? ''}${d.region ? `, ${d.region}` : ''}`,
-    '',
-    `Mám zájem domluvit detaily (rozsah prací, termíny, výstupy).`,
-    '',
-    `Děkuji a těším se na odpověď.`
-  ].filter(Boolean);
-  return rows.join('\n');
-}
+// function buildIntroMessage(d) {
+//  const rows = [
+//    `Dobrý den,`,
+//    `reaguji na Vaši poptávku „${d.title ?? ''}“.`,
+//    '',
+//    `• Lokalita: ${d.location ?? ''}${d.region ? `, ${d.region}` : ''}`,
+//    '',
+//    `Mám zájem domluvit detaily (rozsah prací, termíny, výstupy).`,
+//    '',
+//    `Děkuji a těším se na odpověď.`
+//  ].filter(Boolean);
+//  return rows.join('\n');
+// }
 
 // -------------------------------------------
 // Získání e-mailu pilota (session → LS → prompt)
@@ -361,16 +361,18 @@ async function handleReactById(id) {
       advertiserEmail: demand.advertiser_email
     });
     if (!success || !conversationId) throw new Error(message || 'Nepodařilo se vytvořit konverzaci');
+ 
+     // 3) Pošli úvodní zprávu
+ // const intro = buildIntroMessage(demand);
+ // const sendRes = await apiJson('/send-message', {
+ //  conversationId,
+ //  senderEmail: pilotEmail,
+ //  message: intro
+ // });
+ // if (!sendRes.success) throw new Error('Zprávu se nepodařilo odeslat.');
 
-    // 3) Pošli úvodní zprávu
-    const intro = buildIntroMessage(demand);
-    const sendRes = await apiJson('/send-message', {
-      conversationId,
-      senderEmail: pilotEmail,
-      message: intro
-    });
-    if (!sendRes.success) throw new Error('Zprávu se nepodařilo odeslat.');
 
+    
     // 4) Přesměruj do chatu (chat.html očekává tyto 3 parametry)
     const url = new URL(location.origin + '/chat.html');
     url.searchParams.set('conversationId', conversationId);

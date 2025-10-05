@@ -1522,35 +1522,54 @@ app.post('/create-conversation', async (req, res) => {
   const { pilotEmail, advertiserEmail } = req.body;
 
   try {
-    // Get pilot and advertiser details from the database
+    // Získáme pilot ID
     const pilotResult = await pool.query('SELECT id FROM pilots WHERE email = $1', [pilotEmail]);
-    const advertiserResult = await pool.query('SELECT id FROM advertisers WHERE email = $1', [advertiserEmail]);
-
-    if (pilotResult.rowCount === 0 || advertiserResult.rowCount === 0) {
-      return res.status(400).json({ success: false, message: 'Pilot nebo inzerent nenalezen' });
+    if (pilotResult.rowCount === 0) {
+      return res.status(400).json({ success: false, message: 'Pilot nenalezen' });
     }
 
     const pilotId = pilotResult.rows[0].id;
-    const advertiserId = advertiserResult.rows[0].id;
 
-    // Check if a conversation already exists between this pilot and advertiser
+    // Pokusíme se zjistit, zda je advertiser v tabulce advertisers nebo pilots
+    let advertiserId = null;
+    let advertiserTable = 'advertisers';
+
+    const advertiserResult = await pool.query('SELECT id FROM advertisers WHERE email = $1', [advertiserEmail]);
+    if (advertiserResult.rowCount > 0) {
+      advertiserId = advertiserResult.rows[0].id;
+      advertiserTable = 'advertisers';
+    } else {
+      const pilotAsAdvertiserResult = await pool.query('SELECT id FROM pilots WHERE email = $1', [advertiserEmail]);
+      if (pilotAsAdvertiserResult.rowCount > 0) {
+        advertiserId = pilotAsAdvertiserResult.rows[0].id;
+        advertiserTable = 'pilots';
+      }
+    }
+
+    if (!advertiserId) {
+      return res.status(400).json({ success: false, message: 'Inzerent nenalezen' });
+    }
+
+    // Zabráníme self-konverzaci
+    if (advertiserId === pilotId && advertiserTable === 'pilots') {
+      return res.status(400).json({ success: false, message: 'Nelze vytvořit konverzaci se stejným uživatelem' });
+    }
+
+    // Zkontroluj, zda konverzace už neexistuje (včetně tabulky)
     const existingConversation = await pool.query(
-      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 LIMIT 1',
-      [pilotId, advertiserId]
+      `SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 AND advertiser_table = $3 LIMIT 1`,
+      [pilotId, advertiserId, advertiserTable]
     );
 
     let conversationId;
-
     if (existingConversation.rowCount > 0) {
-      // If the conversation exists, use the existing conversationId
       conversationId = existingConversation.rows[0].id;
     } else {
-      // If no conversation exists, create a new one
       const conversationResult = await pool.query(
-        `INSERT INTO conversations (pilot_id, advertiser_id) 
-         VALUES ($1, $2) 
+        `INSERT INTO conversations (pilot_id, advertiser_id, advertiser_table)
+         VALUES ($1, $2, $3)
          RETURNING id`,
-        [pilotId, advertiserId]
+        [pilotId, advertiserId, advertiserTable]
       );
       conversationId = conversationResult.rows[0].id;
     }
@@ -1558,7 +1577,7 @@ app.post('/create-conversation', async (req, res) => {
     res.json({ success: true, conversationId });
 
   } catch (err) {
-    console.error("Chyba při vytváření konverzace:", err);
+    console.error("❌ Chyba při vytváření konverzace:", err);
     res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
   }
 });
@@ -1634,7 +1653,7 @@ app.get('/get-pilot-conversations', async (req, res) => {
   const { pilotEmail } = req.query;
 
   try {
-    // First get pilot ID
+    // Najdi ID pilota podle emailu
     const pilotResult = await pool.query(
       'SELECT id FROM pilots WHERE email = $1',
       [pilotEmail]
@@ -1646,33 +1665,52 @@ app.get('/get-pilot-conversations', async (req, res) => {
 
     const pilotId = pilotResult.rows[0].id;
 
-    // Get all conversations with advertisers
+    // Načti všechny konverzace pilota (včetně typu tabulky advertiser_table)
     const conversations = await pool.query(`
       SELECT 
         c.id,
-        a.email AS advertiser_email,
-        a.name AS advertiser_name,
-        (SELECT message FROM messages 
+        c.advertiser_table,
+        CASE
+          WHEN c.advertiser_table = 'advertisers' THEN a.email
+          ELSE p2.email
+        END AS advertiser_email,
+        CASE
+          WHEN c.advertiser_table = 'advertisers' THEN a.name
+          ELSE p2.name
+        END AS advertiser_name,
+
+        (SELECT message 
+         FROM messages 
          WHERE conversation_id = c.id 
-         ORDER BY created_at DESC LIMIT 1) AS last_message,
-        (SELECT created_at FROM messages 
+         ORDER BY created_at DESC 
+         LIMIT 1) AS last_message,
+
+        (SELECT created_at 
+         FROM messages 
          WHERE conversation_id = c.id 
-         ORDER BY created_at DESC LIMIT 1) AS last_message_time,
+         ORDER BY created_at DESC 
+         LIMIT 1) AS last_message_time,
+
         EXISTS (
           SELECT 1 FROM messages 
           WHERE conversation_id = c.id 
           AND sender_id != $1 
           AND (created_at > (
-            SELECT last_seen FROM conversation_views 
+            SELECT last_seen 
+            FROM conversation_views 
             WHERE conversation_id = c.id AND user_id = $1
             LIMIT 1
           ) OR NOT EXISTS (
-            SELECT 1 FROM conversation_views 
+            SELECT 1 
+            FROM conversation_views 
             WHERE conversation_id = c.id AND user_id = $1
           ))
         ) AS unread
+
       FROM conversations c
-      JOIN advertisers a ON c.advertiser_id = a.id
+      JOIN pilots p ON c.pilot_id = p.id
+      LEFT JOIN advertisers a ON c.advertiser_table = 'advertisers' AND c.advertiser_id = a.id
+      LEFT JOIN pilots p2 ON c.advertiser_table = 'pilots' AND c.advertiser_id = p2.id
       WHERE c.pilot_id = $1
       ORDER BY last_message_time DESC NULLS LAST
     `, [pilotId]);
@@ -1682,7 +1720,7 @@ app.get('/get-pilot-conversations', async (req, res) => {
       conversations: conversations.rows
     });
   } catch (err) {
-    console.error("Error fetching pilot conversations:", err);
+    console.error("❌ Error fetching pilot conversations:", err);
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
@@ -2100,138 +2138,120 @@ app.get('/send-expiry-emails', async (req, res) => {
 });
 
 app.post('/admin-send-gdpr-reminder', requireAdminLogin, async (req, res) => {
-    try {
-        // Zkontroluj, zda je připojen emailový server
-        await transporter.verify(); // Tato funkce ověřuje připojení k serveru
-        console.log('Email server connection is ready');
+  try {
+    await transporter.verify();
+    console.log('📡 Email server connection is ready');
 
-        // Definování proměnné pro piloty (získání pilotů z DB)
-        let query = `
-            SELECT p.id, p.email, p.name, p.type_account
-            FROM pilots p
-            LEFT JOIN consents c ON p.id = c.user_id AND c.consent_type = 'public_contact'
-            WHERE p.type_account IN ('Premium', 'Basic') -- Vybírá všechny piloty s těmito typy účtů
+    // 1️⃣ Získání seznamu pilotů
+    let query = `
+      SELECT p.id, p.email, p.name, p.type_account
+      FROM pilots p
+      LEFT JOIN consents c ON p.id = c.user_id AND c.consent_type = 'public_contact'
+      WHERE p.type_account IN ('Premium', 'Basic')
+    `;
+    let queryParams = [];
+
+    if (req.body.ids && req.body.ids.length > 0) {
+      query += ` AND p.id IN (${req.body.ids.map((_, i) => `$${i + 1}`).join(',')})`;
+      queryParams = [...req.body.ids];
+    }
+
+    const result = await pool.query({
+      text: query,
+      values: queryParams,
+      timeout: 10000
+    });
+
+    const pilotsWithoutConsent = result.rows;
+    if (pilotsWithoutConsent.length === 0) {
+      return res.send("Žádní piloti nevyžadují připomenutí GDPR souhlasu.");
+    }
+
+    let successCount = 0;
+    let failedEmails = [];
+
+    // 2️⃣ Odeslání e-mailů
+    for (const pilot of pilotsWithoutConsent) {
+      try {
+        const innerHtml = `
+          <p>Dobrý den, <strong>${escapeHtml(pilot.name || '')}</strong>,</p>
+          <p>
+            děkujeme, že jste součástí komunity <strong style="color:#0077B6;">NajdiPilota.cz</strong>.
+            Váš účet <strong>${escapeHtml(pilot.type_account)}</strong> zatím nemá udělen souhlas se
+            zobrazením kontaktů (GDPR).
+          </p>
+          <p>
+            Bez tohoto souhlasu se váš profil nemusí zobrazovat ve veřejném přehledu pilotů.
+            Kliknutím na tlačítko níže se můžete přihlásit a souhlas snadno potvrdit:
+          </p>
+          <p style="margin:24px 0;">
+            <a href="https://www.najdipilota.cz/index.html"
+               style="background:#0077B6;color:#fff;text-decoration:none;
+                      padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+              Přihlaš se a uděl souhlas GDPR
+            </a>
+          </p>
+          <p>
+            Děkujeme vám za spolupráci a těšíme se na další společné lety! 🛩️<br>
+            <strong>Tým NajdiPilota.cz</strong>
+          </p>
+          <p style="font-size:13px;color:#6c757d;">
+            Tento e-mail je automaticky generován systémem NajdiPilota.cz.<br>
+            <a href="https://www.najdipilota.cz/o-projektu.html" style="color:#0077B6;">O projektu</a> |
+            <a href="https://www.najdipilota.cz/faq.html" style="color:#0077B6;">FAQ</a>
+          </p>
         `;
-        
-        let queryParams = [];
 
-        // Pokud je posláno pole 'ids', přidáme podmínku pro konkrétní piloty
-        if (req.body.ids && req.body.ids.length > 0) {
-            query += ` AND p.id IN (${req.body.ids.map((_, i) => `$${i + 1}`).join(',')})`;
-            queryParams = [...req.body.ids];
-        }
+        const html = wrapEmailContent(innerHtml, "GDPR připomínka – NajdiPilota.cz");
 
-        // Spustí dotaz na získání všech pilotů
-        const result = await pool.query({
-            text: query,
-            values: queryParams,
-            timeout: 10000 // 10 sekundy timeout
+        const text = `
+Dobrý den ${pilot.name},
+
+děkujeme, že jste součástí komunity NajdiPilota.cz.
+
+Váš účet je ${pilot.type_account}, ale chybí nám váš souhlas se zobrazením kontaktů.
+
+Pokud chcete udělit souhlas s GDPR, přihlaste se na:
+https://www.najdipilota.cz/moje-udaje.html
+
+Po přihlášení budete mít možnost souhlas s GDPR udělit.
+
+Dotazy: dronadmin@seznam.cz
+
+S pozdravem,
+Tým NajdiPilota.cz
+`;
+
+        await transporter.sendMail({
+          from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+          to: pilot.email,
+          subject: "📋 Potvrďte GDPR souhlas – NajdiPilota.cz",
+          html,
+          text
         });
 
-        const pilotsWithoutConsent = result.rows;  // Seznam všech pilotů, včetně těch, kteří již mají GDPR souhlas
-
-        if (pilotsWithoutConsent.length === 0) {
-            return res.send("Žádní piloti nevyžadují připomenutí GDPR souhlasu.");
-        }
-
-        let successCount = 0;
-        let failedEmails = [];
-
-        // Posílání GDPR připomínek pilotům
-        for (const pilot of pilotsWithoutConsent) {
-    try {
-        const emailContent = {
-            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-            to: pilot.email,
-            subject: "Důležitá informace k vašemu účtu na NajdiPilota.cz – Potřebujeme váš souhlas s GDPR",
-            html: `
-                <div style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-                    <h2 style="color: #0077B6;">Důležitá informace k vašemu účtu na NajdiPilota.cz</h2>
-                    <p style="font-size: 16px; color: #495057;">Dobrý den, <strong>${pilot.name}</strong>,</p>
-                    <p style="font-size: 16px; color: #495057;">
-                        Děkujeme, že jste součástí komunity <strong style="color: #0077B6;">NajdiPilota.cz</strong>.
-                    </p>
-                    <p style="font-size: 16px; color: #495057;">
-                        Váš účet je <strong style="color: #258f01">${pilot.type_account}</strong>, ale chybí nám váš souhlas se zobrazením kontaktů.
-                    </p>
-                    <p style="font-size: 16px; color: #495057;">
-                        Pokud chcete udělit souhlas s GDPR, klikněte na tento odkaz:
-                    </p>
-                    <p style="font-size: 16px; color: #495057;">
-                        <a href="https://www.najdipilota.cz/index.html" style="font-size: 18px; color: #0077B6; text-decoration: none;">Klikněte zde pro přihlášení a udělení souhlasu s GDPR</a>
-                    </p>
-                    <p style="font-size: 16px; color: #495057;">
-                        Po přihlášení na stránce budete mít možnost souhlas s GDPR udělit.
-                    </p>
-                    <p style="font-size: 16px; color: #495057;">
-                        Pokud máte jakékoliv dotazy nebo potřebujete další informace, neváhejte nás kontaktovat na <a href="mailto:dronadmin@seznam.cz" style="color: #0077B6;">dronadmin@seznam.cz</a>.
-                    </p>
-                    <p style="font-size: 16px; color: #495057;">
-                        Děkujeme vám za spolupráci a těšíme se na další spolupráci!
-                    </p>
-
-                    <p style="font-size: 16px; color: #495057;">
-                        S pozdravem,<br />Tým NajdiPilota.cz
-                    </p>
-
-                    <p style="font-size: 14px; color: #6c757d;">
-                        Tento e-mail je automaticky generován na základě vašeho účtu na NajdiPilota.cz. Pokud nemáte zájem o tuto připomínku, ignorujte prosím tento e-mail.
-                    </p>
-                    <p style="font-size: 14px; color: #6c757d;">
-                        <a href="https://www.najdipilota.cz/o-projektu.html" style="color: #0077B6;">O projektu</a> | <a href="https://www.najdipilota.cz/faq.html" style="color: #0077B6;">FAQ</a>
-                    </p>
-                </div>
-            `,
-            text: `
-                Dobrý den ${pilot.name},
-
-                Děkujeme, že jste součástí komunity NajdiPilota.cz.
-
-                Váš účet je ${pilot.type_account}, ale chybí nám váš souhlas se zobrazením kontaktů.
-
-                Pokud chcete udělit souhlas s GDPR, přihlaste se na následujícím odkazu:
-                https://www.najdipilota.cz/index.html
-
-                Po přihlášení budete mít možnost souhlas s GDPR udělit.
-
-                Pokud máte jakékoliv dotazy nebo potřebujete další informace, kontaktujte nás na: dronadmin@seznam.cz
-
-                S pozdravem,
-                Tým NajdiPilota.cz
-
-                Tento e-mail je automaticky generován na základě vašeho účtu na NajdiPilota.cz. Pokud nemáte zájem o tuto připomínku, ignorujte prosím tento e-mail.
-
-                Pro více informací navštivte:
-                - O projektu: https://www.najdipilota.cz/o-projektu.html
-                - FAQ: https://www.najdipilota.cz/faq.html
-            `
-        };
-
-        await transporter.sendMail(emailContent);  // Odeslání emailu
         successCount++;
         console.log(`✅ GDPR reminder sent to: ${pilot.email}`);
-
-        await new Promise(resolve => setTimeout(resolve, 500));  // Malé zpoždění mezi e-maily
-    } catch (err) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (err) {
         console.error(`❌ Error sending to ${pilot.email}:`, err.message);
         failedEmails.push(pilot.email);
+      }
     }
-}
 
-        // Vytvoření odpovědi
-        let response = `GDPR připomínky odeslány: ${successCount} úspěšně z ${pilotsWithoutConsent.length} pilotů.`;
-        
-        if (failedEmails.length > 0) {
-            response += `\n\nNepodařilo se odeslat na: ${failedEmails.join(', ')}`;
-        }
-
-        res.send(response);
-
-    } catch (err) {
-        console.error("❌ Chyba při odesílání GDPR připomínek:", err);
-        res.status(500).send(`Chyba při odesílání: ${err.message}`);
+    // 3️⃣ Výsledek
+    let response = `GDPR připomínky odeslány: ${successCount} úspěšně z ${pilotsWithoutConsent.length} pilotů.`;
+    if (failedEmails.length > 0) {
+      response += `\n\nNepodařilo se odeslat na: ${failedEmails.join(', ')}`;
     }
+
+    res.send(response);
+  } catch (err) {
+    console.error("❌ Chyba při odesílání GDPR připomínek:", err);
+    res.status(500).send(`Chyba při odesílání: ${err.message}`);
+  }
 });
+
 
 
 // Route pro přístup k 'onlymap.html'
@@ -2973,9 +2993,9 @@ function buildNewDemandsDigestEmailFancy(pilotName, demands) {
       <tbody>${rows}</tbody>
     </table>
     <div style="text-align:center;margin-top:24px;">
-      <a href="https://www.najdipilota.cz/poptavky.html" 
+      <a href="https://www.najdipilota.cz/index.html" 
          style="background:#27ae60;color:#fff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:bold;">
-        👉 Zobrazit všechny poptávky
+        👉 Přihlaš se a zobraz všechny poptávky
       </a>
     </div>
   `;
@@ -3024,7 +3044,7 @@ function gpsFixEmailContent() {
     <p>Pro správné zobrazení prosím doplňte nebo opravte svou adresu v účtu:</p>
 
     <p style="margin:24px 0;">
-      <a href="https://www.najdipilota.cz/login.html"
+      <a href="https://www.najdipilota.cz/"
          style="background:#0077B6;color:#fff;text-decoration:none;
                 padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
         Přihlásit se do účtu

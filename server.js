@@ -1510,12 +1510,74 @@ app.post('/send-message', async (req, res) => {
 
     return res.json({ success: true, newMessage: enriched.rows[0] });
 
+
+
   } catch (err) {
     console.error("Chyba při odesílání zprávy:", err);
     res.status(500).json({ success: false, message: 'Chyba při odesílání zprávy' });
   }
 });
 
+// 🕐 Naplánuj kontrolu po 1 hodině, zda příjemce zprávu přečetl
+setTimeout(async () => {
+  try {
+    const msg = enriched.rows[0];
+    if (!msg) return;
+
+    if (msg.sender_role === 'advertiser') {
+      // Inzerent poslal → kontrolujeme pilota
+      const r = await pool.query(`
+        SELECT p.email, p.name, cv.last_seen, m.created_at, a.name AS adv_name
+        FROM messages m
+        JOIN conversations c ON c.id = m.conversation_id
+        JOIN pilots p ON p.id = c.pilot_id
+        JOIN advertisers a ON a.id = c.advertiser_id
+        LEFT JOIN conversation_views cv
+          ON cv.conversation_id = c.id AND cv.user_id = p.id
+        WHERE m.id = $1
+      `, [msg.id]);
+
+      const { email, name, last_seen, created_at, adv_name } = r.rows[0];
+      if (!last_seen || new Date(last_seen) < new Date(created_at)) {
+        await transporter.sendMail({
+          from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+          to: email,
+          bcc: 'drboom@seznam.cz',
+          subject: `💬 Nová zpráva od inzerenta ${adv_name}`,
+          html: `<p>Dobrý den ${escapeHtml(name)},<br>máte novou zprávu od inzerenta <b>${escapeHtml(adv_name)}</b>.</p>`
+        });
+        console.log(`📧 Notifikace pilotovi ${email} odeslána.`);
+      }
+
+    } else if (msg.sender_role === 'pilot') {
+      // Pilot poslal → kontrolujeme inzerenta
+      const r = await pool.query(`
+        SELECT a.email, a.name, cv.last_seen, m.created_at, p.name AS pilot_name
+        FROM messages m
+        JOIN conversations c ON c.id = m.conversation_id
+        JOIN pilots p ON p.id = c.pilot_id
+        JOIN advertisers a ON a.id = c.advertiser_id
+        LEFT JOIN conversation_views cv
+          ON cv.conversation_id = c.id AND cv.user_id = a.id
+        WHERE m.id = $1
+      `, [msg.id]);
+
+      const { email, name, last_seen, created_at, pilot_name } = r.rows[0];
+      if (!last_seen || new Date(last_seen) < new Date(created_at)) {
+        await transporter.sendMail({
+          from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+          to: email,
+          bcc: 'drboom@seznam.cz',
+          subject: `💬 Nová zpráva od pilota ${pilot_name}`,
+          html: `<p>Dobrý den ${escapeHtml(name)},<br>máte novou zprávu od pilota <b>${escapeHtml(pilot_name)}</b>.</p>`
+        });
+        console.log(`📧 Notifikace inzerentovi ${email} odeslána.`);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Chyba při odložené notifikaci:", err);
+  }
+}, 60 * 60 * 1000); // 1 hodina
 
 
 app.post('/create-conversation', async (req, res) => {
@@ -2492,12 +2554,57 @@ app.get('/send-membership-email-12m', async (req, res) => {
   }
 });
 
+// ODESLÁNÍ E-MAILU BEZ PRODLOUŽENÍ ČLENSTVÍ
+app.get('/send-email-only-1m', async (req, res) => {
+  const { id } = req.query;
+  if (!id) return res.status(400).send("❌ Chybí ID pilota v parametru URL.");
+
+  try {
+    // načtení dat pilota
+    const result = await pool.query(
+      `SELECT email, name, visible_valid, visible_payment, type_account
+       FROM pilots
+       WHERE id = $1`,
+      [id]
+    );
+
+    if (result.rowCount === 0) return res.status(404).send("❌ Pilot nenalezen.");
+
+    const pilot = result.rows[0];
+
+    const content = `
+      <h2 style="color:#258f01;">✅ Členství prodlouženo o 1 měsíc</h2>
+      <p>Dobrý den, ${pilot.name || ""},</p>
+      <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.</p>
+      <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
+         <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
+    `;
+
+    const html = wrapEmailContent(content, "Prodloužení členství o 1 měsíc");
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: pilot.email,
+      bcc: 'drboom@seznam.cz',
+      subject: 'Vaše členství bylo prodlouženo o 1 měsíc',
+      html
+    });
+
+    res.send(`📧 E-mail (1M) byl odeslán na adresu <strong>${pilot.email}</strong>.`);
+  } catch (err) {
+    console.error("❌ Chyba při odesílání e-mailu:", err);
+    res.status(500).send("❌ Nepodařilo se odeslat e-mail.");
+  }
+});
 
 
 
 
 
 
+
+
+/*
 // ──────────────────────────────────────────────────────────────
 // CRON: Denní souhrn nepřečtených zpráv (Europe/Prague) – 07:30
 // ──────────────────────────────────────────────────────────────
@@ -2556,7 +2663,7 @@ cron.schedule(
           advertiserEmail: r.advertiser_email,
           advertiserName: r.advertiser_name || r.advertiser_email,
           unreadCount: Number(r.unread_count),
-          lastMessage: (r.last_message || '').slice(0, 300), // oříznout pro jistotu
+          lastMessage: (r.last_message || '').slice(0, 300),
           lastTime: new Date(r.last_time)
         }));
 
@@ -2583,6 +2690,8 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
+*/
+
 
 // ──────────────────────────────────────────────────────────────
 // CRON: Nové poptávky → 12:00 Europe/Prague → poslat Basic/Premium

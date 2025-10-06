@@ -323,6 +323,38 @@ async function deleteDemand(id) {
   }
 }
 
+// -------------------------------------------
+// Označení poptávky jako hotové
+// -------------------------------------------
+async function markDone(id) {
+  const confirmHotovo = confirm('Označit tuto poptávku jako hotovou?');
+  if (!confirmHotovo) return;
+
+  // jednoduchý prompt (můžeš později nahradit modálním oknem)
+  const rating = prompt('Jak jste spokojeni s výsledkem? (1–5 hvězdiček)', '5');
+  const note = prompt('Chcete přidat krátký komentář?', '');
+
+  try {
+    const res = await fetch(`/poptavky/${id}/status`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: 'Hotovo',
+        satisfaction: Number(rating) || null,
+        note: note?.trim() || null
+      }),
+      credentials: 'include'
+    });
+    if (!res.ok) throw new Error(await res.text());
+    alert('Děkujeme za zpětnou vazbu! Poptávka označena jako hotová.');
+    await loadPoptavky(currentRegion());
+  } catch (err) {
+    console.error('❌', err);
+    alert('Nepodařilo se uložit hodnocení: ' + (err?.message || err));
+  }
+}
+
+
 function startEditDemand(id) {
   id = Number(id);
   const item = (_lastData || []).find(d => Number(d.id) === id);
@@ -734,6 +766,13 @@ const payload = {
                       onclick="deleteDemand(${Number(x.id)})">
                 <i class="bi bi-trash"></i>
               </button>
+
+              <button type="button" class="btn btn-success btn-sm p-1"
+          title="Označit jako hotovo"
+          aria-label="Hotovo"
+          onclick="markDone(${Number(x.id)})">
+    ✅
+  </button>
               
             ` : ``}
           </div>

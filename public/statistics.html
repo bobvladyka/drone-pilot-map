@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <title>📊 Statistiky pilotů</title>
+  <script src="https://cdn.canvasjs.com/canvasjs.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background: #1e1e1e;
+      color: #f1f1f1;
+    }
+    h1, h2 {
+      color: #90e0ef;
+      text-align: center;
+    }
+    .chart {
+      max-width: 1000px;
+      margin: 40px auto;
+    }
+    #summary {
+      font-size: 1.2em;
+      margin: 20px auto;
+      text-align: center;
+    }
+    #controls {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    button {
+      background-color: #0077b6;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      font-size: 16px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    button:hover {
+      background-color: #0096c7;
+    }
+    #lastUpdate {
+      display: block;
+      text-align: center;
+      color: #aaa;
+      font-size: 0.9em;
+      margin-top: 8px;
+    }
+    table {
+      border-collapse: collapse;
+      width: 90%;
+      margin: 20px auto;
+      background: #2b2b2b;
+      color: #f1f1f1;
+      border: 1px solid #444;
+    }
+    th, td {
+      border: 1px solid #444;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #0077B6;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    tr:nth-child(even) {
+      background-color: #333;
+    }
+    caption {
+      text-align: left;
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #90e0ef;
+    }
+  </style>
+</head>
+<body>
+  <h1>📈 Statistiky pilotů</h1>
+
+  <div id="controls">
+    <button onclick="loadStats()">🔄 Obnovit data</button>
+    <span id="lastUpdate"></span>
+  </div>
+
+  <div id="summary">
+    <p>🗺️ Počet pilotů na mapě: <strong id="total"></strong></p>
+    <p>🤝 Počet dobrovolníků: <strong id="volunteers"></strong></p>
+  </div>
+
+  <div class="chart">
+    <h2>Typ účtu</h2>
+    <div id="accountChart" style="height: 420px; width: 100%;"></div>
+  </div>
+
+  <div class="chart">
+    <h2>Rozložení podle krajů</h2>
+    <div id="regionChart" style="height: 520px; width: 100%;"></div>
+    <table id="regionTable">
+      <caption>📍 Přehled podle krajů</caption>
+      <thead><tr><th>Kraj</th><th>Počet pilotů</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="chart">
+    <h2>Top 10 specializací</h2>
+    <div id="specChart" style="height: 520px; width: 100%;"></div>
+    <table id="specTable">
+      <caption>🎯 Přehled TOP 10 specializací</caption>
+      <thead><tr><th>Specializace</th><th>Počet pilotů</th></tr></thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function loadStats() {
+      try {
+        const res = await fetch('/api/statistics');
+        const data = await res.json();
+
+        document.getElementById('total').textContent = data.total_visible;
+        document.getElementById('volunteers').textContent = data.volunteers;
+
+        // aktualizace času posledního načtení
+        const now = new Date();
+        const formatted = now.toLocaleString('cs-CZ', {
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit'
+        });
+        document.getElementById('lastUpdate').textContent = `Poslední aktualizace zobrazení: ${formatted}`;
+
+        // 🥧 Typ účtu (koláč)
+        const accountData = data.type_accounts.map(a => ({
+          label: a.type_account,
+          y: Number(a.count)
+        }));
+        const accountChart = new CanvasJS.Chart("accountChart", {
+          animationEnabled: true,
+          theme: "dark2",
+          title: { text: "Rozložení podle typu účtu" },
+          data: [{
+            type: "pie",
+            showInLegend: true,
+            legendText: "{label}",
+            indexLabel: "{label} – {y}",
+            indexLabelFontColor: "#fff",
+            dataPoints: accountData
+          }]
+        });
+        accountChart.render();
+
+        // 🏙️ Regiony (vodorovný bar)
+        const regionData = data.regions.map(r => ({
+          label: r.region,
+          y: Number(r.count)
+        }));
+        const regionChart = new CanvasJS.Chart("regionChart", {
+          animationEnabled: true,
+          theme: "dark2",
+          backgroundColor: "#1e1e1e",
+          title: { text: "Rozložení pilotů podle krajů" },
+          axisY: { title: "Kraj", reversed: true, labelFontColor: "#fff" },
+          axisX: { title: "Počet pilotů", labelFontColor: "#fff", gridColor: "#444" },
+          data: [{
+            type: "bar",
+            indexLabel: "{y}",
+            indexLabelFontColor: "#f1f1f1",
+            color: "#00B4D8",
+            dataPoints: regionData
+          }]
+        });
+        regionChart.render();
+
+        const regionTable = document.querySelector('#regionTable tbody');
+        regionTable.innerHTML = regionData
+          .map(r => `<tr><td>${r.label}</td><td>${r.y}</td></tr>`)
+          .join('');
+
+        // 🔝 Specializace (vodorovný bar)
+        const specData = data.specializations.map(s => ({
+          label: s.specialization_name,
+          y: Number(s.count)
+        }));
+        const specChart = new CanvasJS.Chart("specChart", {
+          animationEnabled: true,
+          theme: "dark2",
+          backgroundColor: "#1e1e1e",
+          title: { text: "TOP 10 specializací pilotů" },
+          axisY: { title: "Specializace", reversed: true, labelFontColor: "#fff" },
+          axisX: { title: "Počet pilotů", labelFontColor: "#fff", gridColor: "#444" },
+          data: [{
+            type: "bar",
+            indexLabel: "{y}",
+            indexLabelFontColor: "#f1f1f1",
+            color: "#90E0EF",
+            dataPoints: specData
+          }]
+        });
+        specChart.render();
+
+        const specTable = document.querySelector('#specTable tbody');
+        specTable.innerHTML = specData
+          .map(s => `<tr><td>${s.label}</td><td>${s.y}</td></tr>`)
+          .join('');
+
+      } catch (err) {
+        console.error("❌ Chyba při načítání statistik:", err);
+        alert("Nepodařilo se načíst data pro statistiky.");
+      }
+    }
+
+    window.onload = loadStats;
+  </script>
+</body>
+</html>

@@ -1041,6 +1041,57 @@ app.get('/admin.html', allowLocalhostOnly, requireAdminLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'admin.html'));
 });
 
+
+// 📊 STATISTIKY PILOTŮ (viditelní na mapě)
+app.get('/api/statistics', async (req, res) => {
+  try {
+    const [typeAccounts, regions, specializations, volunteers, totalVisible] = await Promise.all([
+      pool.query(`
+        SELECT type_account, COUNT(*) AS count
+        FROM pilots
+        WHERE visible = 'ANO'
+        GROUP BY type_account
+        ORDER BY count DESC
+      `),
+      pool.query(`
+        SELECT region, COUNT(*) AS count
+        FROM pilots
+        WHERE visible = 'ANO'
+          AND region IS NOT NULL
+          AND region <> ''
+        GROUP BY region
+        ORDER BY count DESC
+      `),
+      pool.query(`
+        SELECT TRIM(UNNEST(string_to_array(specialization, ','))) AS specialization_name,
+               COUNT(*) AS count
+        FROM pilots
+        WHERE visible = 'ANO'
+          AND specialization IS NOT NULL
+          AND specialization <> ''
+        GROUP BY specialization_name
+        ORDER BY count DESC
+        LIMIT 10
+      `),
+      pool.query(`SELECT COUNT(*) AS volunteers FROM pilots WHERE visible = 'ANO' AND volunteer = 'ANO'`),
+      pool.query(`SELECT COUNT(*) AS total FROM pilots WHERE visible = 'ANO'`)
+    ]);
+
+    res.json({
+      type_accounts: typeAccounts.rows,
+      regions: regions.rows,
+      specializations: specializations.rows,
+      volunteers: volunteers.rows[0].volunteers,
+      total_visible: totalVisible.rows[0].total
+    });
+  } catch (err) {
+    console.error("❌ Chyba při načítání statistik:", err);
+    res.status(500).json({ error: "Chyba při načítání statistik" });
+  }
+});
+
+
+
 app.post('/mark-payment-today', async (req, res) => {
   const { id } = req.body;
   if (!id) return res.status(400).send("Chybí ID pilota.");
@@ -1920,6 +1971,44 @@ app.get('/poptavky', async (req, res) => {
   }
 });
 
+app.put('/poptavky/:id/status', async (req, res) => {
+  const { id } = req.params;
+  const { status, satisfaction, note } = req.body; // ✨ přidáno hodnocení a poznámka
+  const email = req.session?.email || req.body.email; // inzerent v session
+
+  if (!['Zpracovává se', 'Hotovo'].includes(status)) {
+    return res.status(400).json({ error: 'Neplatný stav' });
+  }
+
+  try {
+    // ověření vlastnictví
+    const check = await pool.query(
+      `SELECT advertiser_email FROM demands WHERE id = $1`, [id]
+    );
+    if (check.rowCount === 0)
+      return res.status(404).json({ error: 'Poptávka nenalezena' });
+
+    if (check.rows[0].advertiser_email !== email)
+      return res.status(403).json({ error: 'Nemáte oprávnění měnit tuto poptávku' });
+
+    // 🔹 update včetně hodnocení, pokud je zasláno
+    await pool.query(`
+      UPDATE demands
+      SET status = $1,
+          satisfaction = COALESCE($2, satisfaction),
+          satisfaction_note = COALESCE($3, satisfaction_note)
+      WHERE id = $4
+    `, [status, satisfaction || null, note || null, id]);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error('❌ Chyba při změně stavu poptávky:', err);
+    res.status(500).json({ error: 'Chyba serveru' });
+  }
+});
+
+
+
 // POST /poptavky – vložení poptávky inzerentem
 app.post('/poptavky', async (req, res) => {
   try {
@@ -2598,6 +2687,34 @@ app.get('/send-email-only-1m', async (req, res) => {
 });
 
 
+cron.schedule('0 8 * * *', async () => {
+  console.log('📬 Kontrola poptávek starších 10 dní...');
+  const { rows } = await pool.query(`
+    SELECT id, title, advertiser_email, created_at
+    FROM demands
+    WHERE status = 'Zpracovává se'
+      AND created_at < NOW() - INTERVAL '10 days'
+  `);
+
+  for (const d of rows) {
+    const html = wrapEmailContent(`
+      <h2>🕓 Jak to vypadá s vaší poptávkou?</h2>
+      <p>Poptávka <strong>${escapeHtml(d.title)}</strong> byla zveřejněna před více než 10 dny.</p>
+      <p>Pokud je již vyřešená, prosím označte ji jako <strong>Hotovo</strong> v rozhraní NajdiPilota.cz.</p>
+      <p><a href="https://www.najdipilota.cz/poptavky.html" 
+        style="background:#0077B6;color:#fff;padding:10px 18px;text-decoration:none;border-radius:6px;">Otevřít poptávky</a></p>
+    `, 'NajdiPilota.cz – Stav poptávky');
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: d.advertiser_email,
+      subject: 'Jak to vypadá s vaší poptávkou?',
+      html
+    });
+
+    console.log(`📨 Mail odeslán inzerentovi: ${d.advertiser_email}`);
+  }
+});
 
 
 

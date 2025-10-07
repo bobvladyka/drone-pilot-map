@@ -735,12 +735,17 @@ if (note) {
   note = sanitizeNote(note, 'CZ');
 }
 
-  // natáhni stará data (kvůli omezením a defaultům)
-  const oldDataResult = await pool.query(
-    "SELECT visible, visible_valid, visible_payment, type_account, available AS old_available FROM pilots WHERE email = $1",
-    [email]
-  );
-  const oldPilotData = oldDataResult.rows[0];
+    // natáhni stará data (kvůli omezením a defaultům)
+const oldDataResult = await pool.query(
+  `SELECT visible, visible_valid, visible_payment, type_account, 
+          available AS old_available, latitude, longitude,
+          street AS old_street, city AS old_city, zip AS old_zip, region AS old_region
+   FROM pilots 
+   WHERE email = $1`,
+  [email]
+);
+const oldPilotData = oldDataResult.rows[0];
+
   if (!oldPilotData) {
     return res.status(404).send("Pilot nenalezen.");
   }

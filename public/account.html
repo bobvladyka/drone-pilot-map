@@ -661,16 +661,19 @@ document.addEventListener('DOMContentLoaded', () => {
     loggedAs.textContent = `Přihlášen: ${loggedEmail}`;
   }
 
-  // Zobraz Poptávky jen pro Basic/Premium
-  fetch('/get-my-pilot', { credentials: 'include' })
-    .then(r => r.ok ? r.json() : null)
-    .then(me => {
-      const t = (me?.type_account || '').toLowerCase();
-      if (t === 'basic' || t === 'premium') {
+   // 🟢 Načti data pilota podle e-mailu z localStorage
+  fetch(`/get-my-pilot?email=${encodeURIComponent(loggedEmail)}`, { cache: 'no-store' })
+    .then(res => res.ok ? res.json() : null)
+    .then(pilot => {
+      if (!pilot) return;
+
+      // ✅ Zobraz "Poptávky" pro Basic a Premium účty
+      const type = (pilot.type_account || '').toLowerCase();
+      if (type === 'basic' || type === 'premium') {
         document.getElementById('poptavkyBtn')?.classList.remove('d-none');
       }
     })
-    .catch(() => {});
+    .catch(err => console.warn('Chyba při načítání pilota:', err));
 });
 
   </script>

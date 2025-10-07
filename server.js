@@ -343,6 +343,43 @@ app.post('/register', async (req, res) => {
     } else {
       console.warn("❗Adresu se nepodařilo geokódovat:", location);
     }
+
+// --- kontrola, zda už v okolí není jiný pilot a případný jemný posun ---
+if (lat && lon) {
+  try {
+    const radiusMeters = 300; // okruh pro kontrolu 300 m
+    const earthRadius = 6371000; // poloměr Země v metrech
+    const latDelta = (radiusMeters / earthRadius) * (180 / Math.PI);
+    const lonDelta = latDelta / Math.cos((lat * Math.PI) / 180);
+
+    const nearby = await pool.query(
+      `SELECT id, name, latitude, longitude
+       FROM pilots
+       WHERE latitude BETWEEN $1 AND $2
+         AND longitude BETWEEN $3 AND $4`,
+      [lat - latDelta, lat + latDelta, lon - lonDelta, lon + lonDelta]
+    );
+
+    if (nearby.rowCount > 0) {
+      console.log(
+        `⚠️ V okolí (${nearby.rowCount}) pilotů – posouvám nového o náhodnou odchylku.`
+      );
+
+      // Posun maximálně o ±0.001° (~100 m)
+      const offsetLat = (Math.random() - 0.5) * 0.002; // ±0.001 → cca ±111 m
+      const offsetLon = (Math.random() - 0.5) * 0.002; // ±0.001 → cca ±80 m v ČR
+
+      lat = parseFloat((lat + offsetLat).toFixed(6));
+      lon = parseFloat((lon + offsetLon).toFixed(6));
+
+      console.log(`📍 Nová posunutá pozice: ${lat}, ${lon}`);
+    }
+  } catch (err) {
+    console.error("❌ Chyba při kontrole blízkých pilotů:", err);
+  }
+}
+
+
   } catch (err) {
     console.error("Chyba při geokódování:", err);
   }
@@ -777,6 +814,42 @@ if (!lat || !lon) {
   lon = oldPilotData.longitude;
 } else {
   console.log(`✅ Geokódováno na (${lat}, ${lon}) pomocí dotazu: ${usedQuery}`);
+}
+
+// --- kontrola blízkých pilotů při UPDATE a jemný posun ---
+if (lat && lon) {
+  try {
+    const radiusMeters = 300; // okruh pro kontrolu 300 m
+    const earthRadius = 6371000; // poloměr Země v metrech
+    const latDelta = (radiusMeters / earthRadius) * (180 / Math.PI);
+    const lonDelta = latDelta / Math.cos((lat * Math.PI) / 180);
+
+    const nearby = await pool.query(
+      `SELECT id, name, latitude, longitude
+       FROM pilots
+       WHERE latitude BETWEEN $1 AND $2
+         AND longitude BETWEEN $3 AND $4
+         AND email <> $5`, // vyloučíme právě upravovaného pilota
+      [lat - latDelta, lat + latDelta, lon - lonDelta, lon + lonDelta, email]
+    );
+
+    if (nearby.rowCount > 0) {
+      console.log(
+        `⚠️ UPDATE: V okolí (${nearby.rowCount}) pilotů – posouvám o náhodnou odchylku.`
+      );
+
+      // Posun maximálně o ±0.001° (~100 m)
+      const offsetLat = (Math.random() - 0.5) * 0.002;
+      const offsetLon = (Math.random() - 0.5) * 0.002;
+
+      lat = parseFloat((lat + offsetLat).toFixed(6));
+      lon = parseFloat((lon + offsetLon).toFixed(6));
+
+      console.log(`📍 UPDATE: Nová posunutá pozice: ${lat}, ${lon}`);
+    }
+  } catch (err) {
+    console.error("❌ Chyba při kontrole blízkých pilotů při UPDATE:", err);
+  }
 }
 
 

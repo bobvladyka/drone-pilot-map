@@ -2510,6 +2510,38 @@ app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);
 });
 
+// 📄 Vrátí všechny faktury
+app.get('/api/invoices', requireAdminLogin, async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT i.*, p.email 
+      FROM invoices i
+      JOIN pilots p ON p.id = i.pilot_id
+      ORDER BY i.created_at DESC
+    `);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Chyba při načítání faktur:", err);
+    res.status(500).send("Chyba při načítání faktur.");
+  }
+});
+
+// ➕ Přidá novou fakturu
+app.post('/api/invoices', requireAdminLogin, async (req, res) => {
+  const { pilot_id, invoice_url, amount, currency, period, type_account } = req.body;
+  try {
+    await pool.query(`
+      INSERT INTO invoices (pilot_id, invoice_url, amount, currency, period, type_account)
+      VALUES ($1, $2, $3, $4, $5, $6)
+    `, [pilot_id, invoice_url, amount, currency || 'CZK', period, type_account]);
+    res.send("✅ Faktura uložena.");
+  } catch (err) {
+    console.error("Chyba při vkládání faktury:", err);
+    res.status(500).send("Nepodařilo se uložit fakturu.");
+  }
+});
+
+
 // ──────────────────────────────────────────────────────────────
 // CRON: Každý den v 08:00 odešle expirační e-maily (Europe/Prague)
 // ──────────────────────────────────────────────────────────────
@@ -2605,14 +2637,22 @@ app.get('/send-membership-email-1m', async (req, res) => {
       [id]
     );
     if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
-
     const pilot = update.rows[0];
+
+    // 🧾 pokus o načtení poslední faktury z tabulky invoices
+    const invoiceRes = await pool.query(
+      `SELECT invoice_url FROM invoices WHERE pilot_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [id]
+    );
+    const invoiceLink = invoiceRes.rows[0]?.invoice_url || null;
+
     const content = `
       <h2 style="color:#258f01;">✅ Členství prodlouženo o 1 měsíc</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
          <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
+      ${invoiceLink ? `<p>📎 Fakturu naleznete zde: <a href="${invoiceLink}" target="_blank">Otevřít fakturu</a></p>` : ""}
     `;
     const html = wrapEmailContent(content, "Prodloužení členství o 1 měsíc");
 
@@ -2647,14 +2687,22 @@ app.get('/send-membership-email-6m', async (req, res) => {
       [id]
     );
     if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
-
     const pilot = update.rows[0];
+
+    // 🧾 pokus o načtení poslední faktury
+    const invoiceRes = await pool.query(
+      `SELECT invoice_url FROM invoices WHERE pilot_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [id]
+    );
+    const invoiceLink = invoiceRes.rows[0]?.invoice_url || null;
+
     const content = `
       <h2 style="color:#258f01;">✅ Členství prodlouženo o 6 měsíců</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>vážíme si toho, že jste si prodloužil své členství na <strong>NajdiPilota.cz</strong>.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
          <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
+      ${invoiceLink ? `<p>📎 Fakturu naleznete zde: <a href="${invoiceLink}" target="_blank">Otevřít fakturu</a></p>` : ""}
     `;
     const html = wrapEmailContent(content, "Prodloužení členství o 6 měsíců");
 
@@ -2689,14 +2737,22 @@ app.get('/send-membership-email-12m', async (req, res) => {
       [id]
     );
     if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
-
     const pilot = update.rows[0];
+
+    // 🧾 pokus o načtení poslední faktury
+    const invoiceRes = await pool.query(
+      `SELECT invoice_url FROM invoices WHERE pilot_id = $1 ORDER BY created_at DESC LIMIT 1`,
+      [id]
+    );
+    const invoiceLink = invoiceRes.rows[0]?.invoice_url || null;
+
     const content = `
       <h2 style="color:#8f06bd;">🎉 Členství prodlouženo o 12 měsíců</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>děkujeme, že jste s námi! Vaše členství na <strong>NajdiPilota.cz</strong> bylo úspěšně prodlouženo.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
          <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
+      ${invoiceLink ? `<p>📎 Fakturu naleznete zde: <a href="${invoiceLink}" target="_blank">Otevřít fakturu</a></p>` : ""}
       <hr>
       <h3 style="color:#258f01;">🎁 Přiveďte kamaráda a získejte +7 dní zdarma!</h3>
       <p>Pozvěte kamaráda přes tento odkaz:</p>
@@ -2720,6 +2776,7 @@ app.get('/send-membership-email-12m', async (req, res) => {
     res.status(500).send("Nepodařilo se prodloužit členství o 12M.");
   }
 });
+
 
 // ODESLÁNÍ E-MAILU BEZ PRODLOUŽENÍ ČLENSTVÍ
 app.get('/send-email-only-1m', async (req, res) => {

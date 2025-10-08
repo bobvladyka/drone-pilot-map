@@ -82,9 +82,14 @@
   <h1>📈 Statistiky pilotů</h1>
 
   <div id="controls">
-    <button onclick="loadStats()">🔄 Obnovit data</button>
-    <span id="lastUpdate"></span>
-  </div>
+  <button class="admin-btn" onclick="loadStats()">🔄 Obnovit data</button>
+  <span id="lastUpdate"></span>
+</div>
+
+<div style="text-align: center; margin-top: 20px;">
+  <button class="admin-btn" onclick="window.location.href='admin.html'">⬅️ Zpět na admin</button>
+</div>
+
 
   <div id="summary">
     <p>🗺️ Počet pilotů na mapě: <strong id="total"></strong></p>

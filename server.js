@@ -1660,12 +1660,24 @@ app.post('/send-message', async (req, res) => {
           const { email, name, last_seen, created_at, adv_name } = r.rows[0];
           if (!last_seen || new Date(last_seen) < new Date(created_at)) {
             await transporter.sendMail({
-              from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-              to: email,
-              bcc: 'drboom@seznam.cz',
-              subject: `💬 Nová zpráva od inzerenta ${adv_name}`,
-              html: `<p>Dobrý den ${escapeHtml(name)},<br>máte novou zprávu od inzerenta <b>${escapeHtml(adv_name)}</b>.</p>`
-            });
+
+  from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+  to: email,
+  bcc: 'drboom@seznam.cz',
+  subject: `💬 Nová zpráva od inzerenta ${adv_name}`,
+  html: wrapEmailContent(`
+    <p>Dobrý den ${escapeHtml(name)},</p>
+    <p>máte novou zprávu od inzerenta <b>${escapeHtml(adv_name)}</b>.</p>
+    <p style="margin:24px 0;">
+      <a href="https://www.najdipilota.cz/moje-zpravy.html"
+         style="background:#0077B6;color:#fff;text-decoration:none;
+                padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+        Otevřít konverzaci
+      </a>
+    </p>
+  `, "Nová zpráva")
+});
+
             console.log(`📧 Notifikace pilotovi ${email} odeslána.`);
           }
 
@@ -1685,12 +1697,24 @@ app.post('/send-message', async (req, res) => {
           const { email, name, last_seen, created_at, pilot_name } = r.rows[0];
           if (!last_seen || new Date(last_seen) < new Date(created_at)) {
             await transporter.sendMail({
-              from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-              to: email,
-              bcc: 'drboom@seznam.cz',
-              subject: `💬 Nová zpráva od pilota ${pilot_name}`,
-              html: `<p>Dobrý den ${escapeHtml(name)},<br>máte novou zprávu od pilota <b>${escapeHtml(pilot_name)}</b>.</p>`
-            });
+
+  from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+  to: email,
+  bcc: 'drboom@seznam.cz',
+  subject: `💬 Nová zpráva od pilota ${pilot_name}`,
+  html: wrapEmailContent(`
+    <p>Dobrý den ${escapeHtml(name)},</p>
+    <p>máte novou zprávu od pilota <b>${escapeHtml(pilot_name)}</b>.</p>
+    <p style="margin:24px 0;">
+      <a href="https://www.najdipilota.cz/moje-zpravy.html"
+         style="background:#0077B6;color:#fff;text-decoration:none;
+                padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+        Otevřít konverzaci
+      </a>
+    </p>
+  `, "Nová zpráva")
+});
+
             console.log(`📧 Notifikace inzerentovi ${email} odeslána.`);
           }
         }
@@ -2856,7 +2880,7 @@ cron.schedule('0 8 * * *', async () => {
 
 
 
-/*
+
 // ──────────────────────────────────────────────────────────────
 // CRON: Denní souhrn nepřečtených zpráv (Europe/Prague) – 07:30
 // ──────────────────────────────────────────────────────────────
@@ -2942,7 +2966,7 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
-*/
+
 
 
 // ──────────────────────────────────────────────────────────────

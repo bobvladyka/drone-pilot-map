@@ -79,6 +79,18 @@
   </style>
 </head>
 <body>
+
+<script>
+// Kontrola admin session
+fetch('/check-admin-session')
+  .then(res => {
+    if (!res.ok) window.location.href = '/adminland.html';
+  })
+  .catch(() => window.location.href = '/adminland.html');
+</script>
+
+
+
   <h1>📈 Statistiky pilotů</h1>
 
   <div id="controls">

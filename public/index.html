@@ -1118,33 +1118,40 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
     once: true       // animovat jen jednou
   });
 </script>
-
 <script>
 document.addEventListener("DOMContentLoaded", () => {
   const isLoggedInPilot = !!localStorage.getItem("loggedEmail");
   const isLoggedInAdvertiser = !!localStorage.getItem("inzerentEmail");
 
   if (isLoggedInPilot || isLoggedInAdvertiser) {
-    const hero = document.querySelector(".landing-hero");
-    const benefits = document.querySelector(".section-spaced");
-    const cta = document.querySelector(".cta-section");
-
-    [hero, benefits, cta].forEach(section => {
-      if (section) section.style.display = "none";
+    // Skryj sekce trvale a úplně
+    const sections = document.querySelectorAll(".landing-hero, .section-spaced, .cta-section");
+    sections.forEach(el => {
+      el.style.display = "none";
+      el.classList.add("hidden-section"); // záloha pro jistotu
     });
 
-    // volitelně můžeš i odstranit margin kolem mapy, aby vyplnila víc obrazovky
-    const map = document.getElementById("map");
-    if (map) {
-      map.style.marginTop = "0";
-      map.style.height = "calc(100vh - 80px)"; // mapa přes celou obrazovku (minus navbar)
+    // Úprava mapy
+    const mapElement = document.getElementById("map");
+    if (mapElement) {
+      mapElement.style.marginTop = "0";
+      mapElement.style.height = "calc(100vh - 80px)";
+      mapElement.style.opacity = "1";
     }
 
+    // 🪄 Přepočet velikosti mapy po změně layoutu
+    setTimeout(() => {
+      if (window.map && typeof window.map.invalidateSize === "function") {
+        window.map.invalidateSize();
+      }
+    }, 400);
+
+    // Volitelné: skryj i footer (pokud chceš opravdu fullscreen)
+    // document.querySelector("footer")?.style.display = "none";
   }
 });
+
 </script>
-
-
 
 </body>
 </html>

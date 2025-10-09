@@ -2565,6 +2565,81 @@ app.post('/api/invoices', requireAdminLogin, async (req, res) => {
   }
 });
 
+// === Automatická záloha pilots → pilots_backup + logování + e-mail alerty ===
+const EMAIL_ON_SUCCESS = false; // přepni na true, pokud chceš mít i úspěšné notifikace
+const ADMIN_ALERT_EMAIL = process.env.ADMIN_ALERT_EMAIL || 'drboom@seznam.cz';
+
+// Pomocná funkce pro časový formát (Praha)
+function ts() {
+  return new Date().toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
+}
+
+// Log do DB
+async function logBackup(line) {
+  const msg = `[${ts()}] ${line}`;
+  try {
+    await pool.query('INSERT INTO backup_logs (message) VALUES ($1)', [msg]);
+  } catch (e) {
+    console.error('❌ [BACKUP] Chyba při zápisu do backup_logs:', e);
+  }
+  console.log(msg);
+}
+
+// E-mail notifikace (reuses nodemailer transporter + wrapEmailContent)
+async function notifyAdmin(subject, bodyText) {
+  const html = wrapEmailContent(
+    `<p>${bodyText.replace(/\n/g, '<br>')}</p>`,
+    'Cron záloha – NajdiPilota.cz'
+  );
+  try {
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: ADMIN_ALERT_EMAIL,
+      subject,
+      text: bodyText,
+      html
+    });
+  } catch (e) {
+    console.error('❌ [BACKUP] Nepodařilo se odeslat e-mail s notifikací:', e);
+  }
+}
+
+// CRON – 1× za 5 dní ve 02:00 českého času → 00:00 UTC
+// Pozn.: Render běží v UTC; 00:00 UTC ≈ 02:00 Praha
+cron.schedule('0 0 */5 * *', async () => {
+  await logBackup('🕒 Spouštím zálohu dat z "pilots" do "pilots_backup"...');
+  const client = await pool.connect();
+
+  try {
+    await client.query('BEGIN');
+
+    await client.query('TRUNCATE TABLE pilots_backup;');
+    await client.query('INSERT INTO pilots_backup SELECT * FROM pilots;');
+
+    const { rows: cnt } = await client.query('SELECT COUNT(*)::int AS n FROM pilots_backup;');
+    const rows = cnt[0]?.n ?? 0;
+
+    await client.query('COMMIT');
+    const okMsg = `✅ Záloha úspěšná – zkopírováno ${rows} řádků.`;
+    await logBackup(okMsg);
+
+    if (EMAIL_ON_SUCCESS) {
+      await notifyAdmin('[Cron] Záloha OK', `${okMsg}\nČas: ${ts()}`);
+    }
+  } catch (err) {
+    await client.query('ROLLBACK');
+    const errMsg = `❌ Chyba při záloze: ${err.message}`;
+    await logBackup(errMsg);
+    console.error('❌ [BACKUP ERROR]', err);
+
+    // ✉️ e-mail jen při chybě
+    await notifyAdmin('[Cron] Záloha SELHALA', `${errMsg}\nČas: ${ts()}`);
+  } finally {
+    client.release();
+  }
+});
+
+
 
 // ──────────────────────────────────────────────────────────────
 // CRON: Každý den v 08:00 odešle expirační e-maily (Europe/Prague)

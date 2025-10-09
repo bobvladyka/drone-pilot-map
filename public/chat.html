@@ -7,6 +7,8 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
   <meta name="robots" content="index, follow">
+  <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
+
   <style>
     #chat-container {
       height: 80vh;
@@ -26,6 +28,8 @@
       border-radius: 5px;
       display: flex;
       flex-direction: column;
+      overflow-x: hidden;          /* hlavní fix */
+
     }
 
     .message {
@@ -49,17 +53,26 @@
       border-radius: 18px;
       position: relative;
       word-wrap: break-word;
+      #messages .message {
+  min-width: 0;                /* důležité pro flex! */
+}
     }
 
     .my-message .message-content {
-      background-color: #d4edda; /* světle zelená pro pilota */
-      border-bottom-right-radius: 4px;
-    }
+  background-color: rgba(13, 110, 253, 0.5); /* #0d6efd → 50 % průhledná modrá */
+  border-bottom-right-radius: 4px;
+}
 
-    .their-message .message-content {
-      background-color: #fff3cd; /* světle žlutá pro inzerenta */
-      border-bottom-left-radius: 4px;
-    }
+.their-message .message-content {
+  background-color: rgba(253, 126, 20, 0.5); /* #fd7e14 → 50 % průhledná oranžová */
+  border-bottom-left-radius: 4px;
+}
+
+
+/* extrémně dlouhé odkazy */
+.message-content a {
+  word-break: break-all;
+}
 
     .message-time {
       font-size: 0.75rem;
@@ -155,6 +168,25 @@
   #messages{
     display:flex; flex-direction:column; gap:.25rem;
   }
+   #new-message {
+  min-height: 42px;
+  max-height: 200px;
+  resize: none;
+  overflow-y: auto;
+}
+ 
+#messages .message {
+  min-width: 0;                /* důležité pro flex! */
+}
+
+img.emoji {
+  height: 1em;
+  width: 1em;
+  margin: 0 .05em;
+  vertical-align: -0.1em;
+}
+
+
    
   </style>
 </head>
@@ -175,7 +207,8 @@
       </div>
 
       <div id="message-input">
-        <input type="text" id="new-message" class="form-control" placeholder="Napište zprávu..." />
+        <textarea id="new-message" class="form-control" placeholder="Napište zprávu..." rows="1"></textarea>
+
         <button id="send-message-btn" class="btn btn-primary">
           <i class="bi bi-send"></i> Odeslat
         </button>
@@ -190,7 +223,14 @@ document.addEventListener("DOMContentLoaded", function() {
   const urlParams = new URLSearchParams(window.location.search);
   const conversationId = urlParams.get('conversationId');
   const pilotEmail = urlParams.get('pilotEmail');
-  const advertiserEmail = urlParams.get('inzerentEmail'); 
+  const advertiserEmail = urlParams.get('inzerentEmail');
+
+const textarea = document.getElementById('new-message');
+textarea.addEventListener('input', () => {
+  textarea.style.height = 'auto';
+  textarea.style.height = textarea.scrollHeight + 'px';
+});
+ 
 
   if (!conversationId || !pilotEmail || !advertiserEmail) {
     alert("Chyba: Chybí parametry konverzace.");
@@ -283,13 +323,15 @@ if (conversationId && loggedUserId) {
       });
   }
 
-  // Send message when the button is clicked or Enter is pressed
-  document.getElementById('send-message-btn').addEventListener('click', sendMessageHandler);
-  document.getElementById('new-message').addEventListener('keypress', function(e) {
-    if (e.key === 'Enter') {
-      sendMessageHandler();
-    }
-  });
+  // Enter = odeslat, Shift+Enter = nový řádek
+document.getElementById('send-message-btn').addEventListener('click', sendMessageHandler);
+document.getElementById('new-message').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault(); // zabrání zalomení řádku
+    sendMessageHandler();
+  }
+});
+
 
   function sendMessageHandler() {
     const messageContent = document.getElementById('new-message').value.trim();
@@ -317,6 +359,10 @@ if (conversationId && loggedUserId) {
     .then(data => {
       if (data.success) {
         document.getElementById('new-message').value = '';
+        const ta = document.getElementById('new-message');
+ta.style.height = 'auto';
+ta.style.height = ta.scrollHeight + 'px';
+
         loadMessages(); // Reload all messages to maintain order
       } else {
         alert("Chyba při odesílání zprávy: " + (data.message || 'Neznámá chyba'));
@@ -344,27 +390,54 @@ if (conversationId && loggedUserId) {
     return `${day}.${month}.${year} ${hours}:${minutes}`;
   }
 
+  function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, s => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'
+  }[s]));
+}
+
+function renderMessageHTML(raw) {
+  if (!raw) return '';
+  let s = raw;
+
+  // GIF odkazy
+  const gifRegex = /(https?:\/\/[^\s<]+\.gif)/gi;
+  s = s.replace(gifRegex, '<img src="$1" alt="GIF" style="max-width:220px;border-radius:10px;">');
+
+  // Ostatní odkazy (https://...) → klikací link
+  const urlRegex = /(https?:\/\/[^\s<]+)/gi;
+  s = s.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+
+  // Nové řádky zachovat
+  s = s.replace(/\n/g, '<br>');
+
+  // Emoji shortcody
+  s = s.replace(/:smile:/g, '😄')
+       .replace(/:thumbsup:/g, '👍')
+       .replace(/:drone:/g, '🚁');
+
+  return s;
+}
+
+
   // Function to display messages
   function displayMessages(messages) {
   const messagesDiv = document.getElementById('messages');
-  messagesDiv.innerHTML = ''; // Clear existing messages
+  messagesDiv.innerHTML = '';
 
   if (!messages || messages.length === 0) {
     messagesDiv.innerHTML = '<div class="text-center text-muted">Žádné zprávy v této konverzaci</div>';
     return;
   }
 
-  // Sort messages by date (oldest first)
   messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
 
   messages.forEach(message => {
     const messageDiv = document.createElement('div');
 
     const isPilotSender = message.sender_email === pilotEmail;
-    const isAdvSender   = message.sender_email === advertiserEmail;
-    const isMyMessage   = message.sender_email === (isPilot ? pilotEmail : advertiserEmail);
+    const isMyMessage = message.sender_email === (isPilot ? pilotEmail : advertiserEmail);
 
-    // bublina podle role
     messageDiv.classList.add(
       'message',
       isMyMessage ? 'my-message' : 'their-message',
@@ -372,24 +445,33 @@ if (conversationId && loggedUserId) {
     );
 
     const formattedTime = formatDateTime(message.created_at);
+    const contentHTML = renderMessageHTML(message.message);
 
-    messageDiv.innerHTML = `
-      <div class="message-content">
-        <div class="message-role">${isPilotSender ? 'Pilot' : 'Inzerent'}</div>
-        <div>${message.message}</div>
-        <div class="message-time">${formattedTime}</div>
-      </div>
-    `;
+messageDiv.innerHTML = `
+  <div class="message-content">
+    <div class="message-role">${isPilotSender ? 'Pilot' : 'Inzerent'}</div>
+    <div class="message-body">${contentHTML}</div>
+    <div class="message-time">${formattedTime}</div>
+  </div>
+`;
+
 
     messagesDiv.appendChild(messageDiv);
   });
 
-  // Scroll to the bottom
+  // ⬇️ Vykreslení emoji (Twemoji)
+  if (window.twemoji && typeof twemoji.parse === 'function') {
+    twemoji.parse(messagesDiv, { folder: 'svg', ext: '.svg' });
+  }
+
   messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
+
   // Load messages initially and set up periodic refresh
   loadMessages();
+  twemoji.parse(document.getElementById('messages'));
+
   setInterval(loadMessages, 10000); // Refresh every 10 seconds
 });
 

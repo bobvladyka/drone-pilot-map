@@ -4,42 +4,39 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   
-<title>Drone Pilot Map in Czechia – Find or Join | Connecting Pilots and Clients</title>
+<title>Drone Pilot Map in Czechia – Find or Join | Connecting Pilots and Customers</title>
 
-    <meta name="description" content="Looking for a drone pilot or want to be visible on the map? Find pilots by location, specialization, and equipment — or join a verified community." />
+    <meta name="description" content="Looking for a drone pilot or want to be visible on the map? Find a pilot by location, specialization, equipment, and join a verified community." />
 
   <meta name="robots" content="index, follow" />
 <link rel="canonical" href="https://www.najdipilota.cz/" />
 
-  <!-- Open Graph for Facebook and others -->
   <meta property="og:title" content="Drone Pilot Map in Czechia" />
-  <meta property="og:description" content="We connect customers with drone pilots. Show up on the map or find a pilot near you." />
+  <meta property="og:description" content="We connect customers with drone pilots. Show up on the map or find a pilot in your area." />
   <meta property="og:type" content="website" />
   <meta property="og:url" content="https://www.najdipilota.cz/" />
   <meta property="og:image" content="icons/logo.png" />
   <meta name="google-site-verification" content="yxzi02d6ahPBVtx31lx_Mwg07khOFlY_fWUFdkyrsUE" />
 
-  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
 
-  <!-- Custom style -->
   <link rel="stylesheet" href="style.css" />
 
-  <!-- Leaflet & MarkerCluster -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- Favicons -->
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/icons/site.webmanifest">
 <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
 
+<link href="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.css" rel="stylesheet">
 
-<!-- Global site tag (gtag.js) - Google Analytics -->
+
+
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-3KQTXQ496Y"></script>
 <script>
   window.dataLayer = window.dataLayer || [];
@@ -57,102 +54,131 @@
 <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
   <div class="container">
     <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
-  <img src="/icons/logo.png" alt="NajdiPilota.cz logo" height="60" class="me-2" loading="lazy" aria-hidden="true" />
-  <span class="fs-4">NajdiPilota.cz</span>
-</a>
+      <img src="/icons/logo.png" alt="NajdiPilota.cz Logo" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+      <span class="fs-4">NajdiPilota.cz</span>
+    </a>
+
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
       <span class="navbar-toggler-icon"></span>
     </button>
     
-    <div class="collapse navbar-collapse" id="mainNavbar">
+    <div class="collapse navbar-collapse justify-content-end align-items-center" id="mainNavbar">
       <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-	<li class="nav-item" id="inzerent-nav-item" style="display:none;">
-  <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
-    <i class="bi bi-megaphone-fill me-1"></i>For Advertisers
-  </a>
-</li>
+        <li class="nav-item" id="inzerent-nav-item" style="display:none;">
+          <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
+            <i class="bi bi-megaphone-fill me-1"></i>For Advertisers
+          </a>
+        </li>
         <li class="nav-item">
           <a class="nav-link" href="/index.html">Map</a>
         </li>
-
-         <li class="nav-item" id="messages-nav-item" style="display:none;">
-          <a class="nav-link" href="/moje-zpravy.html">
-            <i class="bi bi-envelope me-1"></i>My Messages
-          </a>
+        <li class="nav-item" id="messages-nav-item" style="display:none;">
+          <a class="nav-link" href="/moje-zpravy.html"><i class="bi bi-envelope me-1"></i>My Messages</a>
         </li>
         
-        <li class="nav-item" id="poptavky-nav-item" style="display:none;">
-  <a class="nav-link" href="/poptavky.html">
-    <i class="bi bi-briefcase-fill me-1"></i>Job Requests
-  </a>
-</li>
-
-        <li class="nav-item">
-          <a class="nav-link" href="/o-projektu.html">About</a>
+        
+        
+        <li class="nav-item"><a class="nav-link" href="/o-projektu.html">About the Project</a></li>
+        <li class="nav-item"><a class="nav-link" href="/kontakt.html">Contact</a></li>
+        <li class="nav-item dropdown">
+          <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+            🌐 Language
+          </a>
+          <ul class="dropdown-menu" aria-labelledby="langDropdown">
+            <li><a class="dropdown-item" href="/index.html"><span class="fi fi-cz me-2"></span>Česky</a></li>
+            <li><a class="dropdown-item" href="/index_en.html"><span class="fi fi-gb me-2"></span>English</a></li>
+            </ul>
         </li>
-        <li class="nav-item">
-          <a class="nav-link" href="/kontakt.html">Contact</a>
-        </li>
-
-<li class="nav-item dropdown">
-  <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-    🌐 Language
-  </a>
-  <ul class="dropdown-menu" aria-labelledby="langDropdown">
-            <li>
-  <a class="dropdown-item" href="/index.html">
-    <span class="fi fi-cz me-2"></span>Česky
-  </a>
-</li>
-<li>
-  <a class="dropdown-item" href="/index_en.html">
-    <span class="fi fi-gb me-2"></span>English
-  </a>
-</li>
-
-
-<!--
-<li>
-  <a class="dropdown-item" href="/index_ua.html">
-    <span class="fi fi-ua me-2"></span>Українська
-  </a>
-</li>
--->
-
-
-          </ul>
-</li>
-          
-<li class="nav-item">
-
-</li>
       </ul>
-<button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
-  <i class="bi bi-person-badge me-2"></i>
-  <span id="login-toggle">Log in as a Pilot</span>
-</button>
+
+      <div class="account-buttons ms-lg-3">
+        <span id="logged-info" class="fw-bold small"></span>
+
+        <button id="edit-profile-btn" style="display:none;" class="pilot-login-btn">
+          <i class="bi bi-pencil-square me-1"></i> <span>My Account</span>
+        </button>
+
+        <button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
+          <i class="bi bi-person-badge me-2"></i>
+          <span id="login-toggle">Pilot Login</span>
+        </button>
+      </div>
     </div>
   </div>
 </nav>
 
-  <div class="container py-4">
-    <h1 class="text-center">
-  <i class="bi bi-map-fill me-2" aria-hidden="true"></i>
-  Drone Pilot Map in Czechia</h1>
-    <p id="user-status" class="text-center fw-bold mb-3"></p>
-<!-- Login buttons -->
+
+  <section class="landing-hero fade-in">
+  <div class="container">
+    <div class="row justify-content-center">
+      <div class="col-lg-10">
+        <div class="hero-content text-center">
+          <h1 class="hero-title">Find a drone pilot in your area.
+<br>Or join and show yourself on the map.</h1>
+          <p class="hero-subtitle">Community map of verified pilots in Czechia.
+Direct contact without intermediaries, clear profiles with equipment and specialization.
+Basic or Premium? Choose for yourself.</p>
+          <div class="text-center mt-4">
+            <img src="/icons/logo.png" alt="Drone icon" class="img-fluid hero-logo" style="max-height: 220px;">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-spaced" data-aos="fade-up">
+  <div class="container">
+    
+    <div class="row text-center mb-4" data-aos="fade-down">
+      <div class="col">
+        <h2 class="display-6 fw-bold">Why use NajdiPilota.cz?</h2>
+        <p class="lead">Simple and effective connection between drone pilots and customers.</p>
+      </div>
+    </div>
+
+    <div class="row g-4 justify-content-center">
+      <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="100">
+        <div class="benefit-icon mb-3" style="font-size:2.5rem;">
+          <i class="bi bi-geo-alt"></i>
+        </div>
+        <h3 class="benefit-title">Local Search</h3>
+        <p>Find pilots in your area using an interactive map. Filter by specialization and equipment.</p>
+      </div>
+
+      <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="200">
+        <div class="benefit-icon mb-3" style="font-size:2.5rem;">
+          <i class="bi bi-cash-coin"></i>
+        </div>
+        <h3 class="benefit-title">No Commissions</h3>
+        <p>Communicate directly with pilots without unnecessary commissions. Save time and money.</p>
+      </div>
+
+      <div class="col-md-4 text-center" data-aos="fade-up" data-aos-delay="300">
+        <div class="benefit-icon mb-3" style="font-size:2.5rem;">
+          <i class="bi bi-shield-check"></i>
+        </div>
+        <h3 class="benefit-title">Verified Pilots</h3>
+        <p>All pilot profiles are verified. You can be sure of the quality of service.</p>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+
+
 <div id="pilot-login-wrapper" class="d-flex flex-wrap align-items-center gap-2 justify-content-center" >
 
   
 
 
-<!-- Modal for advertisers -->
 <div class="modal fade" id="inzerentModal" tabindex="-1" aria-labelledby="inzerentModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-warning">
       <div class="modal-header bg-warning">
         <h5 class="modal-title" id="inzerentModalLabel">
-          <i class="bi bi-building me-2"></i>For Companies & Advertisers
+          <i class="bi bi-building me-2"></i>For Companies and Advertisers
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
@@ -161,7 +187,7 @@
       </div>
       <div class="modal-footer">
         <a href="/inzerent.html" class="btn btn-outline-warning">
-          <i class="bi bi-person-badge-fill me-1"></i> Log in as Advertiser
+          <i class="bi bi-person-badge-fill me-1"></i> Log in as an Advertiser
         </a>
       </div>
     </div>
@@ -169,38 +195,14 @@
 </div>
 
 
-  <span id="logged-info" class="fw-bold small"></span>
-  <button id="edit-profile-btn" style="display:none;" class="pilot-login-btn w-100">
-    <i class="bi bi-pencil-square me-1"></i>Edit
-  </button>
+  
 </div>
     
 
-    <section class="mb-5">
-<p class="visually-hidden">
-  Find verified drone pilots in Czechia. An interactive map of drone pilots — filter by location, equipment, and specialization. Quick contact and direct connection with clients.
-</p>
-      <p><strong>Looking for a drone pilot near you?</strong> Or do you fly and want to be discovered?</p>
-      <p>This map connects clients and pilots. Find a reliable pilot by location, equipment, or specialization — or register yourself and get new flying and earning opportunities.</p>
-      <ul>
-  <li><strong>Fast matchmaking</strong> without unnecessary forms</li>
-  <li><strong>Verified pilots</strong> with profile and contact</li>
-  <li><strong>Extra income opportunity</strong> for every pilot</li>
-</ul>
-      <p><strong>Start by clicking a pilot on the map — or log in and join!</strong></p>
-    </section>
-
-    <h2>
-  <i class="bi bi-geo-alt-fill text-danger me-2" aria-hidden="true"></i>
-  Pilots Listed on the Map
-</h2>
-
-    <p>Below you can see all available pilots. Click the icon to view their profile, equipment, and contact. Logged-in users also see details like specialization, drones, or travel radius.</p>
-
+    
     <div id="login-modal-backdrop"></div>
 
-    <!-- Login modal -->
-    <div id="login-box" style="display: none; position: relative;">
+    <div id="login-box" style="display: "display: none; position: relative;">
 <button type="button" class="btn-close close-btn" aria-label="Close"
         onclick="document.getElementById('login-box').style.display='none';"></button>
    <h3>Pilot Login</h3>
@@ -215,77 +217,76 @@
           <label for="password" class="form-label">Password:</label>
           <input type="password" id="password" name="password" class="form-control" required />
         </div>
-        <button type="submit" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100"><i class="bi bi-box-arrow-in-right me-2"></i>Sign in</button>
+        <button type="submit" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100"><i class="bi bi-box-arrow-in-right me-2"></i>Login</button>
       </form>
       <p id="login-status" class="mt-3"></p>
-      <a href="/register.html" class="link">Not registered yet – I want to sign up</a>
+      <a href="/register.html" class="link">I am not registered yet – I want to register</a>
       <a href="/forgot.html" class="link">Forgot password?</a>
     </div>
     
-    <div id="map" class="mt-4"></div>
+    <div id="map" class="mt-4" data-aos="fade-up" data-aos-delay="200">
+
+</div>
 
   </div>
 
-  <!-- Leaflet & Cluster -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 
-  <!-- Bootstrap JS -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
-  <!-- Script -->
   <script>
     const map = L.map('map').setView([49.8, 15.5], 7);
 const fakeNames = [
-  "Speedy Ground Squirrel",
+  "Swift Marmot",
   "Flying Potato",
-  "Dronislav Skywalker",
-  "Turbo Reedbird",
+  "Dronislav of the Heavens",
+  "Turbo Reed Warbler",
   "Unmanned Emil",
   "Whistling Peacock",
   "Pilot Haluz",
-  "František Rotorcraft",
+  "Francis Helicopter",
   "Left Joystick",
   "Captain Shadow",
   "Dr. Rotor",
   "Mr. Spinny",
   "Stewardess Landová",
-  "Dive-bombing Franta",
+  "Dive-bombing Frank",
   "Supersonic Hedgehog",
   "Flying Čenda",
-  "Rotor Rose",
-  "Rustling Fanda",
-  "Safety Béďa",
-  "Beacon of Clouds",
+  "Rotary Róza",
+  "Buzzing Fanda",
+  "Safe Béďa",
+  "Lighthouse of the Clouds",
   "Drony Karel",
-  "Stumbly Pilot",
-  "Starter Stan",
+  "Flier Šmatla",
+  "Starter Staník",
   "Landing Pepa",
   "Helicopter Honza",
   "Navigator Novák",
   "Sensor Soňa",
-  "Lord of Clouds",
+  "Lord of the Clouds",
   "Flying Lojza",
   "Camera Kamil",
   "Rotor Ríša",
   "Altimeter Vašek",
-  "Aerial Vojta",
-  "Quiet Hummer",
+  "Airy Vojta",
+  "Silent Hum",
   "Buzzing Dan",
   "Foggy Milda",
   "Optics Otakar",
   "Lost Signal",
-  "Gimbal Master",
+  "Master Gimbal",
   "Antenna Anička",
-  "Little Prop Věrka",
-  "Casual Lída",
+  "Propeller Věrka",
+  "Airlift Lída",
   "Flyboy Felix",
   "Airy Fairy",
   "Navigational Norbert",
   "Blue Squadron",
   "Winged Karel",
-  "Field Phantom",
-  "Map-maker Mirek",
+  "Field Ghost",
+  "Mapping Mirek",
   "Dodging Kuba"
 ];
 
@@ -324,11 +325,11 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       circleOptions.color = 'darkgreen';
       circleOptions.fillOpacity = 0.5;
     } else if (p.type_account === "Premium") {
-  circleOptions.color = 'purple';         // Outline color
+  circleOptions.color = 'purple';         // Border color
   circleOptions.fillColor = 'purple';     // Fill color
   circleOptions.fillOpacity = 0.8;        // Fill opacity
-  circleOptions.radius = 10000;           // Larger radius than Free and Basic
-  circleOptions.weight = 3;               // Stroke width
+  circleOptions.radius = 10000;           // Double the radius of Free and Basic
+  circleOptions.weight = 3;               // Line thickness (set to 3)
 }
 
             const circle = L.circle([p.latitude, p.longitude], circleOptions)
@@ -342,10 +343,10 @@ L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
 const buildBadge = hasBuildBadge 
   ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
   : "";
-  // Optional: name with badge (for reuse)
+  // Optional: name with badge (for re-use)
 const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
 const fakeNameWithBadge  = `${fakeName}${buildBadge}`;
-  // New: read consent from backend (prefer p.hasPublicConsent), handle also "t"/"f"
+  // New: read consent from backend (prefer p.hasPublicConsent), handle "t"/"f" too
 const hasPublicConsent = (() => {
   const v = (p.hasPublicConsent ?? p.granted ?? false);
   if (typeof v === 'boolean') return v;
@@ -376,12 +377,12 @@ if (!hasPublicConsent) {
  
   if (isAvailable && loggedIn) {
   if (p.type_account === "Free") {
-      // Free account – limited information
+      // Free account - limited information
      html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
     <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
     ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Verified operator" width="60" class="me-2">` 
+      ? `<img src="/icons/approved_4.png" alt="Verified Operator" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
       ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
@@ -398,12 +399,12 @@ if (!hasPublicConsent) {
 
       html += `</div>`;
     } else if (p.type_account === "Basic") {
-  // Basic account – more information
+  // Basic account - more information
  html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
     <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
     ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Verified operator" width="60" class="me-2">` 
+      ? `<img src="/icons/approved_4.png" alt="Verified Operator" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
       ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
@@ -418,26 +419,26 @@ if (!hasPublicConsent) {
       }
   if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drones:</strong> ${p.drones}</p>`;
   if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>About me:</strong> ${p.note}</p>`;
-  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Travel radius:</strong> ${p.travel}</p>`;
+  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Travel:</strong> ${p.travel}</p>`;
   if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licenses:</strong> ${p.licenses}</p>`;
   if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>`;
 
-  // Button to contact the pilot
+  // Button to contact pilot
   html += `
     <div class="mt-3">
       <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
-        ✉️ Message the Pilot
+        ✉️ Write to Pilot
       </button>
     </div>
   `;
 }
  else if (p.type_account === "Premium") {
-      // Premium account – all information
+      // Premium account - all information
       html += `
   <div class="d-flex justify-content-between align-items-center mb-1">
     <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
     ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
-      ? `<img src="/icons/approved_4.png" alt="Verified operator" width="60" class="me-2">` 
+      ? `<img src="/icons/approved_4.png" alt="Verified Operator" width="60" class="me-2">` 
       : ''}
     ${p.id && Number(p.id) <= 80
       ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
@@ -456,7 +457,7 @@ if (!hasPublicConsent) {
 
       html += `<p><i class="bi bi-drone me-1"></i><strong>Drones:</strong> ${p.drones}</p>`;
       if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>`;
-      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Travel radius:</strong> ${p.travel}</p>`;
+      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Travel:</strong> ${p.travel}</p>`;
       if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licenses:</strong> ${p.licenses}</p>`;
     }
   } else if (!isAvailable) {
@@ -470,19 +471,36 @@ if (!hasPublicConsent) {
       ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>` : ''}
     `;
   } else {
-    // Not logged-in user
-    html += `
-      <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
-      
-      <br>
-      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Volunteer</span></div>` : ''}
-      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail after login]</span></p>
-      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[phone hidden]</span></p>` : ''}
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>` : ''}
-      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Travel radius:</strong> ${p.travel}</p>` : ''}
-      <p class="text-muted"><em>Log in as an advertiser to see more details and connect.</em></p>
-    `;
+  // Unauthenticated user
+  html += `
+    <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+    <br>
+    ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Volunteer</span></div>` : ''}
+  `;
+
+  // Only for Premium accounts we show hidden contact
+  if (p.type_account === "Premium") {
+    if (p.email) {
+      html += `<p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[email after login]</span></p>`;
+    }
+    if (p.phone) {
+      html += `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[phone after login]</span></p>`;
+    }
   }
+
+  // Other data is shown normally
+  if (p.specialization) {
+    html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specialization:</strong> ${p.specialization}</p>`;
+  }
+  if (p.travel) {
+    html += `<p><i class="bi bi-signpost me-1"></i><strong>Travel:</strong> ${p.travel}</p>`;
+  }
+
+  html += `
+    <p class="text-muted"><em>Log in as an advertiser to get access to Premium pilot contacts.</em></p>
+  </div>
+  `;
+}
 
   html += `</div>`;
   return html;
@@ -506,16 +524,16 @@ if (!hasPublicConsent) {
     const minRadius = 100;
     const maxRadius = 2000;
 
-    // Radius settings for account types
+    // Setting radius for different account types
     let accountMinRadius = minRadius;
     let accountMaxRadius = maxRadius;
 
     if (circle.options.fillColor === 'darkgreen') { // Basic account (dark green)
-      accountMinRadius = 100;
-      accountMaxRadius = 4000;
+      accountMinRadius = 100;   // Min radius for Basic
+      accountMaxRadius = 4000;  // Max radius for Basic
     } else if (circle.options.fillColor === 'purple') { // Premium account (purple)
-      accountMinRadius = 100;
-      accountMaxRadius = 10000;
+      accountMinRadius = 100;  // Min radius for Premium
+      accountMaxRadius = 10000; // Max radius for Premium
     }
 
     const ratio = (zoom - minZoom) / (maxZoom - minZoom);
@@ -543,8 +561,8 @@ const inzerentNavItem = document.getElementById("inzerent-nav-item");
 if (loggedEmail) {
   loginBox.style.display = "none";
   editBtn.style.display = "inline-block";
-  toggle.textContent = "Log out";
-  status.textContent = "Logged in as: " + loggedEmail;
+  toggle.textContent = "Logout";
+  
   
   // Show "My Messages" for logged-in users
   const messagesNavItem = document.getElementById("messages-nav-item");
@@ -552,7 +570,7 @@ if (loggedEmail) {
     messagesNavItem.style.display = "block";
   }
 
-  // Show "Job Requests" only for Basic/Premium
+  // Show "Requests" only for Basic/Premium accounts
   const poptavkyNavItem = document.getElementById("poptavky-nav-item");
   if (poptavkyNavItem && loggedEmail) {
     fetch('/get-my-pilot', { credentials: 'include' })
@@ -598,15 +616,24 @@ if (loggedEmail && editBtn) {
           body: JSON.stringify({ email, password })
         })
         .then(res => {
-          if (!res.ok) throw new Error("Invalid e-mail or password.");
+          if (!res.ok) throw new Error("Invalid email or password.");
           return res.text();
         })
-        .then(msg => {
-          localStorage.setItem("loggedEmail", email);
-          statusBox.style.color = "green";
-          statusBox.textContent = msg;
-          window.location.href = "/account.html?email=" + encodeURIComponent(email);
-        })
+        .then(async msg => {
+  // Query the server, which will return the pilot's id
+  const res = await fetch(`/get-user-id?email=${encodeURIComponent(email)}&type=pilot`);
+  const data = await res.json();
+
+  if (data.success) {
+    localStorage.setItem("pilotId", data.id);      // stores pilot ID
+    localStorage.setItem("pilotEmail", data.email);
+  }
+
+  localStorage.setItem("loggedEmail", email);
+  statusBox.style.color = "green";
+  statusBox.textContent = msg;
+  window.location.href = "/account.html?email=" + encodeURIComponent(email);
+})
         .catch(err => {
           statusBox.style.color = "red";
           statusBox.textContent = err.message;
@@ -619,7 +646,7 @@ function contactPilot(pilotEmail) {
   const currentUserType  = localStorage.getItem('loggedEmail') ? 'pilot' : 'inzerent';
   
   if (!currentUserEmail) {
-    alert("You must be logged in to contact pilots.");
+    alert("You must be logged in to communicate with pilots.");
     return;
   }
 
@@ -628,7 +655,7 @@ function contactPilot(pilotEmail) {
     fetch(`/get-user-id?email=${encodeURIComponent(pilotEmail)}&type=pilot`).then(res => res.json())
   ])
   .then(([currentUser, partner]) => {
-    return fetch('/create-conversation', {   // correct endpoint
+    return fetch('/create-conversation', {   // ← correct endpoint
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -637,7 +664,7 @@ function contactPilot(pilotEmail) {
       })
     }).then(res => res.json());
   })
-  .then(({ success, conversationId }) => {   // server returns conversationId
+  .then(({ success, conversationId }) => {   // ← server returns conversationId
     if (!success) throw new Error("Failed to create conversation.");
     window.location.href = `/chat.html?conversationId=${conversationId}`;
   })
@@ -661,7 +688,7 @@ function contactPilot(pilotEmail) {
       body: JSON.stringify({ to: pilotEmail, message })
     })
     .then(res => {
-      if (!res.ok) throw new Error("Message could not be sent.");
+      if (!res.ok) throw new Error("Failed to send message.");
       return res.text();
     })
     .then(response => {
@@ -681,13 +708,13 @@ function contactPilot(pilotEmail) {
     banner.className = "alert alert-warning text-center m-3 d-flex justify-content-center align-items-center";
     banner.innerHTML = `
       <div>
-        <strong>Advertiser logged in:</strong> ${advertiserEmail}
+        <strong>Logged in as advertiser:</strong> ${advertiserEmail}
       </div>
     `;
 
     const logoutBtn = document.createElement("button");
     logoutBtn.className = "btn btn-sm btn-outline-dark ms-3";
-    logoutBtn.textContent = "Log out";
+    logoutBtn.textContent = "Logout";
     logoutBtn.onclick = () => {
       localStorage.removeItem("inzerentEmail");
       window.location.reload();
@@ -715,7 +742,7 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
                 <div class="d-flex justify-content-between">
                   <div>
                     <h5 class="mb-1">${conv.advertiser_name || conv.advertiser_email}</h5>
-                    <p class="mb-1 last-message">${conv.last_message || 'No messages yet'}</p>
+                    <p class="mb-1 last-message">${conv.last_message || 'No messages'}</p>
                   </div>
                   <div class="text-end">
                     <span class="time-ago">${formatTimeAgo(conv.last_message_time)}</span>
@@ -729,18 +756,18 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
             container.innerHTML = `
               <div class="text-center py-5">
                 <i class="bi bi-envelope-open display-5 text-muted"></i>
-                <p class="mt-3">You have no messages yet</p>
+                <p class="mt-3">You don't have any messages yet</p>
                 <a href="/index.html" class="btn btn-primary mt-2">Find jobs</a>
               </div>
             `;
           }
         })
         .catch(err => {
-          console.error("Failed to load conversations:", err);
+          console.error("Error loading conversations:", err);
           document.getElementById("conversations-list").innerHTML = `
             <div class="text-center py-5 text-danger">
               <i class="bi bi-exclamation-triangle display-5"></i>
-              <p class="mt-3">Could not load conversations</p>
+              <p class="mt-3">Failed to load conversations</p>
               <button onclick="window.location.reload()" class="btn btn-outline-primary mt-2">
                 <i class="bi bi-arrow-repeat"></i> Try again
               </button>
@@ -756,13 +783,71 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
         const diff = Math.floor((now - msgDate) / 1000); // difference in seconds
         
         if (diff < 60) return "just now";
-        if (diff < 3600) return `${Math.floor(diff/60)} min`;
-        if (diff < 86400) return `${Math.floor(diff/3600)} h`;
-        return `${Math.floor(diff/86400)} d`;
+        if (diff < 3600) return `${Math.floor(diff/60)} min ago`;
+        if (diff < 86400) return `${Math.floor(diff/3600)} h ago`;
+        return `${Math.floor(diff/86400)} d ago`;
       }
     });
 </script>
+<section class="cta-section py-5" data-aos="fade-up">
+  <div class="container">
+    <div class="row g-4">
+      
+      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="100">
+        <div class="cta-card pilot h-100">
+          <div class="cta-header text-center">
+            <div class="cta-icon">
+              <i class="bi bi-person-badge"></i>
+            </div>
+            <h3 class="cta-title">I am a Pilot</h3>
+            <p class="cta-subtitle">Create your profile and start receiving requests</p>
+          </div>
+          <div class="cta-body">
+            <ul class="cta-features">
+              <li>Display on the pilot map</li>
+              <li>Specify equipment and specialization</li>
+              <li>Receive requests from advertisers</li>
+              <li>Become a verified drone operator</li>
+              <li>Different account types (Free, Basic, Premium)</li>
+            </ul>
+          </div>
+          <div class="cta-footer text-center">
+            <a href="/register.html" class="btn btn-landing btn-pilot">
+              <i class="bi bi-person-plus me-1"></i> Create Pilot Profile
+            </a>
+          </div>
+        </div>
+      </div>
 
+      <div class="col-lg-6" data-aos="fade-up" data-aos-delay="300">
+        <div class="cta-card inzerent h-100">
+          <div class="cta-header text-center">
+            <div class="cta-icon">
+              <i class="bi bi-megaphone"></i>
+            </div>
+            <h3 class="cta-title">I am an Advertiser</h3>
+            <p class="cta-subtitle">Find the ideal pilot for your project</p>
+          </div>
+          <div class="cta-body">
+            <ul class="cta-features">
+              <li>Browse a map of verified pilots</li>
+              <li>Filter by specialization and location</li>
+              <li>Contact pilots directly</li>
+              <li>Save time and money</li>
+              <li>Simple registration</li>
+            </ul>
+          </div>
+          <div class="cta-footer text-center">
+            <a href="/inzerent.html" class="btn btn-landing btn-inzerent">
+              <i class="bi bi-building me-1"></i> Register as an Advertiser
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
 
 
 <script>
@@ -782,7 +867,7 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="contactPilotModalLabel">Message the Pilot</h5>
+        <h5 class="modal-title" id="contactPilotModalLabel">Write to Pilot</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -793,20 +878,19 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
         <input type="hidden" id="contactPilotEmail">
       </div>
 
-<!-- Modal for public contact consent -->
 <div class="modal fade" id="publicContactConsentModal" tabindex="-1" aria-labelledby="publicContactConsentLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content border-warning">
       <div class="modal-header bg-warning">
-        <h5 class="modal-title" id="publicContactConsentLabel">Consent to Publicly Show Contacts</h5>
+        <h5 class="modal-title" id="publicContactConsentLabel">Consent to Publish Contacts</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
-        I agree that my e-mail and phone number may be publicly displayed on my profile.
+        I agree that my email and phone number may be publicly displayed on my profile.
         <div class="form-check mt-3">
           <input class="form-check-input" type="checkbox" id="premiumConsentCheck">
           <label class="form-check-label" for="premiumConsentCheck">
-            I agree to publish my contact details
+            I agree to the publication of contact details
           </label>
         </div>
       </div>
@@ -822,7 +906,7 @@ fetch(`/get-conversations?pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentE
 <script>
 document.getElementById('confirmPremiumConsent').addEventListener('click', function() {
   if (!document.getElementById('premiumConsentCheck').checked) {
-    alert("You must confirm the consent to publish contacts.");
+    alert("You must confirm consent to publish your contacts.");
     return;
   }
 
@@ -831,13 +915,13 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       consent_type: 'public_contact',
-      consent_text: 'Consent to display e-mail and phone number on the public profile.',
+      consent_text: 'Consent to the publication of email and phone on the public profile.',
       timestamp: new Date().toISOString()
     })
   })
   .then(res => {
     if (!res.ok) throw new Error("Failed to save consent.");
-    alert("Consent saved. Your contacts will now be visible.");
+    alert("Consent has been saved. Your contacts will now be visible.");
     location.reload();
   })
   .catch(err => alert(err.message));
@@ -856,40 +940,36 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
   <div class="container">
     <div class="row gy-3 justify-content-between">
       
-      <!-- Logo & description -->
       <div class="col-md-4">
         <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
-          <img src="/icons/logo.png" alt="NajdiPilota logo" height="40" class="me-2" />
+          <img src="/icons/logo.png" alt="NajdiPilota Logo" height="40" class="me-2" />
           <span class="fw-bold fs-5">NajdiPilota.cz</span>
         </a>
-        <p class="small text-muted">We connect clients with verified drone pilots across the Czech Republic. Quick, direct connection without middlemen.</p>
+        <p class="small text-muted">We connect customers with verified drone pilots throughout the Czech Republic. Fast connection without intermediaries.</p>
       </div>
 
-      <!-- Navigation -->
       <div display="no" class="col-md-2">
         <h6 class="fw-bold">Navigation</h6>
         <ul class="list-unstyled">
           <li><a href="/index.html" class="text-decoration-none text-muted">Pilot Map</a></li>
-          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">About</a></li>
+          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">About the Project</a></li>
           <li><a href="/kontakt.html" class="text-decoration-none text-muted">Contact</a></li>
         <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
         </ul>
       </div>
 
-      <!-- Legal / Info -->
       <div class="col-md-3">
         <h6 class="fw-bold">Information</h6>
         <ul class="list-unstyled">
           <li><a href="/gdpr.html" class="text-decoration-none text-muted">Personal Data Processing</a></li>
-          
-          <li><a href="mailto:dronadmin@seznam.cz?subject=Website bug report" class="text-decoration-none text-muted">Report an issue</a></li>
+          <li><a href="/obchodni-podminky.html" class="text-decoration-none text-muted">Terms and Conditions</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Website Error" class="text-decoration-none text-muted">Report an error</a></li>
         </ul>
       </div>
 
-      <!-- Operator -->
       <div class="col-md-3">
         <h6 class="fw-bold">Operator</h6>
-        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>Company ID (IČO): 08578591<br>Prague, Czech Republic</p>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>Company ID: 08578591<br>Prague, Czech Republic</p>
         <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
       </div>
 
@@ -900,23 +980,23 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
     <div class="d-flex justify-content-between align-items-center small text-muted">
       <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
       <div>
-        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
-        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
-        <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
+      
+        <a href="https://www.instagram.com/najdipilota/" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+        
       </div>
     </div>
   </div>
 </footer>
 
 <script>
-  // Insert current year into copyright
+  // Inserts the current year into the copyright
   document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("year").textContent = new Date().getFullYear();
   });
 </script>
 
 <script>
-  // If the page is not intended for advertisers, log them out
+  // If the page is not intended for an advertiser, log them out
   document.addEventListener("DOMContentLoaded", () => {
     if (localStorage.getItem("inzerentEmail")) {
       localStorage.removeItem("inzerentEmail");
@@ -925,7 +1005,7 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
 </script>
 
 <script>
-  // Automatically add 'active' class for current page in navbar
+  // Automatic addition of 'active' class to the current page in the menu
   document.addEventListener("DOMContentLoaded", () => {
     const currentPage = window.location.pathname;
     const navLinks = document.querySelectorAll('.navbar-nav .nav-item .nav-link');
@@ -939,7 +1019,7 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
 </script>
 
 <script>
-  // badge in top navigation (index.html)
+  // badge into the top navigation (index.html)
   function renderUnreadBadgeIntoNav(count) {
     const li = document.getElementById('messages-nav-item');
     if (!li) return;
@@ -981,8 +1061,68 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
   });
 </script>
 
+<script>
+  // Activation of scroll animations
+  document.addEventListener('DOMContentLoaded', () => {
+    const elements = document.querySelectorAll('.fade-in');
+    const logo = document.querySelector('.hero-logo');
 
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
 
+    elements.forEach(el => observer.observe(el));
+    if (logo) observer.observe(logo);
+  });
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/aos@2.3.4/dist/aos.js"></script>
+<script>
+  AOS.init({
+    duration: 1000,  // animation duration in ms
+    offset: 80,      // distance from the bottom of the viewport
+    once: true       // animate only once
+  });
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const isLoggedInPilot = !!localStorage.getItem("loggedEmail");
+  const isLoggedInAdvertiser = !!localStorage.getItem("inzerentEmail");
+
+  if (isLoggedInPilot || isLoggedInAdvertiser) {
+    // Hide sections permanently and completely
+    const sections = document.querySelectorAll(".landing-hero, .section-spaced, .cta-section");
+    sections.forEach(el => {
+      el.style.display = "none";
+      el.classList.add("hidden-section"); // backup for safety
+    });
+
+    // Map adjustment
+    const mapElement = document.getElementById("map");
+    if (mapElement) {
+      mapElement.style.marginTop = "0";
+      mapElement.style.height = "calc(100vh - 80px)";
+      mapElement.style.opacity = "1";
+    }
+
+    // 🪄 Recalculate map size after layout change
+    setTimeout(() => {
+      if (window.map && typeof window.map.invalidateSize === "function") {
+        window.map.invalidateSize();
+      }
+    }, 400);
+
+    // Optional: hide the footer too (if you want a true fullscreen)
+    // document.querySelector("footer")?.style.display = "none";
+  }
+});
+
+</script>
 
 </body>
 </html>

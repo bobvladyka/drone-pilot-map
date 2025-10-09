@@ -758,6 +758,357 @@ button.accordion-button:not(.collapsed) {
   }
 }
 
+/* === CTA SEKCE – Pilot / Inzerent === */
+.cta-section {
+  padding: 80px 0;
+}
+
+.cta-card {
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  height: 100%;
+  overflow: hidden;
+  border: none;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.cta-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.15);
+}
+
+.cta-card.pilot {
+  border-top: 5px solid var(--primary);
+  background: linear-gradient(180deg, rgba(169, 214, 229, 0.1), #fff);
+}
+
+.cta-card.inzerent {
+  border-top: 5px solid #ffa751;
+  background: linear-gradient(180deg, rgba(255, 226, 89, 0.1), #fff);
+}
+
+.cta-header {
+  padding: 30px 30px 10px;
+}
+
+.cta-icon {
+  font-size: 3rem;
+  margin-bottom: 20px;
+}
+
+.cta-card.pilot .cta-icon {
+  color: var(--primary);
+}
+
+.cta-card.inzerent .cta-icon {
+  color: #ffa751;
+}
+
+.cta-title {
+  font-size: 1.8rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+}
+
+.cta-card.pilot .cta-title {
+  color: var(--primary);
+}
+
+.cta-card.inzerent .cta-title {
+  color: #ffa751;
+}
+
+.cta-subtitle {
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: #555;
+  margin-bottom: 20px;
+}
+
+.cta-body {
+  flex-grow: 1;
+  padding: 0 30px;
+}
+
+.cta-features {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.cta-features li {
+  padding: 10px 0;
+  padding-left: 35px;
+  position: relative;
+  font-size: 1rem;
+}
+
+.cta-features li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--success);
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+.cta-footer {
+  padding: 25px 30px;
+  background-color: var(--background-light);
+  border-top: 1px solid var(--neutral);
+}
+
+.btn-landing {
+  padding: 12px 30px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 1.1rem;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.btn-pilot {
+  background-color: var(--primary);
+  color: white;
+  border: none;
+}
+
+.btn-pilot:hover {
+  background-color: #005a8f;
+  color: white;
+}
+
+.btn-inzerent {
+  background: linear-gradient(90deg, #ffe259, #ffa751);
+  color: #000;
+  border: none;
+}
+
+.btn-inzerent:hover {
+  background: linear-gradient(90deg, #ffd140, #ff9a3d);
+  color: #000;
+}
+
+@media (max-width: 768px) {
+  .cta-section {
+    padding: 50px 0;
+  }
+  .cta-header {
+    padding: 20px 20px 10px;
+  }
+  .cta-body {
+    padding: 0 20px;
+  }
+  .cta-footer {
+    padding: 20px;
+  }
+}
+
+.landing-hero {
+  min-height: 85vh;
+  display: flex;
+  align-items: center;
+  padding: 60px 0;
+  background:
+    linear-gradient(rgba(255,255,255,0.5), rgba(255,255,255,0.5)),
+    url('/icons/bg-map.png');
+  background-size: cover;
+  background-position: center;
+}
+
+.landing-hero .hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  color: var(--primary);
+  line-height: 1.1;
+  margin-bottom: 1.5rem;
+}
+
+.landing-hero .hero-subtitle {
+  font-size: 1.2rem;
+  color: #333;
+  max-width: 800px;
+  margin: 0 auto 1.5rem;
+}
+
+/* === HERO sekce (z index_new.html, sjednocená verze) === */
+.hero-landing {
+  position: relative;
+  min-height: 80vh;
+  display: flex;
+  align-items: center;
+  padding: 64px 0;
+  overflow: hidden;
+  background:
+    linear-gradient(rgba(255,255,255,.7), rgba(255,255,255,.7)),
+    url('/icons/bg-map.png');
+  background-size: cover;
+  background-position: center;
+  will-change: background-position;
+  animation: heroPan 30s linear infinite alternate;
+}
+
+@keyframes heroPan {
+  0%   { background-position: 50% 45%; }
+  100% { background-position: 48% 55%; }
+}
+
+.hero-landing::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(600px 200px at 20% 80%, rgba(0,119,182,.08), transparent 70%),
+    radial-gradient(600px 200px at 80% 20%, rgba(255,167,81,.08), transparent 70%);
+  pointer-events: none;
+}
+
+.hero-title {
+  font-size: clamp(2rem, 4vw, 3.5rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--secondary);
+  margin-bottom: 1rem;
+  text-align: center;
+}
+
+.hero-subtitle {
+  font-size: clamp(1.05rem, 1.8vw, 1.35rem);
+  max-width: 900px;
+  margin: 0 auto 1.5rem;
+  text-align: center;
+}
+
+.hero-ctas {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+/* === Sekce spacing & map styl === */
+.section-spaced { padding: 64px 0; }
+
+.section-muted { background: var(--background-light); }
+
+.map-section .section-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  color: var(--secondary);
+}
+
+/* === Utility třídy === */
+.btn-tool {
+  background: #fff;
+  border: 1px solid var(--neutral);
+  border-radius: 8px;
+  padding: 8px 12px;
+  box-shadow: var(--shadow);
+}
+
+.fade-in {
+  animation: fadeIn .6s ease both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+
+html {
+    scroll-behavior: smooth;
+  }
+
+  .fade-in {
+    opacity: 0;
+    transform: translateY(40px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+  }
+  .fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .hero-logo {
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 1s ease;
+  }
+  .hero-logo.visible {
+    opacity: 1;
+    transform: scale(1);
+  }
+/* Skrytí původního bílého pozadí Leaflet popupu */
+.leaflet-popup-content-wrapper {
+  background: transparent !important;
+  box-shadow: none !important;
+  border: none !important;
+  padding: 0 !important;
+}
+
+/* Odstraní přebytečné okraje uvnitř popupu */
+.leaflet-popup-content {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Skrytí šipky pod popupem (volitelné) */
+.leaflet-popup-tip-container {
+  display: none !important;
+}
+
+/* Vlastní vzhled pilotní karty */
+.pilot-card {
+  background: rgba(240, 248, 255, 0.9); /* světle modrý průsvitný podklad */
+  border-radius: 10px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+  font-size: 14px;
+  color: #333;
+  max-width: 260px;
+}
+
+.pilot-card h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: black;
+  margin-bottom: 8px;
+}
+
+.pilot-card p {
+  margin-bottom: 6px;
+}
+
+.pilot-card a {
+  text-decoration: none;
+}
+
+.pilot-card .btn, 
+.pilot-card button {
+  font-size: 0.85rem;
+}
+
+#map {
+  opacity: 0;
+  transform: translateY(40px);
+  transition: all 1s ease;
+}
+
+#map.aos-animate {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+
+
+
 
 
 

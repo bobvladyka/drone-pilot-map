@@ -1516,7 +1516,8 @@ app.get('/get-messages', async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-         m.id, m.sender_id, m.message, m.created_at,
+         m.id, m.sender_id, m.message, 
+         timezone('Europe/Prague', m.created_at) AS created_at,
          CASE WHEN m.sender_id = c.pilot_id THEN p.email ELSE a.email END AS sender_email,
          CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
        FROM messages m
@@ -1534,7 +1535,6 @@ app.get('/get-messages', async (req, res) => {
     res.status(500).json({ success: false, message: 'Chyba při načítání zpráv' });
   }
 });
-
 
 // Počet nepřečtených zpráv pro pilota
 app.get('/unread-count', async (req, res) => {
@@ -1623,19 +1623,19 @@ app.post('/send-message', async (req, res) => {
       [conversationId, senderId, message]
     );
 
-    // 4) Enriched zpráva
-    const enriched = await pool.query(
-      `SELECT 
-         m.id, m.sender_id, m.message, m.created_at,
-         CASE WHEN m.sender_id = c.pilot_id THEN p.email ELSE a.email END AS sender_email,
-         CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
-       FROM messages m
-       JOIN conversations c ON c.id = m.conversation_id
-       JOIN pilots p ON p.id = c.pilot_id
-       JOIN advertisers a ON a.id = c.advertiser_id
-       WHERE m.id = $1`,
-      [inserted.rows[0].id]
-    );
+   // 4) Enriched zpráva
+const enriched = await pool.query(
+  `SELECT 
+     m.id, m.sender_id, m.message, timezone('Europe/Prague', m.created_at) AS created_at,
+     CASE WHEN m.sender_id = c.pilot_id THEN p.email ELSE a.email END AS sender_email,
+     CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
+   FROM messages m
+   JOIN conversations c ON c.id = m.conversation_id
+   JOIN pilots p ON p.id = c.pilot_id
+   JOIN advertisers a ON a.id = c.advertiser_id
+   WHERE m.id = $1`,
+  [inserted.rows[0].id]
+);
 
     const msg = enriched.rows[0];
 

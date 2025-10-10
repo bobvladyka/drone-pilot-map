@@ -384,32 +384,30 @@ async function handleReactById(id) {
       btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Odesílám…';
     }
 
-    // 1) Kdo jsem (pilot)?
-    const pilotEmail = await resolvePilotEmail();
+    // 1) Kdo jsem (pilot)? ID pilota z localStorage
+    const pilotId = localStorage.getItem('pilotId');
+    if (!pilotId) throw new Error('Pilot není přihlášen. Zkuste se prosím znovu přihlásit.');
+    
+    // 2) Získání ID inzerenta z backendu podle jeho e-mailu
+    const advertiserIdRes = await fetch(`/get-user-id?email=${encodeURIComponent(demand.advertiser_email)}&type=advertiser`);
+    const advertiserData = await advertiserIdRes.json();
+    if (!advertiserData.id) throw new Error('Inzerent nenalezen.');
 
-    // 2) Vytvoř / najdi konverzaci
-    const { success, conversationId, message } = await apiJson('/create-conversation', {
-      pilotEmail,
-      advertiserEmail: demand.advertiser_email
+    const advertiserId = advertiserData.id;
+
+    // 3) Vytvoř / najdi konverzaci (nový endpoint)
+    const { success, conversationId, message } = await apiJson('/api/v2/create-conversation', {
+      pilotId,
+      advertiserId,
+      advertiserTable: 'advertisers'
     });
     if (!success || !conversationId) throw new Error(message || 'Nepodařilo se vytvořit konverzaci');
- 
-     // 3) Pošli úvodní zprávu
- // const intro = buildIntroMessage(demand);
- // const sendRes = await apiJson('/send-message', {
- //  conversationId,
- //  senderEmail: pilotEmail,
- //  message: intro
- // });
- // if (!sendRes.success) throw new Error('Zprávu se nepodařilo odeslat.');
-
-
     
-    // 4) Přesměruj do chatu (chat.html očekává tyto 3 parametry)
+    // 4) Přesměruj do chatu (nové URL s ID)
     const url = new URL(location.origin + '/chat.html');
     url.searchParams.set('conversationId', conversationId);
-    url.searchParams.set('pilotEmail', pilotEmail);
-    url.searchParams.set('inzerentEmail', demand.advertiser_email);
+    url.searchParams.set('pilotId', pilotId);
+    url.searchParams.set('advertiserId', advertiserId);
     location.href = url.toString();
 
   } catch (err) {

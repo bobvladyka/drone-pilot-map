@@ -197,8 +197,7 @@ img.emoji {
       <button onclick="window.history.back()" class="btn btn-outline-secondary">
         <i class="bi bi-arrow-left"></i> Zpět
       </button>
-      <h4 class="mb-0">Konverzace s <span id="pilot-name"></span></h4>
-      <div class="text-muted small">Přihlášen: <span id="advertiser-name" class="email-display"></span></div>
+      <h4 class="mb-0">Konverzace s <span id="partner-name"></span></h4>
     </div>
 
     <div id="chat-container">
@@ -222,92 +221,106 @@ img.emoji {
 document.addEventListener("DOMContentLoaded", function() {
   const urlParams = new URLSearchParams(window.location.search);
   const conversationId = urlParams.get('conversationId');
-  const pilotEmail = urlParams.get('pilotEmail');
-  const advertiserEmail = urlParams.get('inzerentEmail');
 
-const textarea = document.getElementById('new-message');
-textarea.addEventListener('input', () => {
-  textarea.style.height = 'auto';
-  textarea.style.height = textarea.scrollHeight + 'px';
-});
- 
+  const pilotId = parseInt(urlParams.get('pilotId'));
+  const advertiserId = parseInt(urlParams.get('advertiserId'));
+  
+  let loggedId = null;
+  let loggedRole = null;
 
-  if (!conversationId || !pilotEmail || !advertiserEmail) {
+  const pilotStoredId = parseInt(localStorage.getItem('pilotId'));
+  const advertiserStoredEmail = localStorage.getItem('inzerentEmail');
+
+  // Funkce, která se zavolá, jakmile bude známá role uživatele
+  function initializeChat() {
+      // Zavoláme funkci pro aktualizaci jména
+      updatePartnerName();
+
+      // Zkontrolujeme, zda máme ID a konverzaci pro označení
+      if (conversationId && loggedId) {
+          markAsSeen(conversationId, loggedId);
+      }
+
+      // Načteme zprávy
+      loadMessages();
+      setInterval(loadMessages, 10000);
+  }
+
+  // Určení role a ID přihlášeného uživatele z localStorage
+  if (pilotStoredId && !isNaN(pilotStoredId) && pilotStoredId === pilotId) {
+      loggedId = pilotId;
+      loggedRole = 'pilot';
+      initializeChat();
+  } else if (advertiserStoredEmail) {
+      // Pokud to není pilot, zkusíme najít ID inzerenta podle emailu
+      fetch(`/get-user-id?email=${encodeURIComponent(advertiserStoredEmail)}&type=advertiser`)
+          .then(res => res.json())
+          .then(data => {
+              if (data.id === advertiserId) {
+                  loggedId = advertiserId;
+                  loggedRole = 'advertiser';
+                  initializeChat();
+              } else {
+                  console.error("Logged in user does not match conversation participants.");
+              }
+          })
+          .catch(err => {
+              console.error("Error fetching user ID:", err);
+          });
+  }
+
+
+  // Funkce pro označení konverzace jako přečtené
+  function markAsSeen(convId, userId) {
+      if (navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify({ conversationId: convId, userId: userId })], { type: 'application/json' });
+          navigator.sendBeacon('/mark-as-seen', blob);
+      } else {
+          fetch('/mark-as-seen', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ conversationId: convId, userId: userId })
+          });
+      }
+  }
+
+
+  if (!conversationId || !pilotId || !advertiserId) {
     alert("Chyba: Chybí parametry konverzace.");
     window.location.href = '/index.html';
     return;
   }
+ 
+  const textarea = document.getElementById('new-message');
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  });
 
-  // Získání přihlášeného e-mailu z localStorage
-const loggedEmail = localStorage.getItem('inzerentEmail') || localStorage.getItem('loggedEmail');
-
-
-// Pokud máme userId v localStorage, označíme konverzaci jako přečtenou
-const loggedUserId = localStorage.getItem("pilotId") || localStorage.getItem("inzerentId");
-
-if (conversationId && loggedUserId) {
-  fetch('/mark-as-seen', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      conversationId,
-      userId: loggedUserId
-    })
-  }).catch(err => console.error("Chyba při označení jako přečtené:", err));
-}
-
-  
-  if (!loggedEmail) {
-    alert("Chyba: Uživatel není přihlášen.");
-    window.location.href = '/login.html'; // Přesměrování na přihlašovací stránku
-    return;
-  }
-
-  // Logování pro kontrolu správnosti parametrů
-  console.log('conversationId:', conversationId);
-  console.log('pilotEmail:', pilotEmail);
-  console.log('advertiserEmail:', advertiserEmail);
-  console.log('loggedEmail:', loggedEmail); // Log pro ověření, že e-mail je uložený v localStorage
-
-  // Ověření, zda je správný uživatel podle URL parametrů a přihlášeného e-mailu
-  const isPilot = loggedEmail === pilotEmail;
-  const isAdvertiser = loggedEmail === advertiserEmail;
-
-  console.log('isPilot:', isPilot);
-  console.log('isAdvertiser:', isAdvertiser);
-
-  if (!isPilot && !isAdvertiser) {
-    alert("Chyba: Neznámý typ uživatele nebo špatná stránka.");
-    window.location.href = '/index.html';
-    return;
-  }
-
-  // Fetch pilot's name from the database, pokud je pilot
-  fetch(`/get-pilot-name?email=${encodeURIComponent(pilotEmail)}`)
-    .then(res => res.json())
-    .then(data => {
-      if (data.success && data.name) {
-        document.getElementById('pilot-name').textContent = data.name;
-      } else {
-        document.getElementById('pilot-name').textContent = obfuscateEmail(pilotEmail);
+  function updatePartnerName() {
+      if (loggedRole === 'pilot') {
+          fetch(`/get-advertiser-name-by-id?id=${advertiserId}`)
+              .then(res => res.json())
+              .then(data => {
+                  const partnerName = data.success ? data.name : 'Inzerent';
+                  document.getElementById('partner-name').textContent = partnerName;
+              })
+              .catch(() => {
+                  document.getElementById('partner-name').textContent = 'Inzerent';
+              });
+      } else if (loggedRole === 'advertiser') {
+          fetch(`/get-pilot-name-by-id?id=${pilotId}`)
+              .then(res => res.json())
+              .then(data => {
+                  const partnerName = data.success ? data.name : 'Pilot';
+                  document.getElementById('partner-name').textContent = partnerName;
+              })
+              .catch(() => {
+                  document.getElementById('partner-name').textContent = 'Pilot';
+              });
       }
-    })
-    .catch(err => {
-      console.error("Chyba při načítání jména pilota:", err);
-      document.getElementById('pilot-name').textContent = obfuscateEmail(pilotEmail);
-    });
-
-  // Obfuscate advertiser email display
-  document.getElementById('advertiser-name').textContent = obfuscateEmail(advertiserEmail);
-
-  // Funkce pro obfuscation emailu
-  function obfuscateEmail(email) {
-    if (!email) return '';
-    const [name, domain] = email.split('@');
-    return `${name.substring(0, 2)}•••@${domain.substring(0, 2)}•••${domain.substring(domain.lastIndexOf('.'))}`;
   }
 
-  // Fetch messages for the conversation
   function loadMessages() {
     fetch(`/get-messages?conversationId=${conversationId}`)
       .then(res => res.json())
@@ -323,15 +336,13 @@ if (conversationId && loggedUserId) {
       });
   }
 
-  // Enter = odeslat, Shift+Enter = nový řádek
-document.getElementById('send-message-btn').addEventListener('click', sendMessageHandler);
-document.getElementById('new-message').addEventListener('keydown', function(e) {
-  if (e.key === 'Enter' && !e.shiftKey) {
-    e.preventDefault(); // zabrání zalomení řádku
-    sendMessageHandler();
-  }
-});
-
+  document.getElementById('send-message-btn').addEventListener('click', sendMessageHandler);
+  document.getElementById('new-message').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessageHandler();
+    }
+  });
 
   function sendMessageHandler() {
     const messageContent = document.getElementById('new-message').value.trim();
@@ -340,18 +351,21 @@ document.getElementById('new-message').addEventListener('keydown', function(e) {
     }
   }
 
-  // Send message to the backend and update the chat
   function sendMessage(messageContent) {
+    if (!loggedId) {
+        alert("Nelze odeslat zprávu. ID uživatele není k dispozici.");
+        return;
+    }
     const sendBtn = document.getElementById('send-message-btn');
     sendBtn.disabled = true;
     sendBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Odesílám...';
 
-    fetch('/send-message', {
+    fetch('/api/v2/send-message', { // Nový API endpoint
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         conversationId,
-        senderEmail: localStorage.getItem('inzerentEmail') || localStorage.getItem('loggedEmail'), // ✅
+        senderId: loggedId,
         message: messageContent
       })
     })
@@ -360,10 +374,9 @@ document.getElementById('new-message').addEventListener('keydown', function(e) {
       if (data.success) {
         document.getElementById('new-message').value = '';
         const ta = document.getElementById('new-message');
-ta.style.height = 'auto';
-ta.style.height = ta.scrollHeight + 'px';
-
-        loadMessages(); // Reload all messages to maintain order
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+        loadMessages();
       } else {
         alert("Chyba při odesílání zprávy: " + (data.message || 'Neznámá chyba'));
       }
@@ -379,116 +392,82 @@ ta.style.height = ta.scrollHeight + 'px';
   }
 
   function formatDateTime(timestamp) {
-  if (!timestamp) return '';
-  const date = new Date(timestamp);
-  
-  // Vytvoříme objekt Intl.DateTimeFormat pro časové pásmo Praha
-  const formatter = new Intl.DateTimeFormat('cs-CZ', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-    timeZone: 'Europe/Prague'
-  });
-  
-  // Formátujeme datum a čas
-  const parts = formatter.formatToParts(date);
-  const day = parts.find(p => p.type === 'day').value;
-  const month = parts.find(p => p.type === 'month').value;
-  const year = parts.find(p => p.type === 'year').value;
-  const hours = parts.find(p => p.type === 'hour').value;
-  const minutes = parts.find(p => p.type === 'minute').value;
-  
-  return `${day}.${month}.${year} ${hours}:${minutes}`;
-}
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const formatter = new Intl.DateTimeFormat('cs-CZ', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Prague' // toto je klíčové
+    });
+    const parts = formatter.formatToParts(date);
+    const day = parts.find(p => p.type === 'day').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const year = parts.find(p => p.type === 'year').value;
+    const hours = parts.find(p => p.type === 'hour').value;
+    const minutes = parts.find(p => p.type === 'minute').value;
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  }
 
   function escapeHTML(str) {
-  return String(str).replace(/[&<>"']/g, s => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'
-  }[s]));
-}
+    return String(str).replace(/[&<>"']/g, s => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'
+    }[s]));
+  }
 
-function renderMessageHTML(raw) {
-  if (!raw) return '';
-  let s = raw;
+  function renderMessageHTML(raw) {
+    if (!raw) return '';
+    let s = escapeHTML(raw);
+    const gifRegex = /(https?:\/\/[^\s<]+\.gif)/gi;
+    s = s.replace(gifRegex, '<img src="$1" alt="GIF" style="max-width:220px;border-radius:10px;">');
+    const urlRegex = /(https?:\/\/[^\s<]+)/gi;
+    s = s.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+    s = s.replace(/\n/g, '<br>');
+    s = s.replace(/:smile:/g, '😄').replace(/:thumbsup:/g, '👍').replace(/:drone:/g, '🚁');
+    return s;
+  }
 
-  // GIF odkazy
-  const gifRegex = /(https?:\/\/[^\s<]+\.gif)/gi;
-  s = s.replace(gifRegex, '<img src="$1" alt="GIF" style="max-width:220px;border-radius:10px;">');
-
-  // Ostatní odkazy (https://...) → klikací link
-  const urlRegex = /(https?:\/\/[^\s<]+)/gi;
-  s = s.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
-
-  // Nové řádky zachovat
-  s = s.replace(/\n/g, '<br>');
-
-  // Emoji shortcody
-  s = s.replace(/:smile:/g, '😄')
-       .replace(/:thumbsup:/g, '👍')
-       .replace(/:drone:/g, '🚁');
-
-  return s;
-}
-
-
-  // Function to display messages
   function displayMessages(messages) {
-  const messagesDiv = document.getElementById('messages');
-  messagesDiv.innerHTML = '';
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.innerHTML = '';
+    if (!messages || messages.length === 0) {
+      messagesDiv.innerHTML = '<div class="text-center text-muted">Žádné zprávy v této konverzaci</div>';
+      return;
+    }
+    messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    messages.forEach(message => {
+      const messageDiv = document.createElement('div');
+      
+      const isMyMessage = message.sender_id === loggedId;
+      const isPilotSender = message.sender_id === pilotId;
 
-  if (!messages || messages.length === 0) {
-    messagesDiv.innerHTML = '<div class="text-center text-muted">Žádné zprávy v této konverzaci</div>';
-    return;
+      messageDiv.classList.add(
+        'message',
+        isMyMessage ? 'my-message' : 'their-message',
+        isPilotSender ? 'pilot-message' : 'advertiser-message'
+      );
+
+      const formattedTime = formatDateTime(message.created_at);
+      const contentHTML = renderMessageHTML(message.message);
+
+      messageDiv.innerHTML = `
+        <div class="message-content">
+          <div class="message-role">${isPilotSender ? 'Pilot' : 'Inzerent'}</div>
+          <div class="message-body">${contentHTML}</div>
+          <div class="message-time">${formattedTime}</div>
+        </div>
+      `;
+      messagesDiv.appendChild(messageDiv);
+    });
+
+    if (window.twemoji && typeof twemoji.parse === 'function') {
+      twemoji.parse(messagesDiv, { folder: 'svg', ext: '.svg' });
+    }
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
   }
-
-  messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
-
-  messages.forEach(message => {
-    const messageDiv = document.createElement('div');
-
-    const isPilotSender = message.sender_email === pilotEmail;
-    const isMyMessage = message.sender_email === (isPilot ? pilotEmail : advertiserEmail);
-
-    messageDiv.classList.add(
-      'message',
-      isMyMessage ? 'my-message' : 'their-message',
-      isPilotSender ? 'pilot-message' : 'advertiser-message'
-    );
-
-    const formattedTime = formatDateTime(message.created_at);
-    const contentHTML = renderMessageHTML(message.message);
-
-messageDiv.innerHTML = `
-  <div class="message-content">
-    <div class="message-role">${isPilotSender ? 'Pilot' : 'Inzerent'}</div>
-    <div class="message-body">${contentHTML}</div>
-    <div class="message-time">${formattedTime}</div>
-  </div>
-`;
-
-
-    messagesDiv.appendChild(messageDiv);
-  });
-
-  // ⬇️ Vykreslení emoji (Twemoji)
-  if (window.twemoji && typeof twemoji.parse === 'function') {
-    twemoji.parse(messagesDiv, { folder: 'svg', ext: '.svg' });
-  }
-
-  messagesDiv.scrollTop = messagesDiv.scrollHeight;
-}
-
-
-  // Load messages initially and set up periodic refresh
-  loadMessages();
-  twemoji.parse(document.getElementById('messages'));
-
-  setInterval(loadMessages, 10000); // Refresh every 10 seconds
 });
-
-
-  </script>
+</script>
 </body>
 </html>

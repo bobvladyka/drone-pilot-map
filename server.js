@@ -1515,9 +1515,9 @@ app.get('/get-messages', async (req, res) => {
 
   try {
     const result = await pool.query(
-      `SELECT 
+       `SELECT 
          m.id, m.sender_id, m.message, 
-         timezone('Europe/Prague', m.created_at) AS created_at,
+         m.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Prague' AS created_at,
          CASE WHEN m.sender_id = c.pilot_id THEN p.email ELSE a.email END AS sender_email,
          CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
        FROM messages m
@@ -1565,6 +1565,46 @@ app.get('/unread-count', async (req, res) => {
   }
 });
 
+// Nový endpoint pro získání jména pilota podle ID
+app.get('/get-pilot-name-by-id', async (req, res) => {
+  const { id } = req.query;
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'Missing pilot ID' });
+  }
+
+  try {
+    const result = await pool.query('SELECT name FROM pilots WHERE id = $1', [id]);
+    if (result.rowCount > 0) {
+      res.json({ success: true, name: result.rows[0].name });
+    } else {
+      res.json({ success: false, message: 'Pilot not found' });
+    }
+  } catch (err) {
+    console.error("Error fetching pilot name by ID:", err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+// Nový endpoint pro získání jména inzerenta podle ID
+app.get('/get-advertiser-name-by-id', async (req, res) => {
+  const { id } = req.query;
+  if (!id) {
+    return res.status(400).json({ success: false, message: 'Missing advertiser ID' });
+  }
+
+  try {
+    const result = await pool.query('SELECT name FROM advertisers WHERE id = $1', [id]);
+    if (result.rowCount > 0) {
+      res.json({ success: true, name: result.rows[0].name });
+    } else {
+      res.json({ success: false, message: 'Advertiser not found' });
+    }
+  } catch (err) {
+    console.error("Error fetching advertiser name by ID:", err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
 // Vrátí DB id podle e-mailu a role (pilot|advertiser)
 app.get('/get-user-id', async (req, res) => {
   try {
@@ -1586,151 +1626,6 @@ app.get('/get-user-id', async (req, res) => {
   }
 });
 
-
-
-app.post('/send-message', async (req, res) => {
-  const { conversationId, senderEmail, message } = req.body;
-
-  try {
-    // 1) Účastníci konverzace
-    const convRes = await pool.query(
-      'SELECT pilot_id, advertiser_id FROM conversations WHERE id = $1',
-      [conversationId]
-    );
-    if (convRes.rowCount === 0) {
-      return res.status(404).json({ success: false, message: 'Konverzace nenalezena' });
-    }
-    const { pilot_id, advertiser_id } = convRes.rows[0];
-
-    // 2) Urči roli odesílatele
-    const pilotRes = await pool.query('SELECT id FROM pilots WHERE email = $1', [senderEmail]);
-    const advRes = await pool.query('SELECT id FROM advertisers WHERE email = $1', [senderEmail]);
-
-    let senderId = null;
-    if (pilotRes.rowCount > 0 && pilotRes.rows[0].id === pilot_id) {
-      senderId = pilot_id;
-    } else if (advRes.rowCount > 0 && advRes.rows[0].id === advertiser_id) {
-      senderId = advertiser_id;
-    } else {
-      return res.status(403).json({ success: false, message: 'Odesílatel do konverzace nepatří' });
-    }
-
-    // 3) Ulož zprávu
-    const inserted = await pool.query(
-      `INSERT INTO messages (conversation_id, sender_id, message)
-       VALUES ($1, $2, $3)
-       RETURNING id, sender_id, message, created_at`,
-      [conversationId, senderId, message]
-    );
-
-   // 4) Enriched zpráva
-const enriched = await pool.query(
-  `SELECT 
-     m.id, m.sender_id, m.message, timezone('Europe/Prague', m.created_at) AS created_at,
-     CASE WHEN m.sender_id = c.pilot_id THEN p.email ELSE a.email END AS sender_email,
-     CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
-   FROM messages m
-   JOIN conversations c ON c.id = m.conversation_id
-   JOIN pilots p ON p.id = c.pilot_id
-   JOIN advertisers a ON a.id = c.advertiser_id
-   WHERE m.id = $1`,
-  [inserted.rows[0].id]
-);
-
-    const msg = enriched.rows[0];
-
-    // 🔔 Naplánuj kontrolu za 1 hodinu – uvnitř scope, kde má přístup k msg
-    setTimeout(async () => {
-      try {
-        if (!msg) return;
-
-        if (msg.sender_role === 'advertiser') {
-          // Inzerent → kontrolujeme pilota
-          const r = await pool.query(`
-            SELECT p.email, p.name, cv.last_seen, m.created_at, a.name AS adv_name
-            FROM messages m
-            JOIN conversations c ON c.id = m.conversation_id
-            JOIN pilots p ON p.id = c.pilot_id
-            JOIN advertisers a ON a.id = c.advertiser_id
-            LEFT JOIN conversation_views cv
-              ON cv.conversation_id = c.id AND cv.user_id = p.id
-            WHERE m.id = $1
-          `, [msg.id]);
-
-          const { email, name, last_seen, created_at, adv_name } = r.rows[0];
-          if (!last_seen || new Date(last_seen) < new Date(created_at)) {
-            await transporter.sendMail({
-
-  from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-  to: email,
-  bcc: 'drboom@seznam.cz',
-  subject: `💬 Nová zpráva od inzerenta ${adv_name}`,
-  html: wrapEmailContent(`
-    <p>Dobrý den ${escapeHtml(name)},</p>
-    <p>máte novou zprávu od inzerenta <b>${escapeHtml(adv_name)}</b>.</p>
-    <p style="margin:24px 0;">
-      <a href="https://www.najdipilota.cz/moje-zpravy.html"
-         style="background:#0077B6;color:#fff;text-decoration:none;
-                padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
-        Otevřít konverzaci
-      </a>
-    </p>
-  `, "Nová zpráva")
-});
-
-            console.log(`📧 Notifikace pilotovi ${email} odeslána.`);
-          }
-
-        } else if (msg.sender_role === 'pilot') {
-          // Pilot → kontrolujeme inzerenta
-          const r = await pool.query(`
-            SELECT a.email, a.name, cv.last_seen, m.created_at, p.name AS pilot_name
-            FROM messages m
-            JOIN conversations c ON c.id = m.conversation_id
-            JOIN pilots p ON p.id = c.pilot_id
-            JOIN advertisers a ON a.id = c.advertiser_id
-            LEFT JOIN conversation_views cv
-              ON cv.conversation_id = c.id AND cv.user_id = a.id
-            WHERE m.id = $1
-          `, [msg.id]);
-
-          const { email, name, last_seen, created_at, pilot_name } = r.rows[0];
-          if (!last_seen || new Date(last_seen) < new Date(created_at)) {
-            await transporter.sendMail({
-
-  from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-  to: email,
-  bcc: 'drboom@seznam.cz',
-  subject: `💬 Nová zpráva od pilota ${pilot_name}`,
-  html: wrapEmailContent(`
-    <p>Dobrý den ${escapeHtml(name)},</p>
-    <p>máte novou zprávu od pilota <b>${escapeHtml(pilot_name)}</b>.</p>
-    <p style="margin:24px 0;">
-      <a href="https://www.najdipilota.cz/moje-zpravy.html"
-         style="background:#0077B6;color:#fff;text-decoration:none;
-                padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
-        Otevřít konverzaci
-      </a>
-    </p>
-  `, "Nová zpráva")
-});
-
-            console.log(`📧 Notifikace inzerentovi ${email} odeslána.`);
-          }
-        }
-      } catch (err) {
-        console.error("❌ Chyba při odložené notifikaci:", err);
-      }
-    }, 60 * 60 * 1000); // 1 hodina
-
-    // ✅ Odpověď klientovi
-    return res.json({ success: true, newMessage: msg });
-
-  } catch (err) {
-    console.error("Chyba při odesílání zprávy:", err);
-    res.status(500).json({ success: false, message: 'Chyba při odesílání zprávy' });
-  }
-});
 
 
 app.post('/create-conversation', async (req, res) => {
@@ -1842,6 +1737,7 @@ app.get('/blog/article/:id', async (req, res) => {
 
 
 // Get pilot's name by email
+/*
 app.get('/get-pilot-name', async (req, res) => {
   const { email } = req.query;
   
@@ -1861,9 +1757,10 @@ app.get('/get-pilot-name', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
-
+*/
 
 // Get all conversations for a pilot
+/*
 app.get('/get-pilot-conversations', async (req, res) => {
   const { pilotEmail } = req.query;
 
@@ -1939,6 +1836,8 @@ app.get('/get-pilot-conversations', async (req, res) => {
     res.status(500).json({ success: false, message: 'Server error' });
   }
 });
+*/
+
 
 // Mark conversation as read
 app.post('/mark-as-read', async (req, res) => {
@@ -2553,6 +2452,265 @@ app.get('/api/admin/demands', async (req, res) => {
   }
 });
 
+// =======================================================
+// NOVÉ ENDPOINTY PRO CHAT S POUŽITÍM ID
+// =======================================================
+
+// 1. Endpoint pro získání konverzací pilota podle ID
+app.get('/api/v2/pilot-conversations', async (req, res) => {
+  const { pilotId } = req.query; // Čteme ID z URL
+  if (!pilotId) {
+    return res.status(400).json({ success: false, message: 'Missing pilotId' });
+  }
+
+  try {
+    const conversations = await pool.query(`
+      SELECT 
+        c.id,
+        c.advertiser_id, -- Přidáno, aby se ID předalo na frontend
+        c.pilot_id,      -- Přidáno, aby se ID předalo na frontend
+        c.advertiser_table,
+        CASE
+          WHEN c.advertiser_table = 'advertisers' THEN a.email
+          ELSE p2.email
+        END AS advertiser_email,
+        CASE
+          WHEN c.advertiser_table = 'advertisers' THEN a.name
+          ELSE p2.name
+        END AS advertiser_name,
+
+        (SELECT message 
+         FROM messages 
+         WHERE conversation_id = c.id 
+         ORDER BY created_at DESC 
+         LIMIT 1) AS last_message,
+
+        (SELECT created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Prague'
+ FROM messages
+ WHERE conversation_id = c.id
+ ORDER BY created_at DESC
+ LIMIT 1) AS last_message_time,
+
+        EXISTS (
+          SELECT 1 FROM messages 
+          WHERE conversation_id = c.id 
+          AND sender_id != $1 
+          AND (created_at > (
+            SELECT last_seen 
+            FROM conversation_views 
+            WHERE conversation_id = c.id AND user_id = $1
+            LIMIT 1
+          ) OR NOT EXISTS (
+            SELECT 1 
+            FROM conversation_views 
+            WHERE conversation_id = c.id AND user_id = $1
+          ))
+        ) AS unread
+
+      FROM conversations c
+      JOIN pilots p ON c.pilot_id = p.id
+      LEFT JOIN advertisers a ON c.advertiser_table = 'advertisers' AND c.advertiser_id = a.id
+      LEFT JOIN pilots p2 ON c.advertiser_table = 'pilots' AND c.advertiser_id = p2.id
+      WHERE c.pilot_id = $1
+      ORDER BY last_message_time DESC NULLS LAST
+    `, [pilotId]);
+
+    res.json({
+      success: true,
+      conversations: conversations.rows
+    });
+  } catch (err) {
+    console.error("❌ Error fetching pilot conversations:", err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// 2. Endpoint pro získání konverzací inzerenta podle ID
+app.get('/api/v2/advertiser-conversations', async (req, res) => {
+  const { advertiserId } = req.query;
+  if (!advertiserId) {
+    return res.status(400).json({ success: false, message: 'Missing advertiserId' });
+  }
+
+  try {
+    const conversations = await pool.query(`
+      SELECT
+        c.id,
+        c.pilot_id,
+        c.advertiser_id,
+        p.name AS pilot_name,
+        p.email AS pilot_email,
+        (SELECT message
+         FROM messages
+         WHERE conversation_id = c.id
+         ORDER BY created_at DESC
+         LIMIT 1) AS last_message,
+        (SELECT created_at AT TIME ZONE 'UTC' AT TIME ZONE 'Europe/Prague'
+ FROM messages
+ WHERE conversation_id = c.id
+ ORDER BY created_at DESC
+ LIMIT 1) AS last_message_time,
+        EXISTS (
+          SELECT 1 FROM messages
+          WHERE conversation_id = c.id
+          AND sender_id != $1 AND created_at > COALESCE((SELECT last_seen FROM conversation_views WHERE conversation_id = c.id AND user_id = $1), '1970-01-01')
+        ) AS unread
+      FROM conversations c
+      JOIN pilots p ON c.pilot_id = p.id
+      WHERE c.advertiser_id = $1
+      ORDER BY last_message_time DESC NULLS LAST
+    `, [advertiserId]);
+
+    res.json({
+      success: true,
+      conversations: conversations.rows
+    });
+  } catch (err) {
+    console.error("❌ Error fetching advertiser conversations:", err);
+    res.status(500).json({ success: false, message: 'Server error' });
+  }
+});
+
+
+// 3. Endpoint pro odesílání zpráv pomocí ID
+app.post('/api/v2/send-message', async (req, res) => {
+  const { conversationId, senderId, message } = req.body;
+
+  if (!conversationId || !senderId || !message) {
+      return res.status(400).json({ success: false, message: 'Missing required parameters' });
+  }
+
+  try {
+    // 1) Účastníci konverzace
+    const convRes = await pool.query(
+      'SELECT pilot_id, advertiser_id FROM conversations WHERE id = $1',
+      [conversationId]
+    );
+    if (convRes.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Konverzace nenalezena' });
+    }
+    const { pilot_id, advertiser_id } = convRes.rows[0];
+
+    // Ověření, že odesílatel patří do konverzace
+    if (senderId != pilot_id && senderId != advertiser_id) {
+        return res.status(403).json({ success: false, message: 'Odesílatel do konverzace nepatří' });
+    }
+
+    // 2) Ulož zprávu
+    const inserted = await pool.query(
+      `INSERT INTO messages (conversation_id, sender_id, message)
+       VALUES ($1, $2, $3)
+       RETURNING id, sender_id, message, created_at`,
+      [conversationId, senderId, message]
+    );
+    const newMessage = inserted.rows[0];
+
+    // 3) Enriched zpráva pro logiku e-mailu (vrací data obou stran)
+    const enriched = await pool.query(
+      `SELECT 
+         m.id, m.sender_id, m.message, m.created_at,
+         p.email AS pilot_email, p.name AS pilot_name,
+         a.email AS adv_email, a.name AS adv_name,
+         CASE WHEN m.sender_id = c.pilot_id THEN 'pilot' ELSE 'advertiser' END AS sender_role
+       FROM messages m
+       JOIN conversations c ON c.id = m.conversation_id
+       LEFT JOIN pilots p ON p.id = c.pilot_id
+       LEFT JOIN advertisers a ON a.id = c.advertiser_id
+       WHERE m.id = $1`,
+      [newMessage.id]
+    );
+    const msg = enriched.rows[0];
+
+    // 🔔 Naplánuj kontrolu za 1 hodinu (logika notifikací)
+    setTimeout(async () => {
+      try {
+        if (!msg) return;
+
+        const isPilotSender = msg.sender_role === 'pilot';
+        const receiverId = isPilotSender ? msg.adv_email : msg.pilot_email;
+
+        // Kontrola, zda příjemce zprávu neviděl
+        const r = await pool.query(`
+          SELECT cv.last_seen
+          FROM conversation_views cv
+          WHERE cv.conversation_id = $1 AND cv.user_id = $2
+        `, [conversationId, isPilotSender ? advertiser_id : pilot_id]);
+        
+        const last_seen = r.rows[0]?.last_seen;
+        const created_at = new Date(msg.created_at);
+        
+        // Posílej notifikaci, pokud nebyla viděna nebo je novější
+        if (!last_seen || new Date(last_seen) < created_at) {
+          const receiverName = isPilotSender ? msg.adv_name : msg.pilot_name;
+          const senderName = isPilotSender ? msg.pilot_name : msg.adv_name;
+          const subject = `💬 Nová zpráva od ${senderName}`;
+          const link = 'https://www.najdipilota.cz/moje-zpravy.html';
+
+          await transporter.sendMail({
+            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+            to: receiverId,
+            bcc: 'drboom@seznam.cz',
+            subject: subject,
+            html: wrapEmailContent(`
+              <p>Dobrý den ${escapeHtml(receiverName)},</p>
+              <p>máte novou zprávu od <b>${escapeHtml(senderName)}</b>.</p>
+              <p style="margin:24px 0;">
+                <a href="${link}"
+                   style="background:#0077B6;color:#fff;text-decoration:none;
+                          padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+                  Otevřít konverzaci
+                </a>
+              </p>
+            `, "Nová zpráva")
+          });
+
+          console.log(`📧 Notifikace odeslána na: ${receiverId}`);
+        }
+
+      } catch (err) {
+        console.error("❌ Chyba při odložené notifikaci (v2):", err);
+      }
+    }, 60 * 60 * 1000); // 1 hodina
+
+    res.status(201).json({ success: true, newMessage: newMessage });
+
+  } catch (err) {
+    console.error("Chyba při odesílání zprávy:", err);
+    res.status(500).json({ success: false, message: 'Chyba při odesílání zprávy' });
+  }
+});
+
+app.post('/api/v2/create-conversation', async (req, res) => {
+  const { pilotId, advertiserId, advertiserTable } = req.body;
+
+  try {
+    // Zkontroluj, zda konverzace už neexistuje
+    const existingConversation = await pool.query(
+      `SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 AND advertiser_table = $3 LIMIT 1`,
+      [pilotId, advertiserId, advertiserTable]
+    );
+
+    let conversationId;
+    if (existingConversation.rowCount > 0) {
+      conversationId = existingConversation.rows[0].id;
+    } else {
+      const conversationResult = await pool.query(
+        `INSERT INTO conversations (pilot_id, advertiser_id, advertiser_table)
+         VALUES ($1, $2, $3)
+         RETURNING id`,
+        [pilotId, advertiserId, advertiserTable]
+      );
+      conversationId = conversationResult.rows[0].id;
+    }
+
+    res.json({ success: true, conversationId });
+
+  } catch (err) {
+    console.error("❌ Chyba při vytváření konverzace:", err);
+    res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
+  }
+});
 
 app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);

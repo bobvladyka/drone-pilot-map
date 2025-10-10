@@ -2349,6 +2349,8 @@ app.delete('/poptavky/:id', async (req, res) => {
 });
 
 
+
+
 app.get('/send-expiry-emails', async (req, res) => {
   try {
     const result = await pool.query(`
@@ -2530,6 +2532,28 @@ app.use((err, req, res, next) => {
     console.error('❌ Chyba:', err.stack);
     res.status(500).json({ error: 'Interní chyba serveru' });
 });
+
+// ✅ Admin výpis poptávek (všechny stavy)
+app.get('/api/admin/demands', async (req, res) => {
+  try {
+    // Ověření přihlášení nebo IP adresy (máš už middleware allowLocalhostOnly)
+    // Použij, pokud chceš přístup omezit:
+    // if (!req.session.admin && !allowLocalhost(req)) return res.sendStatus(403);
+
+    const { rows } = await pool.query(`
+      SELECT id, title, description, location, region, budget, deadline,
+             advertiser_email, created_at, status, satisfaction, satisfaction_note
+      FROM demands
+      ORDER BY created_at DESC;
+    `);
+    res.json(rows);
+  } catch (err) {
+    console.error('❌ Chyba při načítání všech poptávek:', err);
+    res.status(500).json({ error: 'Chyba při načítání poptávek.' });
+  }
+});
+
+
 app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);
 });
@@ -2921,34 +2945,79 @@ app.get('/send-email-only-1m', async (req, res) => {
 });
 
 
+// Spouští se každý den v 8:00
 cron.schedule('0 8 * * *', async () => {
-  console.log('📬 Kontrola poptávek starších 10 dní...');
-  const { rows } = await pool.query(`
-    SELECT id, title, advertiser_email, created_at
-    FROM demands
-    WHERE status = 'Zpracovává se'
-      AND created_at < NOW() - INTERVAL '10 days'
-  `);
+  console.log('📬 Denní kontrola poptávek...');
 
-  for (const d of rows) {
-    const html = wrapEmailContent(`
-      <h2>🕓 Jak to vypadá s vaší poptávkou?</h2>
-      <p>Poptávka <strong>${escapeHtml(d.title)}</strong> byla zveřejněna před více než 10 dny.</p>
-      <p>Pokud je již vyřešená, prosím označte ji jako <strong>Hotovo</strong> v rozhraní NajdiPilota.cz.</p>
-      <p><a href="https://www.najdipilota.cz/poptavky.html" 
-        style="background:#0077B6;color:#fff;padding:10px 18px;text-decoration:none;border-radius:6px;">Otevřít poptávky</a></p>
-    `, 'NajdiPilota.cz – Stav poptávky');
+  try {
+    // === 1️⃣ Připomenutí po 5 dnech ===
+    const remindDays = 5;
+    const { rows: reminders } = await pool.query(`
+      SELECT id, title, advertiser_email, created_at
+      FROM demands
+      WHERE status = 'Zpracovává se'
+        AND created_at < NOW() - INTERVAL '${remindDays} days'
+        AND (last_reminder_at IS NULL OR last_reminder_at < NOW() - INTERVAL '${remindDays} days')
+    `);
 
-    await transporter.sendMail({
-      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-      to: d.advertiser_email,
-      subject: 'Jak to vypadá s vaší poptávkou?',
-      html
-    });
+    for (const d of reminders) {
+      const html = wrapEmailContent(`
+        <h2>🕓 Jak to vypadá s vaší poptávkou?</h2>
+        <p>Poptávka <strong>${escapeHtml(d.title)}</strong> byla zveřejněna před více než ${remindDays} dny.</p>
+        <p>Pokud je již vyřešená, prosím označte ji jako <strong>Hotovo</strong> v rozhraní NajdiPilota.cz.</p>
+        <p><a href="https://www.najdipilota.cz/poptavky.html"
+          style="background:#0077B6;color:#fff;padding:10px 18px;text-decoration:none;border-radius:6px;">Otevřít poptávky</a></p>
+      `, 'NajdiPilota.cz – Stav poptávky');
 
-    console.log(`📨 Mail odeslán inzerentovi: ${d.advertiser_email}`);
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: d.advertiser_email,
+        subject: 'Jak to vypadá s vaší poptávkou?',
+        html
+      });
+
+      await pool.query('UPDATE demands SET last_reminder_at = NOW() WHERE id = $1', [d.id]);
+      console.log(`📨 Připomínka odeslána: ${d.advertiser_email}`);
+    }
+
+    // === 2️⃣ Automatické označení jako neaktivní po 30 dnech ===
+    const inactiveDays = 30;
+    const { rows: expired } = await pool.query(`
+      UPDATE demands
+      SET status = 'Neaktivní'
+      WHERE status = 'Zpracovává se'
+        AND created_at < NOW() - INTERVAL '${inactiveDays} days'
+      RETURNING id, title, advertiser_email, created_at;
+    `);
+
+    // === 3️⃣ Odeslat přehled adminovi ===
+    if (expired.length > 0) {
+      const htmlList = expired
+        .map(d => `<li>${escapeHtml(d.title)} – ${d.advertiser_email} (vytvořeno ${new Date(d.created_at).toLocaleDateString('cs-CZ')})</li>`)
+        .join('');
+
+      const html = wrapEmailContent(`
+        <h2>🗂 Automaticky uzavřené poptávky (starší než ${inactiveDays} dní)</h2>
+        <ul>${htmlList}</ul>
+      `, 'NajdiPilota.cz – Uzavřené poptávky');
+
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: 'admin@najdipilota.cz',
+        subject: `Uzavřené poptávky (${expired.length}) – starší než ${inactiveDays} dní`,
+        html
+      });
+
+      console.log(`📋 Report odeslán administrátorovi (${expired.length} položek).`);
+    } else {
+      console.log('✅ Žádné poptávky k uzavření.');
+    }
+
+  } catch (err) {
+    console.error('❌ Chyba při kontrole poptávek:', err);
   }
 });
+
 
 
 

@@ -27,7 +27,40 @@
   <style>
     html { scroll-behavior: smooth; }
     .navbar .btn + .btn { margin-left: .5rem; }
-  </style>
+
+#scroll-up-btn {
+  position: fixed;
+  bottom: 30px;
+  right: 30px;
+  background-color: #f8f9fa;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  opacity: 0;
+  visibility: hidden;
+  z-index: 9999;
+}
+#scroll-up-btn i {
+  font-size: 20px;
+  color: #333;
+}
+#scroll-up-btn.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+#scroll-up-btn:hover {
+  background-color: #ffc107;
+  border-color: #ffc107;
+}
+</style>
 </head>
 <body>
 
@@ -151,27 +184,35 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
-  const map = L.map('map').setView([49.8, 15.5], 7);
-  const fakeNames = [
-    "Rychlý Sysel", "Létající Brambor", "Dronislav Nebešťák", "Turbo Rákosník", "Bezpilotní Emil", "Pískající Páv", "Pilotka Haluz", "František Vrtulník", "Levý Joystick", "Kapitán Stín", "Dr. Rotor", "Pan Točivý", "Letuška Landová", "Střemhlavý Franta", "Nadzvukový Ježek", "Létající Čenda", "Rotorová Róza", "Šumící Fanda", "Bezpečný Béďa", "Maják z Oblak", "Droný Karel", "Letec Šmatla", "Startér Staník", "Přistávací Pepa", "Helikoptérník Honza", "Navigátor Novák", "Senzorová Soňa", "Pán Mraků", "Letící Lojza", "Kamera Kamil", "Rotor Ríša", "Výškoměr Vašek", "Vzdušný Vojta", "Tichý Šumák", "Drnčivý Dan", "Mlha Milda", "Optika Otakar", "Ztracený Signál", "Mistr Gimbal", "Anténa Anička", "Vrtulka Věrka", "Letmo Lída", "Flyboy Felix", "Vzdušná Víla", "Navigační Norbert", "Modrá Letka", "Křídlatý Karel", "Polní Přízrak", "Mapový Mirek", "Kličkující Kuba"
-  ];
+    const map = L.map('map').setView([49.8, 15.5], 7);
+    const fakeNames = [
+        "Rychlý Sysel", "Létající Brambor", "Dronislav Nebešťák", "Turbo Rákosník", "Bezpilotní Emil", "Pískající Páv", "Pilotka Haluz", "František Vrtulník", "Levý Joystick", "Kapitán Stín", "Dr. Rotor", "Pan Točivý", "Letuška Landová", "Střemhlavý Franta", "Nadzvukový Ježek", "Létající Čenda", "Rotorová Róza", "Šumící Fanda", "Bezpečný Béďa", "Maják z Oblak", "Droný Karel", "Letec Šmatla", "Startér Staník", "Přistávací Pepa", "Helikoptérník Honza", "Navigátor Novák", "Senzorová Soňa", "Pán Mraků", "Letící Lojza", "Kamera Kamil", "Rotor Ríša", "Výškoměr Vašek", "Vzdušný Vojta", "Tichý Šumák", "Drnčivý Dan", "Mlha Milda", "Optika Otakar", "Ztracený Signál", "Mistr Gimbal", "Anténa Anička", "Vrtulka Věrka", "Letmo Lída", "Flyboy Felix", "Vzdušná Víla", "Navigační Norbert", "Modrá Letka", "Křídlatý Karel", "Polní Přízrak", "Mapový Mirek", "Kličkující Kuba"
+    ];
 
-  function normalizeConsent(v) {
-    if (typeof v === 'boolean') return v;
-    const s = String(v ?? '').trim().toLowerCase();
-    return s === 'true' || s === 't' || s === '1' || s === 'ano' || s === 'yes';
-  }
+    function normalizeConsent(v) {
+        if (typeof v === 'boolean') return v;
+        const s = String(v ?? '').trim().toLowerCase();
+        return s === 'true' || s === 't' || s === '1' || s === 'ano' || s === 'yes';
+    }
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '&copy; OpenStreetMap',
-    maxZoom: 18
-  }).addTo(map);
-  let allPilots = [];
-  const markers = L.markerClusterGroup();
-  const pilotCircles = [];
-  let loggedInzerentId = null;
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap',
+        maxZoom: 18
+    }).addTo(map);
 
-  // Funkce pro získání ID inzerenta a uložení do localStorage
+    let allPilots = [];
+    const markers = L.markerClusterGroup();
+    let pilotCircles = [];
+    let loggedInzerentId = null;
+
+    const filterSpecialization = document.getElementById('filter-specialization');
+    const filterRegion = document.getElementById('filter-region');
+    const filterAvailability = document.getElementById('filter-availability');
+    const filterVolunteer = document.getElementById('filter-volunteer');
+    const filterVerified = document.getElementById('filter-verified');
+    const resetFiltersBtn = document.getElementById('reset-filters-btn');
+    const centerMapBtn = document.getElementById('center-map-btn');
+
     async function getAdvertiserIdAndLoadMap() {
         const advertiserEmail = localStorage.getItem("inzerentEmail");
         if (advertiserEmail) {
@@ -199,271 +240,374 @@ document.addEventListener('DOMContentLoaded', async function () {
         await loadPilots();
     }
 
-    // Funkce pro načtení pilotů a vykreslení na mapu
     async function loadPilots() {
         try {
             const res = await fetch('/pilots');
             allPilots = await res.json();
-            markers.clearLayers();
-            pilotCircles.length = 0;
-
-            allPilots.forEach(p => {
-                if (p.visible !== "ANO") return;
-
-                if (p.latitude != null && p.longitude != null) {
-                    let circleOptions = {
-                        radius: 2000,
-                        fillOpacity: 0.2,
-                        color: p.available === "ANO" ? 'green' : 'gray',
-                        fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
-                        weight: 1
-                    };
-
-                    if (p.type_account === "Free") {
-                        circleOptions.color = 'lightgreen';
-                        circleOptions.fillOpacity = 0.2;
-                    } else if (p.type_account === "Basic") {
-                        circleOptions.color = 'darkgreen';
-                        circleOptions.fillOpacity = 0.5;
-                    } else if (p.type_account === "Premium") {
-                        circleOptions.color = 'purple';
-                        circleOptions.fillColor = 'purple';
-                        circleOptions.fillOpacity = 0.8;
-                        circleOptions.radius = 10000;
-                        circleOptions.weight = 3;
-                    }
-
-                    const circle = L.circle([p.latitude, p.longitude], circleOptions);
-                    
-                    // Vytvoření popup okna
-                    const popupContent = document.createElement('div');
-                    popupContent.className = 'pilot-card';
-
-                    // Vytvoření tlačítka "Napsat pilotovi"
-const chatBtn = document.createElement('button');
-chatBtn.className = 'btn btn-sm btn-primary mt-2';
-chatBtn.textContent = 'Napsat pilotovi';
-chatBtn.dataset.pilotId = p.id;  // Přidání ID pilota
-chatBtn.dataset.advertiserId = loggedInzerentId;
-   
-                    chatBtn.addEventListener('click', () => {
-  const pilotId = chatBtn.dataset.pilotId;
-  const advertiserId = chatBtn.dataset.advertiserId;
-
-  // Předání dat do URL pro chat
-  window.location.href = `/chat.html?advertiser=${advertiserId}&pilot=${pilotId}`;
-});
-
-// Přidání tlačítka do popupu
-popupContent.appendChild(chatBtn);
-
-                    const loggedIn = localStorage.getItem("inzerentEmail");
-                    const isAvailable = p.available === "ANO";
-                    const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-                    const hasBuildBadge = p.id && Number(p.id) <= 80;
-                    const buildBadge = hasBuildBadge ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">` : "";
-                    const pilotNameWithBadge = `${p.name || ''}${buildBadge}`;
-                    const fakeNameWithBadge = `${fakeName}${buildBadge}`;
-                    const hasPublicConsent = normalizeConsent(p.hasPublicConsent ?? p.granted ?? false);
-
-                    let html = '';
-                    if (!hasPublicConsent) {
-                        html = `
-                            <div class="pilot-card">
-                                <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
-                                <div class="d-flex flex-wrap gap-2 mb-2">
-                                    ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Dobrovolník</span>` : ''}
-                                    <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
-                                </div>
-                                ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-                            </div>
-                        `;
-                    } else if (isAvailable && loggedIn) {
-                        if (p.type_account === "Free") {
-                            html = `
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
-                                    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
-                                </div>
-                                ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-                                ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-                                ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-                            `;
-                        } else if (p.type_account === "Basic") {
-                            html = `
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
-                                    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
-                                </div>
-                                ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-                                ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-                                ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
-                                ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-                                ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-                                ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-                                <div class="mt-3">
-                                    <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100 contact-pilot-btn" data-pilot-id="${p.id}">
-                                        ✉️ Napsat pilotovi
-                                    </button>
-                                </div>
-                            `;
-                        } else if (p.type_account === "Premium") {
-                            html = `
-                                <div class="d-flex justify-content-between align-items-center mb-1">
-                                    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
-                                    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
-                                </div>
-                                ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-                                ${p.email ? `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>` : ''}
-                                ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
-                                ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-                                ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-                                ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-                                ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-                            `;
-                        }
-                    } else if (!isAvailable) {
-                        html = `
-                            <h3><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
-                            ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-                            <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
-                            ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-                        `;
-                    } else {
-                        html = `
-                            <div class="d-flex justify-content-between align-items-center mb-1">
-                                <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
-                                ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
-                            </div>
-                            ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-                            <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
-                            ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
-                            ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-                            ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-                            <p class="text-muted"><em>Přihlaste se jako inzerent pro více informací o pilotovi.</em></p>
-                        `;
-                    }
-                    popupContent.innerHTML = html;
-                    
-                    // Napojení event listeneru uvnitř popup okna
-                    const contactButton = popupContent.querySelector('.contact-pilot-btn');
-                    if (contactButton) {
-                        contactButton.addEventListener('click', () => {
-                            const pilotId = contactButton.dataset.pilotId;
-                            contactPilot(pilotId);
-                        });
-                    }
-
-                    circle.bindPopup(popupContent);
-                    markers.addLayer(circle);
-                    pilotCircles.push(circle);
-                }
-            });
-            
-            map.addLayer(markers);
-            if (markers.getBounds().isValid()) {
-                map.fitBounds(markers.getBounds(), { padding: [30, 30] });
-            }
-
+            populateSpecializations();
+            applyFilters();
         } catch (error) {
             console.error("Chyba při načítání pilotů:", error);
             alert('Nepodařilo se načíst data pilotů.');
         }
     }
 
-    // Funkce pro kontaktování pilota (s ID)
-    async function contactPilot(pilotId) {
-        const advertiserId = localStorage.getItem('advertiserId');
-        const advertiserEmail = localStorage.getItem('inzerentEmail');
+    function populateSpecializations() {
+  const select = document.getElementById('filter-specialization');
+  if (!select) return;
 
-        if (!advertiserEmail || !advertiserId) {
-            alert("Musíte být přihlášen jako inzerent.");
-            return;
-        }
+  const specsSet = new Set();
+  allPilots.forEach(p => {
+    if (Array.isArray(p.specializations)) {
+      p.specializations.forEach(s => s && specsSet.add(s.trim()));
+    } else if (typeof p.specialization === 'string' && p.specialization.trim() !== '') {
+      p.specialization.split(',').forEach(s => specsSet.add(s.trim()));
+    }
+  });
 
-        if (!pilotId) {
-            alert("Chyba: Nelze najít kontaktní údaje pilota.");
-            return;
-        }
-        
-        try {
-            const createConvRes = await fetch('/api/v2/create-conversation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    pilotId: pilotId,
-                    advertiserId: advertiserId,
-                    advertiserTable: 'advertisers'
-                }),
-                credentials: 'include'
-            });
-            
-            const createConvData = await createConvRes.json();
-            if (createConvData.success) {
-                const chatUrl = `chat.html?conversationId=${createConvData.conversationId}&pilotId=${pilotId}&advertiserId=${advertiserId}`;
-                window.location.href = chatUrl;
-            } else {
-                alert('Nepodařilo se vytvořit konverzaci: ' + createConvData.message);
+  const specs = Array.from(specsSet).sort((a, b) => a.localeCompare(b, 'cs'));
+  select.innerHTML = '<option value="">Všechny specializace</option>';
+  specs.forEach(spec => {
+    const opt = document.createElement('option');
+    opt.value = spec;
+    opt.textContent = spec;
+    select.appendChild(opt);
+  });
+}
+
+
+    function applyFilters() {
+  const selectedSpec = filterSpecialization.value;
+  const selectedRegion = filterRegion.value;
+  const selectedAvailability = filterAvailability.value;
+  const selectedVolunteer = filterVolunteer.value;
+  const selectedVerified = filterVerified.value;
+
+  const filteredPilots = allPilots.filter(p => {
+    // ✅ logika specializací
+    let pilotSpecs = [];
+    if (Array.isArray(p.specializations)) {
+      pilotSpecs = p.specializations.map(s => s.trim());
+    } else if (typeof p.specialization === 'string') {
+      pilotSpecs = p.specialization.split(',').map(s => s.trim());
+    }
+
+    const matchesSpec = !selectedSpec || pilotSpecs.includes(selectedSpec);
+
+    const matchesRegion = !selectedRegion || p.region === selectedRegion;
+    const matchesAvailability = !selectedAvailability || p.available === selectedAvailability;
+    const matchesVolunteer = !selectedVolunteer || p.volunteer === selectedVolunteer;
+    const isVerified = p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16;
+    const matchesVerified = !selectedVerified ||
+      (selectedVerified === 'YES' && isVerified) ||
+      (selectedVerified === 'NO' && !isVerified);
+
+    return matchesSpec && matchesRegion && matchesAvailability && matchesVolunteer && matchesVerified;
+  });
+
+  drawPilots(filteredPilots);
+}
+
+
+    function drawPilots(pilots) {
+        markers.clearLayers();
+        pilotCircles = [];
+
+        pilots.forEach(p => {
+            if (p.visible !== "ANO" || !p.latitude || !p.longitude) return;
+
+            let circleOptions = {
+                radius: 2000,
+                fillOpacity: 0.2,
+                color: p.available === "ANO" ? 'green' : 'gray',
+                fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
+                weight: 1
+            };
+
+            if (p.type_account === "Free") {
+                circleOptions.color = 'lightgreen';
+                circleOptions.fillOpacity = 0.2;
+            } else if (p.type_account === "Basic") {
+                circleOptions.color = 'darkgreen';
+                circleOptions.fillOpacity = 0.5;
+            } else if (p.type_account === "Premium") {
+                circleOptions.color = 'purple';
+                circleOptions.fillColor = 'purple';
+                circleOptions.fillOpacity = 0.8;
+                circleOptions.radius = 10000;
+                circleOptions.weight = 3;
             }
-        } catch (error) {
-            console.error("Chyba při vytváření konverzace:", error);
-            alert('Došlo k chybě při vytváření konverzace.');
+
+            const circle = L.circle([p.latitude, p.longitude], circleOptions);
+            const popupContent = createPopupContent(p);
+            
+            circle.bindPopup(popupContent);
+            markers.addLayer(circle);
+            pilotCircles.push(circle);
+        });
+
+        map.addLayer(markers);
+        if (markers.getBounds().isValid()) {
+            map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+        } else {
+            map.setView([49.8, 15.5], 7); // Default view if no pilots are found
         }
     }
 
-  // Inzerent login a banner
-  const advertiserEmail = localStorage.getItem("inzerentEmail");
-  const advertiserId = localStorage.getItem("inzerentId");
-  const banner = document.getElementById("advertiser-banner");
+   function createPopupContent(p) {
+  const popupContent = document.createElement('div');
+  popupContent.className = 'pilot-card';
 
-  if (advertiserEmail && advertiserId && banner) {
-    document.getElementById("advertiser-text").innerHTML = `Přihlášen jako: <strong>${advertiserEmail}</strong>`;
-    banner.style.display = "flex";
-    const logoutBtn = document.getElementById("logout-btn");
-    logoutBtn.addEventListener("click", () => {
-      localStorage.removeItem("inzerentId");
-      localStorage.removeItem("inzerentEmail");
-      window.location.href = "/inzerent.html";
-    });
-  } else {
-    console.log("❌ Inzerent není přihlášen nebo chybí ID");
+  const loggedIn = localStorage.getItem("inzerentEmail");
+  const isAvailable = p.available === "ANO";
+  const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+  const hasBuildBadge = p.id && Number(p.id) <= 80;
+  const buildBadge = hasBuildBadge
+    ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+    : "";
+  const pilotNameWithBadge = `${p.name || 'Pilot bez jména'}${buildBadge}`;
+  const fakeNameWithBadge = `${fakeName}${buildBadge}`;
+  const hasPublicConsent = normalizeConsent(p.hasPublicConsent ?? p.granted ?? false);
+  const isVerified =
+    p.registrationnumber &&
+    p.registrationnumber.startsWith("CZE") &&
+    p.registrationnumber.length === 16;
+
+  let html = '';
+
+  // --- GDPR nesouhlas ---
+  if (!hasPublicConsent) {
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Dobrovolník</span>` : ''}
+        <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
+      </div>
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
   }
 
-  // Zavolání inicializační funkce
-  getAdvertiserIdAndLoadMap();
+  // --- Nedostupný pilot ---
+  else if (!isAvailable) {
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+      </div>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+      <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  }
 
-  // Přidání posluchače události pro změnu zoomu
-  map.on('zoomend', () => {
-    const zoom = map.getZoom();
-    pilotCircles.forEach(circle => {
-      const maxZoom = 14;
-      const minZoom = 7;
-      const minRadius = 100;
-      const maxRadius = 2000;
+  // --- Přihlášený inzerent (hlavní logika) ---
+  else if (loggedIn) {
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+      </div>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+    `;
 
-      // Nastavení rádiusu pro různé typy účtů
-      let accountMinRadius = minRadius;
-      let accountMaxRadius = maxRadius;
+    // === BASIC účet ===
+    if (p.type_account === "Basic") {
+      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+      if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
 
-      if (circle.options.fillColor === 'darkgreen') { // Basic účet (tmavě zelený)
-        accountMinRadius = 100;   // Min rádius pro Basic
-        accountMaxRadius = 4000;  // Max rádius pro Basic
-      } else if (circle.options.fillColor === 'purple') { // Premium účet (fialový)
-        accountMinRadius = 100;  // Min rádius pro Premium
-        accountMaxRadius = 10000; // Max rádius pro Premium
-      }
+      html += `
+        <div class="mt-3">
+          <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.id}')">
+            ✉️ Napsat pilotovi
+          </button>
+        </div>
+      `;
+    }
 
-      const ratio = (zoom - minZoom) / (maxZoom - minZoom);
-      const radius = Math.max(accountMinRadius, accountMaxRadius - (accountMaxRadius - accountMinRadius) * ratio);
-      circle.setRadius(radius);
+    // === PREMIUM účet ===
+    else if (p.type_account === "Premium") {
+      html += `
+        ${p.email ? `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>` : ''}
+        ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+        ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+        ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+        ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+        ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+        ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+      `;
+    }
 
-      const opacity = 0.2 + 0.2 * (1 - ratio);
-      circle.setStyle({ fillOpacity: opacity });
+    // === FREE účet – jen stručné info ===
+    else {
+      html += `
+        ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+        ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+        
+      `;
+    }
+  }
+
+  // --- Nepřihlášený inzerent ---
+  else {
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+      </div>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+      <p class="text-muted"><em>Přihlaste se jako inzerent pro více informací o pilotovi.</em></p>
+    `;
+  }
+
+  popupContent.innerHTML = html;
+  return popupContent;
+}
+
+
+    // Event Listeners for all filters
+    document.querySelectorAll('.filter-section select').forEach(select => {
+        select.addEventListener('change', applyFilters);
     });
-  });
-});
-</script>
 
+    resetFiltersBtn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-section select').forEach(select => select.value = '');
+        applyFilters();
+    });
+
+    centerMapBtn.addEventListener('click', () => {
+  // ✅ Nejprve vycentruj mapu podle pilotů
+  if (markers.getBounds().isValid()) {
+    map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+  } else {
+    map.setView([49.8, 15.5], 7);
+  }
+
+
+  // ✅ Potom plynule "nascrolluj" dolů na mapu
+  const mapSection = document.getElementById('sekce-mapa');
+  if (mapSection) {
+    mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+});
+
+// === ŠIPKA NAHORU ===
+const scrollUpBtn = document.getElementById('scroll-up-btn');
+
+window.addEventListener('scroll', () => {
+  const mapSection = document.getElementById('sekce-mapa');
+  if (!mapSection) return;
+
+  const rect = mapSection.getBoundingClientRect();
+  const isMapVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 100;
+
+  if (isMapVisible) {
+    scrollUpBtn.classList.add('show');
+  } else {
+    scrollUpBtn.classList.remove('show');
+  }
+});
+
+scrollUpBtn.addEventListener('click', () => {
+  // Plynulý návrat nahoru (nad mapu)
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+});
+
+
+
+    map.on('zoomend', () => {
+        const zoom = map.getZoom();
+        const maxZoom = 14;
+        const minZoom = 7;
+        
+        pilotCircles.forEach(circle => {
+            let accountMinRadius = 100;
+            let accountMaxRadius = 2000;
+
+            if (circle.options.fillColor === 'darkgreen') {
+                accountMaxRadius = 4000;
+            } else if (circle.options.fillColor === 'purple') {
+                accountMaxRadius = 10000;
+            }
+
+            const ratio = Math.min(1, Math.max(0, (zoom - minZoom) / (maxZoom - minZoom)));
+            const radius = accountMaxRadius - (accountMaxRadius - accountMinRadius) * ratio;
+            circle.setRadius(radius);
+            
+            const opacity = 0.2 + 0.2 * (1 - ratio);
+            circle.setStyle({ fillOpacity: opacity });
+        });
+    });
+
+    getAdvertiserIdAndLoadMap();
+
+    // Inzerent login a banner
+    const advertiserEmail = localStorage.getItem("inzerentEmail");
+    const advertiserId = localStorage.getItem("advertiserId"); // Corrected to use 'advertiserId'
+    const banner = document.getElementById("advertiser-banner");
+
+    if (advertiserEmail && advertiserId && banner) {
+        document.getElementById("advertiser-text").innerHTML = `Přihlášen jako: <strong>${advertiserEmail}</strong>`;
+        banner.style.display = "flex";
+        const logoutBtn = document.getElementById("logout-btn");
+        logoutBtn.addEventListener("click", () => {
+            localStorage.removeItem("inzerentId");
+            localStorage.removeItem("inzerentEmail");
+            localStorage.removeItem("advertiserId"); // Clear advertiserId too
+            window.location.href = "/inzerent.html";
+        });
+    } else {
+        console.log("❌ Inzerent není přihlášen nebo chybí ID");
+        if(banner) banner.style.display = "none";
+    }
+});
+
+async function contactPilot(pilotId) {
+  const advertiserId = localStorage.getItem('advertiserId');
+  const advertiserEmail = localStorage.getItem('inzerentEmail');
+
+  if (!advertiserEmail || !advertiserId) {
+    alert("Musíte být přihlášen jako inzerent.");
+    return;
+  }
+
+  try {
+    const createConvRes = await fetch('/api/v2/create-conversation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pilotId: pilotId,
+        advertiserId: advertiserId,
+        advertiserTable: 'advertisers'
+      }),
+      credentials: 'include'
+    });
+
+    const createConvData = await createConvRes.json();
+
+    if (createConvData.success && createConvData.conversationId) {
+      const chatUrl = `chat.html?conversationId=${createConvData.conversationId}&pilotId=${pilotId}&advertiserId=${advertiserId}`;
+      window.location.href = chatUrl;
+    } else {
+      alert('Nepodařilo se vytvořit konverzaci: ' + (createConvData.message || 'Neznámá chyba.'));
+    }
+  } catch (error) {
+    console.error("Chyba při vytváření konverzace:", error);
+    alert('Došlo k chybě při vytváření konverzace.');
+  }
+}
+
+
+
+</script>
 <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
   <div class="container">
     <div class="row gy-3 justify-content-between">
@@ -512,5 +656,14 @@ popupContent.appendChild(chatBtn);
     document.getElementById("year").textContent = new Date().getFullYear();
   });
 </script>
+
+<button id="scroll-up-btn" title="Zpět nahoru">
+  <i class="bi bi-arrow-up"></i>
+</button>
+
 </body>
 </html>
+
+
+
+

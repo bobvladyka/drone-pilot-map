@@ -3274,6 +3274,7 @@ cron.schedule(
 // ──────────────────────────────────────────────────────────────
 // CRON: Nové poptávky → 12:00 Europe/Prague → poslat Basic/Premium
 // ──────────────────────────────────────────────────────────────
+/*
 cron.schedule(
   '0 12 * * *',
   async () => {
@@ -3331,7 +3332,7 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
-
+*/
 
 
 

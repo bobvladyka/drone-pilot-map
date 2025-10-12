@@ -13,6 +13,11 @@
       font-size: 1.5rem;
       font-weight: bold;
     }
+    /* Všechny ikonky v kartách členství bílé */
+.membership-card i.bi {
+  color: #fff !important;
+}
+
   </style>
   <meta name="robots" content="index, follow">
 </head>
@@ -46,6 +51,12 @@
 <div class="container py-5">
   <h1 class="mb-4 text-center"><i class="bi bi-person-check me-2"></i>Možnosti členství a jejich výhody</h1>
 
+<p class="lead text-center mb-5">
+Každý nový pilot získává 30 dní členství <strong>Basic zdarma</strong>. 
+Po uplynutí zkušební doby se účet automaticky přepne na <strong>Free</strong>.
+</p>
+
+
   <form id="membership-form">
     <div class="row g-4">
       <!-- Toggle pro zobrazení cen -->
@@ -59,69 +70,73 @@
       </div>
 
       <!-- Free -->
-      <div class="col-md-4">
-        <input type="radio" name="membership_type" value="Free" class="d-none" id="plan-free">
-        <label for="plan-free" class="w-100">
-          <div class="card membership-card text-center p-4 free-card">
-            <img src="icons/freejpg.png" alt="Free Plan" class="membership-image">
-            <h4>Free</h4>
-            <p class="membership-price">0 Kč</p>
-            <ul class="list-unstyled">
-              <li>1 specializace</li>
-              <li>1 dron</li>
-              <li>Základní viditelnost</li>
-              <li style="font-weight: bold; color: red;">Bez možnosti kontaktování</li>
-              <li style="font-weight: bold; color: red;">Pro inzerenty se nezobrazuje ve filtrech</li>
-            </ul>
-          </div>
-        </label>
-      </div>
+<div class="col-md-4">
+  <input type="radio" name="membership_type" value="Free" class="d-none" id="plan-free">
+  <label for="plan-free" class="w-100">
+    <div class="card membership-card text-center p-4 free-card">
+      <img src="icons/freejpg.png" alt="Free Plan" class="membership-image">
+      <h4>Free (zdarma)</h4>
+      <p class="membership-price">0 Kč</p>
+      <ul class="list-unstyled text-start">
+        <li><i class="bi bi-eye me-2 text-success"></i>Anonymní zobrazení na mapě</li>
+        <li><i class="bi bi-geo me-2 text-success"></i>Viditelný v základním přehledu</li>
+        <li><i class="bi bi-check-circle me-2 text-success"></i>1 specializace a 1 dron</li>
+        <li><i class="bi bi-x-circle me-2 text-danger"></i>Bez poznámky a bez odkazu na web</li>
+        <li><i class="bi bi-x-circle me-2 text-danger"></i>Nelze být kontaktován zákazníkem</li>
+        <li><i class="bi bi-x-circle me-2 text-danger"></i>Nezobrazuje se ve filtrech inzerentům</li>
+      </ul>
+    </div>
+  </label>
+</div>
 
-      <!-- Basic -->
-      <div class="col-md-4">
-        <input type="radio" name="membership_type" value="Basic" class="d-none" id="plan-basic">
-        <label for="plan-basic" class="w-100">
-          <div class="card membership-card text-center p-4 basic-card">
-            <img src="icons/basicjpg.png" alt="Basic Plan" class="membership-image">
-            <h4>Basic</h4>
-            <!-- Zobrazujeme starou cenu pouze pro půlroční a roční plány -->
-            <p id="basic-old-price" class="old-price">79 Kč</p>
-            <p id="basic-price" class="new-price">79 Kč</p>
-            <p id="basic-monthly" class="monthly-price"></p>
-            <ul class="list-unstyled">
-              <li>Až 2 specializace</li>
-              <li>Až 2 drony</li>
-              <li>Možnost nastavit dostupnost</li>
-              <li>Možnost získat odznak "ověřený pilot"</li>
-              <li>Zobrazení telefonu a e-mailu</li>
-              <li>Odkaz na portfolio / web</li>
-              <li>Možnost kontaktování přes „Napiš pilotovi”</li>
-            </ul>
-          </div>
-        </label>
-      </div>
+<!-- Basic -->
+<div class="col-md-4">
+  <input type="radio" name="membership_type" value="Basic" class="d-none" id="plan-basic">
+  <label for="plan-basic" class="w-100">
+    <div class="card membership-card text-center p-4 basic-card">
+      <img src="icons/basicjpg.png" alt="Basic Plan" class="membership-image">
+      <h4>Basic</h4>
+      <p id="basic-old-price" class="old-price">79 Kč</p>
+      <p id="basic-price" class="new-price">79 Kč</p>
+      <p id="basic-monthly" class="monthly-price"></p>
+      <ul class="list-unstyled text-start">
+        <li><i class="bi bi-check-circle me-2 text-success"></i>Až 2 specializace a 2 drony</li>
+        <li><i class="bi bi-person-badge me-2 text-success"></i>Možnost získat odznak „ověřený pilot“</li>
+        <li><i class="bi bi-envelope me-2 text-success"></i>Možnost být kontaktován přes „Napiš pilotovi“</li>
+        <li><i class="bi bi-link-45deg me-2 text-success"></i>Odkaz na portfolio / web</li>
+        <li><i class="bi bi-geo-alt me-2 text-success"></i>Možnost nastavení dostupnosti</li>
+      </ul>
+    </div>
+  </label>
+</div>
 
-      <!-- Premium -->
-      <div class="col-md-4">
-        <input type="radio" name="membership_type" value="Premium" class="d-none" id="plan-premium">
-        <label for="plan-premium" class="w-100">
-          <div class="card membership-card text-center p-4 premium-card">
-            <img src="icons/premiumjpg.png" alt="Premium Plan" class="membership-image">
-            <h4>Premium</h4>
-            <!-- Zobrazujeme starou cenu pouze pro půlroční a roční plány -->
-            <p id="premium-old-price" class="old-price">149 Kč</p>
-            <p id="premium-price" class="new-price">149 Kč</p>
-            <p id="premium-monthly" class="monthly-price"></p>
-            <ul class="list-unstyled">
-              <li>Vše z Basic</li>
-              <li>Neomezené specializace</li>
-              <li>Neomezený počet dronů</li>
-              <li>Veškeré kontaktní údaje</li>
-              <li>Prioritní viditelnost na mapě</li>
-              <li>Zvýrazněný profil</li>
-            </ul>
-          </div>
-        </label>
+<!-- Premium -->
+<div class="col-md-4">
+  <input type="radio" name="membership_type" value="Premium" class="d-none" id="plan-premium">
+  <label for="plan-premium" class="w-100">
+    <div class="card membership-card text-center p-4 premium-card">
+      <img src="icons/premiumjpg.png" alt="Premium Plan" class="membership-image">
+      <h4>Premium</h4>
+      <p id="premium-old-price" class="old-price">149 Kč</p>
+      <p id="premium-price" class="new-price">149 Kč</p>
+      <p id="premium-monthly" class="monthly-price"></p>
+      <ul class="list-unstyled text-start">
+        <li><i class="bi bi-check-circle me-2 text-success"></i>Všechny výhody z plánu Basic</li>
+        <li><i class="bi bi-infinity me-2 text-success"></i>Až 10 specializací a 5 dronů</li>
+        <li><i class="bi bi-award me-2 text-success"></i>Nejvyšší priorita zobrazení na mapě</li>
+        <li><i class="bi bi-lightning me-2 text-success"></i>Plná viditelnost kontaktu a portfolia</li>
+        <li><i class="bi bi-telephone me-2 text-success"></i>Zobrazení telefonu a e-mailu</li>
+        <li><i class="bi bi-rocket-takeoff me-2 text-success"></i>Prémiová prezentace na úvodní mapě</li>
+        <li><i class="bi bi-envelope-paper-heart me-2 text-success"></i>
+          <strong>Okamžité upozornění na nové poptávky od inzerentů</strong> –  
+          každá nově zadaná poptávka se ihned odesílá e-mailem Premium pilotům.
+        </li>
+      </ul>
+    </div>
+  </label>
+</div>
+
+
       </div>
     </div>
   </form>

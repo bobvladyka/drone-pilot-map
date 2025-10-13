@@ -3909,6 +3909,58 @@ app.get('/test-send-all-emails', allowLocalhostOnly, async (req, res) => {
 });
 
 
+// === bezpečnost: omez na localhost/IP/heslo podle tvého middleware ===
+// app.use('/send-outreach', allowLocalhostOnly); // příklad
+
+app.post('/send-outreach', async (req, res) => {
+  try{
+    const { emails, template, subject, customNote } = req.body;
+    if(!Array.isArray(emails) || !emails.length) return res.status(400).json({error:'No emails'});
+
+    const buildHtml = (row) => {
+      // použij stejné funkce jako v UI nebo svoje: generalOutreachMail / realEstateMail / logisticsMail
+      const map = { general: generalOutreachMail, realty: realEstateMail, logistics: logisticsMail };
+      const fn = map[template] || generalOutreachMail;
+      // volitelné: doplň customNote do šablony (přidej parametr a vlož do wrapu)
+      return fn(row?.name || null, customNote);
+    };
+
+    // po jednom (bezpečné vůči SMTP)
+    for (const row of emails){
+      const html = buildHtml(row);
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: row.email,
+        subject: subject || 'NajdiPilota.cz – dronní služby',
+        html
+      });
+      await new Promise(r=>setTimeout(r, 1200)); // lehký limit, případně fronta
+    }
+
+    res.json({ ok:true, sent: emails.length });
+  }catch(e){
+    console.error('send-outreach error', e);
+    res.status(500).json({ error:String(e?.message||e) });
+  }
+});
+
+// Fallback – přímé odeslání jednoho e-mailu
+app.post('/send-direct', async (req, res) => {
+  try{
+    const { to, subject, html } = req.body;
+    if(!to || !html) return res.status(400).json({error:'missing to/html'});
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to, subject: subject || 'NajdiPilota.cz – dronní služby', html
+    });
+    res.json({ ok:true });
+  }catch(e){
+    console.error('send-direct error', e);
+    res.status(500).json({ error:String(e?.message||e) });
+  }
+});
+
+
 
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));

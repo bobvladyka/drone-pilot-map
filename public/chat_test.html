@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat - NajdiPilota.cz</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  <meta name="robots" content="index, follow">
+  <script src="https://cdn.jsdelivr.net/npm/twemoji@14.0.2/dist/twemoji.min.js"></script>
+
+  <style>
+    #chat-container {
+      height: 80vh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      padding: 15px;
+    }
+
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      padding: 10px;
+      background-color: #f8f9fa;
+      border-radius: 5px;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;          /* hlavní fix */
+
+    }
+
+    .message {
+      margin: 8px 0;
+      max-width: 80%;
+      display: flex;
+    }
+
+    .my-message {
+      align-self: flex-end;
+      margin-left: auto;
+    }
+
+    .their-message {
+      align-self: flex-start;
+      margin-right: auto;
+    }
+
+    .message-content {
+      padding: 10px 15px;
+      border-radius: 18px;
+      position: relative;
+      word-wrap: break-word;
+      #messages .message {
+  min-width: 0;                /* důležité pro flex! */
+}
+    }
+
+    .my-message .message-content {
+  background-color: rgba(13, 110, 253, 0.5); /* #0d6efd → 50 % průhledná modrá */
+  border-bottom-right-radius: 4px;
+}
+
+.their-message .message-content {
+  background-color: rgba(253, 126, 20, 0.5); /* #fd7e14 → 50 % průhledná oranžová */
+  border-bottom-left-radius: 4px;
+}
+
+
+/* extrémně dlouhé odkazy */
+.message-content a {
+  word-break: break-all;
+}
+
+    .message-time {
+      font-size: 0.75rem;
+      color: #6c757d;
+      margin-top: 4px;
+    }
+
+    .my-message .message-time {
+      text-align: right;
+    }
+
+    .their-message .message-time {
+      text-align: left;
+    }
+
+    #message-input {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    #message-input input {
+      flex: 1;
+      border-radius: 20px;
+      padding: 10px 15px;
+    }
+
+    #send-message-btn {
+      border-radius: 20px;
+      padding: 0 20px;
+    }
+
+    .email-display {
+      direction: rtl;
+      unicode-bidi: bidi-override;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+     :root{
+    --pilot-bg:#E8F4FF;      /* světle modrá */
+    --pilot-text:#0A3D62;    /* tmavě modrá */
+    --adv-bg:#F6F6F6;        /* světle šedá */
+    --adv-text:#333333;      /* grafitová */
+    --me-ring:#38B000;       /* zelený proužek u „mých“ zpráv (volitelné) */
+  }
+
+  .msg{
+    max-width: 72%;
+    padding: .6rem .8rem;
+    border-radius: 14px;
+    margin: .25rem 0;
+    line-height: 1.35;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+    position: relative;
+    word-wrap: break-word;
+  }
+  .msg--pilot{
+    background: var(--pilot-bg);
+    color: var(--pilot-text);
+    border-top-left-radius: 6px;
+  }
+  .msg--adv{
+    background: var(--adv-bg);
+    color: var(--adv-text);
+    border-top-right-radius: 6px;
+  }
+  /* zarovnání podle toho, kdo píše */
+  .msg--left{ align-self: flex-start; }
+  .msg--right{ align-self: flex-end; }
+
+  /* jemný proužek pro „moje“ zprávy (ten, kdo je přihlášený) */
+  .msg--me::after{
+    content:"";
+    position:absolute;
+    inset:auto -4px auto auto;
+    width:4px; height:60%;
+    background:var(--me-ring);
+    border-radius:2px;
+  }
+
+  .msg-meta{
+    font-size:.75rem; opacity:.7; margin-top:.25rem;
+    display:flex; gap:.5rem; align-items:center;
+  }
+  .badge{
+    font-size:.65rem; padding:.12rem .4rem; border-radius:999px;
+    background:#00000010;
+  }
+  .badge--pilot{ background:#0077B620; color:#0A3D62; }
+  .badge--adv{ background:#00000014; color:#333; }
+  
+  /* kontejner se zprávami musí být flex-column */
+  #messages{
+    display:flex; flex-direction:column; gap:.25rem;
+  }
+   #new-message {
+  min-height: 42px;
+  max-height: 200px;
+  resize: none;
+  overflow-y: auto;
+}
+ 
+#messages .message {
+  min-width: 0;                /* důležité pro flex! */
+}
+
+img.emoji {
+  height: 1em;
+  width: 1em;
+  margin: 0 .05em;
+  vertical-align: -0.1em;
+}
+
+
+   
+  </style>
+</head>
+
+<body>
+  <div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <button onclick="window.history.back()" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left"></i> Zpět
+      </button>
+      <h4 class="mb-0">Konverzace s <span id="partner-name"></span></h4>
+    </div>
+
+    <div id="chat-container">
+      <div id="messages">
+        <!-- Messages will be displayed here -->
+      </div>
+
+      <div id="message-input">
+        <textarea id="new-message" class="form-control" placeholder="Napište zprávu..." rows="1"></textarea>
+
+        <button id="send-message-btn" class="btn btn-primary">
+          <i class="bi bi-send"></i> Odeslat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+document.addEventListener("DOMContentLoaded", function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  const conversationId = urlParams.get('conversationId');
+
+  const pilotId = parseInt(urlParams.get('pilotId'));
+  const advertiserId = parseInt(urlParams.get('advertiserId'));
+  
+  let loggedId = null;
+  let loggedRole = null;
+
+  const pilotStoredId = parseInt(localStorage.getItem('pilotId'));
+  const advertiserStoredEmail = localStorage.getItem('inzerentEmail');
+
+  // Funkce, která se zavolá, jakmile bude známá role uživatele
+  function initializeChat() {
+      // Zavoláme funkci pro aktualizaci jména
+      updatePartnerName();
+
+      // Zkontrolujeme, zda máme ID a konverzaci pro označení
+      if (conversationId && loggedId) {
+          markAsSeen(conversationId, loggedId);
+      }
+
+      // Načteme zprávy
+      loadMessages();
+      setInterval(loadMessages, 10000);
+  }
+
+  // Určení role a ID přihlášeného uživatele z localStorage
+  if (pilotStoredId && !isNaN(pilotStoredId) && pilotStoredId === pilotId) {
+      loggedId = pilotId;
+      loggedRole = 'pilot';
+      initializeChat();
+  } else if (advertiserStoredEmail) {
+      // Pokud to není pilot, zkusíme najít ID inzerenta podle emailu
+      fetch(`/get-user-id?email=${encodeURIComponent(advertiserStoredEmail)}&type=advertiser`)
+          .then(res => res.json())
+          .then(data => {
+              if (data.id === advertiserId) {
+                  loggedId = advertiserId;
+                  loggedRole = 'advertiser';
+                  initializeChat();
+              } else {
+                  console.error("Logged in user does not match conversation participants.");
+              }
+          })
+          .catch(err => {
+              console.error("Error fetching user ID:", err);
+          });
+  }
+
+
+  // Funkce pro označení konverzace jako přečtené
+  function markAsSeen(convId, userId) {
+      if (navigator.sendBeacon) {
+          const blob = new Blob([JSON.stringify({ conversationId: convId, userId: userId })], { type: 'application/json' });
+          navigator.sendBeacon('/mark-as-seen', blob);
+      } else {
+          fetch('/mark-as-seen', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ conversationId: convId, userId: userId })
+          });
+      }
+  }
+
+
+  if (!conversationId || !pilotId || !advertiserId) {
+    alert("Chyba: Chybí parametry konverzace.");
+    window.location.href = '/index.html';
+    return;
+  }
+ 
+  const textarea = document.getElementById('new-message');
+  textarea.addEventListener('input', () => {
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 'px';
+  });
+
+  function updatePartnerName() {
+      if (loggedRole === 'pilot') {
+          fetch(`/get-advertiser-name-by-id?id=${advertiserId}`)
+              .then(res => res.json())
+              .then(data => {
+                  const partnerName = data.success ? data.name : 'Inzerent';
+                  document.getElementById('partner-name').textContent = partnerName;
+              })
+              .catch(() => {
+                  document.getElementById('partner-name').textContent = 'Inzerent';
+              });
+      } else if (loggedRole === 'advertiser') {
+          fetch(`/get-pilot-name-by-id?id=${pilotId}`)
+              .then(res => res.json())
+              .then(data => {
+                  const partnerName = data.success ? data.name : 'Pilot';
+                  document.getElementById('partner-name').textContent = partnerName;
+              })
+              .catch(() => {
+                  document.getElementById('partner-name').textContent = 'Pilot';
+              });
+      }
+  }
+
+  function loadMessages() {
+    fetch(`/get-messages?conversationId=${conversationId}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          displayMessages(data.messages);
+        } else {
+          console.error("Chyba při načítání zpráv:", data.message);
+        }
+      })
+      .catch(err => {
+        console.error("Chyba při načítání zpráv:", err);
+      });
+  }
+
+  document.getElementById('send-message-btn').addEventListener('click', sendMessageHandler);
+  document.getElementById('new-message').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      sendMessageHandler();
+    }
+  });
+
+  function sendMessageHandler() {
+    const messageContent = document.getElementById('new-message').value.trim();
+    if (messageContent) {
+      sendMessage(messageContent);
+    }
+  }
+
+  function sendMessage(messageContent) {
+    if (!loggedId) {
+        alert("Nelze odeslat zprávu. ID uživatele není k dispozici.");
+        return;
+    }
+    const sendBtn = document.getElementById('send-message-btn');
+    sendBtn.disabled = true;
+    sendBtn.innerHTML = '<i class="bi bi-arrow-repeat"></i> Odesílám...';
+
+    fetch('/api/v2/send-message', { // Nový API endpoint
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        conversationId,
+        senderId: loggedId,
+        message: messageContent
+      })
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (data.success) {
+        document.getElementById('new-message').value = '';
+        const ta = document.getElementById('new-message');
+        ta.style.height = 'auto';
+        ta.style.height = ta.scrollHeight + 'px';
+        loadMessages();
+      } else {
+        alert("Chyba při odesílání zprávy: " + (data.message || 'Neznámá chyba'));
+      }
+    })
+    .catch(err => {
+      console.error("Chyba při odesílání zprávy:", err);
+      alert("Došlo k chybě při odesílání zprávy.");
+    })
+    .finally(() => {
+      sendBtn.disabled = false;
+      sendBtn.innerHTML = '<i class="bi bi-send"></i> Odeslat';
+    });
+  }
+
+  function formatDateTime(timestamp) {
+    if (!timestamp) return '';
+    const date = new Date(timestamp);
+    const formatter = new Intl.DateTimeFormat('cs-CZ', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZone: 'Europe/Prague' // toto je klíčové
+    });
+    const parts = formatter.formatToParts(date);
+    const day = parts.find(p => p.type === 'day').value;
+    const month = parts.find(p => p.type === 'month').value;
+    const year = parts.find(p => p.type === 'year').value;
+    const hours = parts.find(p => p.type === 'hour').value;
+    const minutes = parts.find(p => p.type === 'minute').value;
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  }
+
+  function escapeHTML(str) {
+    return String(str).replace(/[&<>"']/g, s => ({
+      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;', "'":'&#39;'
+    }[s]));
+  }
+
+  function renderMessageHTML(raw) {
+    if (!raw) return '';
+    let s = escapeHTML(raw);
+    const gifRegex = /(https?:\/\/[^\s<]+\.gif)/gi;
+    s = s.replace(gifRegex, '<img src="$1" alt="GIF" style="max-width:220px;border-radius:10px;">');
+    const urlRegex = /(https?:\/\/[^\s<]+)/gi;
+    s = s.replace(urlRegex, '<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>');
+    s = s.replace(/\n/g, '<br>');
+    s = s.replace(/:smile:/g, '😄').replace(/:thumbsup:/g, '👍').replace(/:drone:/g, '🚁');
+    return s;
+  }
+
+  function displayMessages(messages) {
+    const messagesDiv = document.getElementById('messages');
+    messagesDiv.innerHTML = '';
+    if (!messages || messages.length === 0) {
+      messagesDiv.innerHTML = '<div class="text-center text-muted">Žádné zprávy v této konverzaci</div>';
+      return;
+    }
+    messages.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    messages.forEach(message => {
+      const messageDiv = document.createElement('div');
+      
+      const isMyMessage = message.sender_id === loggedId;
+      const isPilotSender = message.sender_id === pilotId;
+
+      messageDiv.classList.add(
+        'message',
+        isMyMessage ? 'my-message' : 'their-message',
+        isPilotSender ? 'pilot-message' : 'advertiser-message'
+      );
+
+      const formattedTime = formatDateTime(message.created_at);
+      const contentHTML = renderMessageHTML(message.message);
+
+      messageDiv.innerHTML = `
+        <div class="message-content">
+          <div class="message-role">${isPilotSender ? 'Pilot' : 'Inzerent'}</div>
+          <div class="message-body">${contentHTML}</div>
+          <div class="message-time">${formattedTime}</div>
+        </div>
+      `;
+      messagesDiv.appendChild(messageDiv);
+    });
+
+    if (window.twemoji && typeof twemoji.parse === 'function') {
+      twemoji.parse(messagesDiv, { folder: 'svg', ext: '.svg' });
+    }
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+});
+</script>
+</body>
+</html>

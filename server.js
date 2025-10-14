@@ -2903,6 +2903,12 @@ if (daysLeft === 7) {
 
 // === PRODLOUŽENÍ ČLENSTVÍ + EMAIL ===
 
+const accountColors = {
+  'Free': '#b0f759',
+  'Basic': '#258f01',   // Zelená
+  'Premium': '#8f06bd'  // Fialová
+};
+
 // 1 MĚSÍC
 app.get('/send-membership-email-1m', async (req, res) => {
   const { id } = req.query;
@@ -2911,16 +2917,16 @@ app.get('/send-membership-email-1m', async (req, res) => {
   try {
     const update = await pool.query(
       `UPDATE pilots 
-       SET visible_valid   = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '1 month',
-           visible_payment = CURRENT_DATE
-       WHERE id = $1
-       RETURNING email, name, visible_valid, visible_payment, type_account`,
+        SET visible_valid = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '1 month',
+            visible_payment = CURRENT_DATE
+        WHERE id = $1
+        RETURNING email, name, visible_valid, visible_payment, type_account`,
       [id]
     );
     if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
     const pilot = update.rows[0];
+    const color = accountColors[pilot.type_account] || '#0077B6';
 
-    // 🧾 pokus o načtení poslední faktury z tabulky invoices
     const invoiceRes = await pool.query(
       `SELECT invoice_url FROM invoices WHERE pilot_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [id]
@@ -2928,20 +2934,20 @@ app.get('/send-membership-email-1m', async (req, res) => {
     const invoiceLink = invoiceRes.rows[0]?.invoice_url || null;
 
     const content = `
-      <h2 style="color:#258f01;">✅ Členství prodlouženo o 1 měsíc</h2>
+      <h2 style="color:${color};">✅ Členství (${pilot.type_account}) prodlouženo o 1 měsíc</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>děkujeme, že jste si na <strong>NajdiPilota.cz</strong> prodloužil své členství.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
-         <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
+          <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
       ${invoiceLink ? `<p>📎 Fakturu naleznete zde: <a href="${invoiceLink}" target="_blank">Otevřít fakturu</a></p>` : ""}
     `;
-    const html = wrapEmailContent(content, "Prodloužení členství o 1 měsíc");
+    const html = wrapEmailContent(content, `Prodloužení členství (${pilot.type_account}) o 1 měsíc`);
 
     await transporter.sendMail({
       from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
       to: pilot.email,
       bcc: 'drboom@seznam.cz',
-      subject: 'Vaše členství bylo prodlouženo o 1 měsíc',
+      subject: `Vaše členství (${pilot.type_account}) bylo prodlouženo o 1 měsíc`,
       html
     });
 
@@ -2952,7 +2958,6 @@ app.get('/send-membership-email-1m', async (req, res) => {
   }
 });
 
-
 // 6 MĚSÍCŮ
 app.get('/send-membership-email-6m', async (req, res) => {
   const { id } = req.query;
@@ -2961,16 +2966,16 @@ app.get('/send-membership-email-6m', async (req, res) => {
   try {
     const update = await pool.query(
       `UPDATE pilots 
-       SET visible_valid   = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '6 months',
-           visible_payment = CURRENT_DATE
-       WHERE id = $1
-       RETURNING email, name, visible_valid, visible_payment, type_account`,
+        SET visible_valid = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '6 months',
+            visible_payment = CURRENT_DATE
+        WHERE id = $1
+        RETURNING email, name, visible_valid, visible_payment, type_account`,
       [id]
     );
     if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
     const pilot = update.rows[0];
+    const color = accountColors[pilot.type_account] || '#0077B6';
 
-    // 🧾 pokus o načtení poslední faktury
     const invoiceRes = await pool.query(
       `SELECT invoice_url FROM invoices WHERE pilot_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [id]
@@ -2978,20 +2983,20 @@ app.get('/send-membership-email-6m', async (req, res) => {
     const invoiceLink = invoiceRes.rows[0]?.invoice_url || null;
 
     const content = `
-      <h2 style="color:#258f01;">✅ Členství prodlouženo o 6 měsíců</h2>
+      <h2 style="color:${color};">✅ Členství (${pilot.type_account}) prodlouženo o 6 měsíců</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>vážíme si toho, že jste si prodloužil své členství na <strong>NajdiPilota.cz</strong>.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
-         <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
+          <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
       ${invoiceLink ? `<p>📎 Fakturu naleznete zde: <a href="${invoiceLink}" target="_blank">Otevřít fakturu</a></p>` : ""}
     `;
-    const html = wrapEmailContent(content, "Prodloužení členství o 6 měsíců");
+    const html = wrapEmailContent(content, `Prodloužení členství (${pilot.type_account}) o 6 měsíců`);
 
     await transporter.sendMail({
       from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
       to: pilot.email,
       bcc: 'drboom@seznam.cz',
-      subject: 'Vaše členství bylo prodlouženo o 6 měsíců',
+      subject: `Vaše členství (${pilot.type_account}) bylo prodlouženo o 6 měsíců`,
       html
     });
 
@@ -3011,16 +3016,16 @@ app.get('/send-membership-email-12m', async (req, res) => {
   try {
     const update = await pool.query(
       `UPDATE pilots 
-       SET visible_valid   = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '12 months',
-           visible_payment = CURRENT_DATE
-       WHERE id = $1
-       RETURNING email, name, visible_valid, visible_payment, type_account, id`,
+        SET visible_valid = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '12 months',
+            visible_payment = CURRENT_DATE
+        WHERE id = $1
+        RETURNING email, name, visible_valid, visible_payment, type_account, id`,
       [id]
     );
     if (update.rowCount === 0) return res.status(404).send("Pilot nenalezen.");
     const pilot = update.rows[0];
+    const color = accountColors[pilot.type_account] || '#0077B6';
 
-    // 🧾 pokus o načtení poslední faktury
     const invoiceRes = await pool.query(
       `SELECT invoice_url FROM invoices WHERE pilot_id = $1 ORDER BY created_at DESC LIMIT 1`,
       [id]
@@ -3028,11 +3033,11 @@ app.get('/send-membership-email-12m', async (req, res) => {
     const invoiceLink = invoiceRes.rows[0]?.invoice_url || null;
 
     const content = `
-      <h2 style="color:#8f06bd;">🎉 Členství prodlouženo o 12 měsíců</h2>
+      <h2 style="color:${color};">🎉 Členství (${pilot.type_account}) prodlouženo o 12 měsíců</h2>
       <p>Dobrý den, ${pilot.name || ""},</p>
       <p>děkujeme, že jste s námi! Vaše členství na <strong>NajdiPilota.cz</strong> bylo úspěšně prodlouženo.</p>
       <p><strong>Platnost nyní končí:</strong> ${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}<br>
-         <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
+          <strong>Poslední platba:</strong> ${new Date(pilot.visible_payment).toLocaleDateString("cs-CZ")}</p>
       ${invoiceLink ? `<p>📎 Fakturu naleznete zde: <a href="${invoiceLink}" target="_blank">Otevřít fakturu</a></p>` : ""}
       <hr>
       <h3 style="color:#258f01;">🎁 Přiveďte kamaráda a získejte +7 dní zdarma!</h3>
@@ -3041,13 +3046,13 @@ app.get('/send-membership-email-12m', async (req, res) => {
         https://www.najdipilota.cz/register.html?ref=${encodeURIComponent(pilot.id)}
       </div>
     `;
-    const html = wrapEmailContent(content, "Prodloužení členství o 12 měsíců");
+    const html = wrapEmailContent(content, `Prodloužení členství (${pilot.type_account}) o 12 měsíců`);
 
     await transporter.sendMail({
       from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
       to: pilot.email,
       bcc: 'drboom@seznam.cz',
-      subject: 'Vaše členství bylo prodlouženo o 12 měsíců',
+      subject: `Vaše členství (${pilot.type_account}) bylo prodlouženo o 12 měsíců`,
       html
     });
 
@@ -3718,7 +3723,50 @@ function buildNewDemandAlertEmail(pilotName, demand) {
   `, "Nová poptávka na NajdiPilota.cz");
 }
 
+// ──────────────────────────────────────────────────────────────
+// CRON: Každé 2 dny ve 08:00 (Praha) kontroluje GPS a odesílá e-maily
+// ──────────────────────────────────────────────────────────────
+cron.schedule(
+  '0 8 */2 * *',
+  async () => {
+    console.log('⏰ CRON: kontrola pilotů bez GPS souřadnic...');
+    try {
+      const { rows: pilots } = await pool.query(`
+        SELECT id, email, name, latitude, longitude
+        FROM pilots
+        WHERE id < 10000 AND (latitude IS NULL OR longitude IS NULL)
+          AND email IS NOT NULL
+      `);
 
+      if (pilots.length === 0) {
+        console.log('✅ Žádní piloti bez GPS souřadnic.');
+        return;
+      }
+
+      let sentCount = 0;
+      for (const pilot of pilots) {
+        try {
+          await transporter.sendMail({
+            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+            to: pilot.email,
+            bcc: 'drboom@seznam.cz',
+            subject: "Upozornění: GPS v profilu není správně nastavena",
+            html: gpsFixEmailContent()
+          });
+          sentCount++;
+          console.log(`📧 Odeslán GPS fix e-mail na: ${pilot.email}`);
+        } catch (mailError) {
+          console.error(`❌ Chyba při odesílání e-mailu na ${pilot.email}:`, mailError);
+        }
+      }
+
+      console.log(`✅ CRON hotovo. E-mail odeslán ${sentCount} pilotům.`);
+    } catch (dbError) {
+      console.error('❌ Chyba CRONu při kontrole pilotů (DB):', dbError);
+    }
+  },
+  { timezone: 'Europe/Prague' }
+);
 
 // ---------------------------------------------------------------------
 // GPS fix e-mail

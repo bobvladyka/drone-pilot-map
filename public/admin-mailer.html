@@ -87,10 +87,13 @@
       <h2>Šablona e-mailu</h2>
       <label for="template">Vyber šablonu</label>
       <select id="template">
-        <option value="general">Obecný — NajdiPilota.cz</option>
-        <option value="realty">Reality — RK / developeři</option>
-        <option value="logistics">Logistika — kurýři/depA/sklady</option>
-      </select>
+  <option value="general">Obecný — NajdiPilota.cz</option>
+  <option value="realty">Reality — RK / developeři</option>
+  <option value="logistics">Logistika — kurýři / depa / sklady</option>
+  <option value="followup1">Follow-up #1 (připomenutí po 3 dnech)</option>
+  <option value="followup2">Follow-up #2 (poslední pozvánka po 7 dnech)</option>
+</select>
+
 
       <label for="subject">Předmět</label>
       <input id="subject" type="text" placeholder="Předmět e-mailu" />
@@ -192,22 +195,92 @@ function wrapEmailContent(innerHtml, title = "NajdiPilota.cz"){
   </div>`;
 }
 
+/* ======= Šablony ======= */
 function tplGeneral(company){
   const note = ($('#customNote').value||'').trim();
   return wrapEmailContent(`
-    <h2>🚀 Potřebujete nafotit nebo natočit něco z výšky?</h2>
-    <p>Drony už dávno nejsou jen hračky — jsou to oči z nebe pro marketing, dokumentaci i inspekce.</p>
-    <p>Na <strong>NajdiPilota.cz</strong> najdete <strong>ověřené dronní piloty po celé ČR</strong>, připravené do 24 h vyrazit do terénu.</p>
-    <p>Stačí vložit krátkou poptávku, my ji rozešleme pilotům ve vašem okolí a do několika hodin máte nabídky.</p>
+    <h2>🚀 NajdiPilota.cz – váš přístup k ověřeným droním pilotům v celé ČR</h2>
+    <p><strong>Zdravím z NajdiPilota.cz!</strong></p>
+    <p>Spustili jsme novou českou platformu, která propojuje firmy, agentury a jednotlivce
+    s <strong>ověřenými droními piloty po celé republice</strong>.</p>
+    <p>Pokud potřebujete <strong>rychle nafotit, natočit nebo zkontrolovat objekt z výšky</strong>,
+    najdete na <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a>
+    ideálního pilota během několika minut.</p>
+    <p><strong>Co platforma nabízí:</strong></p>
+    <ul>
+      <li>🗺️ Interaktivní mapa pilotů – vyberte si konkrétního pilota ve vašem regionu,</li>
+      <li>📸 Rychlé poptávky – zadáte, co potřebujete, a piloti vám pošlou nabídky,</li>
+      <li>🤝 Bezplatné členství pro inzerenty – žádné poplatky ani závazky,</li>
+      <li>⚡ Odpovědi během několika hodin – přímý kontakt s piloty bez prostředníků.</li>
+    </ul>
+    <p>Pomáháme firmám z různých oblastí:</p>
+    <ul>
+      <li>🏡 Reality a developeři – letecké fotky a videa nemovitostí,</li>
+      <li>🎬 Marketing a produkce – reklamy, eventy, firemní spoty,</li>
+      <li>🏗️ Stavebnictví a průmysl – dokumentace a inspekce staveb,</li>
+      <li>📦 Logistika – přehled a vizuální kontrola areálů.</li>
+    </ul>
+    <p>👉 Vyzkoušejte <strong>NajdiPilota.cz</strong> – registrace i zadání poptávky jsou zcela zdarma.</p>
     ${note ? `<p><em>${escapeHtml(note)}</em></p>` : ``}
-    <p><a href="https://www.najdipilota.cz/poptavky.html"
+    <p><a href="https://www.najdipilota.cz/" target="_blank"
       style="background:#0077B6;color:#fff;text-decoration:none;
-      padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
-      Vložit poptávku zdarma
+      padding:10px 18px;border-radius:6px;font-size:15px;font-weight:600;">
+      Navštívit NajdiPilota.cz zdarma
     </a></p>
-    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong></p>
-  `, 'NajdiPilota.cz – Rychle najděte pilota');
+    <p style="color:#555;">📍 Pomůžeme vám najít pilota ještě dnes. Stačí pár kliknutí a první nabídky budete mít do několika hodin.</p>
+    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong><br>
+    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span></p>
+  `, 'NajdiPilota.cz – Letecké záběry pro firmy a projekty');
 }
+
+function tplFollowup1(company){
+  return wrapEmailContent(`
+    <h2>📸 Jen krátce navazuji – už jste se podívali na NajdiPilota.cz?</h2>
+    <p><strong>Zdravím z NajdiPilota.cz!</strong></p>
+    <p>Před pár dny jsme vám psali o naší nové platformě, která spojuje firmy s ověřenými droními piloty po celé ČR.</p>
+    <p>Pokud potřebujete <strong>záběry z výšky, video nebo kontrolu stavby či areálu</strong>, 
+    na <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a> 
+    si můžete <strong>zdarma zadat poptávku</strong> nebo si přímo <strong>vybrat pilota na mapě</strong>.</p>
+    <p>Členství pro inzerenty je stále zcela zdarma a první nabídky obvykle dorazí do několika hodin.</p>
+    <p><a href="https://www.najdipilota.cz/" target="_blank"
+      style="background:#0077B6;color:#fff;text-decoration:none;
+      padding:10px 18px;border-radius:6px;font-size:15px;font-weight:600;">
+      Vyzkoušet NajdiPilota.cz zdarma
+    </a></p>
+    <p style="color:#555;">Pomozte nám rozlétat český droní trh 🚀 – a získejte přístup k pilotům, kteří jsou připraveni vyrazit ještě dnes.</p>
+    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong><br>
+    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span></p>
+  `, 'Připomenutí – NajdiPilota.cz je zdarma pro inzerenty');
+}
+
+function tplFollowup2(company){
+  return wrapEmailContent(`
+    <h2>🚀 Ještě jste to nestihli? NajdiPilota.cz je stále otevřené inzerentům zdarma</h2>
+    <p><strong>Zdravím z NajdiPilota.cz!</strong></p>
+    <p>Chtěl bych vám naposledy připomenout naši platformu, která pomáhá firmám a tvůrcům 
+    najít <strong>ověřené droní pilot y po celé ČR</strong> – rychle, bez závazků a zcela zdarma.</p>
+    <p>Na <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a> 
+    můžete během minuty zadat poptávku nebo si přímo na mapě vybrat pilota, který je nejblíž vašemu projektu.</p>
+    <ul>
+      <li>✅ Zadání poptávky zdarma – bez registrace a poplatků</li>
+      <li>🗺️ Výběr pilota přímo na mapě</li>
+      <li>📷 Ideální pro reality, marketing, stavebnictví a logistiku</li>
+    </ul>
+    <p><a href="https://www.najdipilota.cz/" target="_blank"
+      style="background:#0077B6;color:#fff;text-decoration:none;
+      padding:10px 18px;border-radius:6px;font-size:15px;font-weight:600;">
+      Otevřít NajdiPilota.cz
+    </a></p>
+    <p style="color:#555;">Budeme rádi, když budete u toho – pomozte nám rozlétat český droní trh a získejte výhodu prvních inzerentů.</p>
+    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong><br>
+    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span></p>
+  `, 'Poslední připomenutí – NajdiPilota.cz zdarma pro inzerenty');
+}
+
+
+
+
+
 
 function tplRealty(company){
   const note = ($('#customNote').value||'').trim();
@@ -252,11 +325,16 @@ function tplLogistics(company){
   `, 'NajdiPilota.cz – Pro logistiku a kurýry');
 }
 
+
+/* ======= Přepínač šablon ======= */
 function buildHtml(company){
   const t = $('#template').value;
+  // Důležité je zajistit správný výběr šablon pro follow-upy
   if (t === 'realty') return tplRealty(company);
   if (t === 'logistics') return tplLogistics(company);
-  return tplGeneral(company);
+  if (t === 'followup1') return tplFollowup1(company);  // Opravený follow-up #1
+  if (t === 'followup2') return tplFollowup2(company);  // Opravený follow-up #2
+  return tplGeneral(company); // Výchozí šablona
 }
 
 /* ======= UI Handlery ======= */
@@ -322,13 +400,16 @@ $('#btnPreview').addEventListener('click', () => {
   const html = buildHtml(sample);
   $('#preview').innerHTML = html;
   if(!$('#subject').value.trim()){
-    const subj = ({
-      general:'NajdiPilota.cz – rychle najděte pilota pro vaši zakázku',
-      realty:'NajdiPilota.cz – letecké záběry, které prodávají',
-      logistics:'NajdiPilota.cz – drony pro logistiku a kurýry'
-    })[$('#template').value] || 'NajdiPilota.cz – dronní služby';
-    $('#subject').value = subj;
-  }
+  const subj = ({
+    general:   'NajdiPilota.cz – rychle najděte pilota pro vaši zakázku',
+    realty:    'NajdiPilota.cz – letecké záběry, které prodávají',
+    logistics: 'NajdiPilota.cz – drony pro logistiku a kurýry',
+    followup1: 'Připomenutí – NajdiPilota.cz zdarma pro inzerenty',
+    followup2: 'Poslední připomenutí – NajdiPilota.cz zdarma pro inzerenty'
+  })[$('#template').value] || 'NajdiPilota.cz – droní služby';
+  $('#subject').value = subj;
+}
+
 });
 
 /* ======= Odesílání ======= */

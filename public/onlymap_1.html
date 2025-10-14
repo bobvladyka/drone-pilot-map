@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>Dronová mapa pilotů v Česku – Najdi nebo se přidej</title>
+
+    <meta name="description" content="Hledáš pilota dronu nebo chceš být vidět? Dronová mapa spojuje piloty a zákazníky. Rychlé spojení, ověření uživatelé a možnost přivýdělku." />
+  <meta name="robots" content="index, follow" />
+<link rel="canonical" href="https://www.najdipilota.cz/" />
+
+  <!-- Open Graph pro Facebook a další sítě -->
+  <meta property="og:title" content="Dronová mapa pilotů v Česku" />
+  <meta property="og:description" content="Spojujeme zákazníky s piloty dronů. Zobraz se na mapě nebo si najdi pilota ve svém okolí." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.najdipilota.cz/" />
+  <meta property="og:image" content="https://www.najdipilota.cz/og-image.jpg" />
+  <!-- Nahraď reálnou URL obrázku -->
+  <meta name="google-site-verification" content="yxzi02d6ahPBVtx31lx_Mwg07khOFlY_fWUFdkyrsUE" />
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <!-- Vlastní styl -->
+  <link rel="stylesheet" href="style.css" />
+
+  <!-- Leaflet a MarkerCluster -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+<!-- Favicony -->
+<link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+<link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+<link rel="manifest" href="/icons/site.webmanifest">
+<link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+<style>
+
+html {
+  scroll-behavior: smooth;
+}
+
+</style>
+
+
+</head>
+<body>
+
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+  <div class="container">
+    <a class="navbar-brand fw-bold d-flex align-items-center">
+  <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+  <span class="fs-4">NajdiPilota.cz | Sekce pro inzerenty</span>
+
+  <a href="moje-zpravy-inzerent.html" class="btn btn-outline-secondary btn-sm d-none d-md-inline"><i class="bi bi-envelope me-1"></i>Moje zprávy</a>
+
+
+</a>
+        
+    
+  </div>
+</nav>
+
+
+<div id="advertiser-banner" class="alert alert-warning text-center m-3 d-flex justify-content-center align-items-center" style="display: none;">
+  <div id="advertiser-text" class="me-3 fw-semibold"></div>
+  <button id="logout-btn" class="btn btn-warning w-100">Odhlásit se</button>
+</div>
+
+
+	<div id="filter-section" class="filter-section bg-light p-3 rounded-3 mb-4 shadow-sm">
+  <div class="row g-3">
+    <!-- Specializace -->
+    <div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-puzzle-fill me-2"></i>Specializace
+        </h6>
+        <select id="filter-specialization" class="form-select form-select-sm">
+          <option value="">Všechny specializace</option>
+        </select>
+      </div>
+    </div>
+
+  <!-- Kraj -->
+    <div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-geo-alt-fill me-2"></i>Kraj
+        </h6>
+        <select id="filter-region" class="form-select form-select-sm">
+          <option value="">Všechny kraje</option>
+      <option value="Hlavní město Praha">Hlavní město Praha</option>
+      <option value="Středočeský kraj">Středočeský kraj</option>
+      <option value="Jihočeský kraj">Jihočeský kraj</option>
+      <option value="Plzeňský kraj">Plzeňský kraj</option>
+      <option value="Karlovarský kraj">Karlovarský kraj</option>
+      <option value="Ústecký kraj">Ústecký kraj</option>
+      <option value="Liberecký kraj">Liberecký kraj</option>
+      <option value="Královéhradecký kraj">Královéhradecký kraj</option>
+      <option value="Pardubický kraj">Pardubický kraj</option>
+      <option value="Vysočina">Vysočina</option>
+      <option value="Jihomoravský kraj">Jihomoravský kraj</option>
+      <option value="Olomoucký kraj">Olomoucký kraj</option>
+      <option value="Zlínský kraj">Zlínský kraj</option>
+      <option value="Moravskoslezský kraj">Moravskoslezský kraj</option>
+      </select>
+      </div>
+    </div>
+
+<!-- Dostupnost -->
+    <div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-check-circle-fill me-2"></i>Dostupnost
+        </h6>
+        <select id="filter-availability" class="form-select form-select-sm">
+          <option value="">Všichni piloti</option>
+          <option value="ANO">Dostupní piloti</option>
+          <option value="NE">Nedostupní piloti</option>
+        </select>
+      </div>
+    </div>
+
+<div class="col-md-4">
+      <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+          <i class="bi bi-heart-fill me-2"></i>Dobrovolníci
+        </h6>
+        <select id="filter-volunteer" class="form-select form-select-sm">
+          <option value="">Všichni piloti</option>
+          <option value="ANO">Pouze dobrovolníci</option>
+          <option value="NE">Pouze profesionálové</option>
+        </select>
+      </div>
+    </div>
+
+<!-- Ověřený pilot (registrationnumber) -->
+<div class="col-md-4">
+  <div class="filter-card h-100 p-3 bg-white rounded-3">
+    <h6 class="filter-title fw-bold mb-3 text-primary">
+      <i class="bi bi-patch-check-fill me-2"></i>Ověřený pilot
+    </h6>
+    <select id="filter-verified" class="form-select form-select-sm">
+      <option value="">Všichni</option>
+      <option value="YES">Pouze ověření</option>
+      <option value="NO">Pouze neověření</option>
+    </select>
+  </div>
+</div>
+
+
+<!-- Akční tlačítka -->
+    <div class="col-md-6 d-flex flex-column justify-content-end">
+          <button id="reset-filters-btn" class="btn-sm btn-outline-secondary mb-2">
+  <i class="bi bi-x-circle me-1"></i> Vymazat filtry
+</button>
+           <button id="center-map-btn" class="btn-sm btn-outline-secondary mb-2">
+    <i class="bi bi-map me-1"></i> Vycentrovat mapu
+  </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+    
+    <p id="user-status" class="text-center fw-bold mb-3"></p>
+
+  <span id="logged-info" class="fw-bold small"></span>
+ 
+</div>
+
+
+
+    
+
+    
+
+    <div id="sekce-mapa" class="mt-4" style="height: 100vh;">
+  <div id="map" style="height: 100%; width: 100%;"></div>
+</div>
+
+
+  </div>
+
+  <!-- Leaflet & Cluster -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+  <!-- Skript -->
+ <script>
+  const map = L.map('map').setView([49.8, 15.5], 7);
+  const fakeNames = [
+    "Rychlý Sysel", "Létající Brambor", "Dronislav Nebešťák", "Turbo Rákosník", "Bezpilotní Emil", "Pískající Páv", "Pilotka Haluz", "František Vrtulník", "Levý Joystick", "Kapitán Stín", "Dr. Rotor", "Pan Točivý", "Letuška Landová", "Střemhlavý Franta", "Nadzvukový Ježek", "Létající Čenda", "Rotorová Róza", "Šumící Fanda", "Bezpečný Béďa", "Maják z Oblak", "Droný Karel", "Letec Šmatla", "Startér Staník", "Přistávací Pepa", "Helikoptérník Honza", "Navigátor Novák", "Senzorová Soňa", "Pán Mraků", "Letící Lojza", "Kamera Kamil", "Rotor Ríša", "Výškoměr Vašek", "Vzdušný Vojta", "Tichý Šumák", "Drnčivý Dan", "Mlha Milda", "Optika Otakar", "Ztracený Signál", "Mistr Gimbal", "Anténa Anička", "Vrtulka Věrka", "Letmo Lída", "Flyboy Felix", "Vzdušná Víla", "Navigační Norbert", "Modrá Letka", "Křídlatý Karel", "Polní Přízrak", "Mapový Mirek", "Kličkující Kuba"
+  ];
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; OpenStreetMap',
+    maxZoom: 18
+  }).addTo(map);
+  let allPilots = [];
+  const markers = L.markerClusterGroup();
+    const pilotCircles = [];
+    fetch('/pilots')
+      .then(res => res.json())
+      .then(data => {
+        data.forEach(p => {
+  if (p.visible !== "ANO") return; // Skryj neviditelné piloty
+
+  if (p.latitude != null && p.longitude != null) {
+
+            let circleOptions = {
+      radius: 2000, // Výchozí rádius
+      fillOpacity: 0.2, // Výchozí opacity pro Free
+      color: p.available === "ANO" ? 'green' : 'gray',
+      fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
+      weight: 1
+    };
+
+ // Změna pro různé typy účtů
+    if (p.type_account === "Free") {
+      circleOptions.color = 'lightgreen';
+      circleOptions.fillOpacity = 0.2;
+    } else if (p.type_account === "Basic") {
+      circleOptions.color = 'darkgreen';
+      circleOptions.fillOpacity = 0.5;
+    } else if (p.type_account === "Premium") {
+  circleOptions.color = 'purple';         // Barva obrysu
+  circleOptions.fillColor = 'purple';     // Barva výplně
+  circleOptions.fillOpacity = 0.8;        // Opacity výplně
+  circleOptions.radius = 10000;           // Dvojnásobně větší rádius než Free a Basic
+  circleOptions.weight = 3;               // Tloušťka linie (nastavena na 3)
+}
+
+            const circle = L.circle([p.latitude, p.longitude], circleOptions)
+
+        .bindPopup(() => {
+  const loggedIn = localStorage.getItem("loggedEmail") || localStorage.getItem("inzerentEmail");
+  const isAvailable = p.available === "ANO";
+  const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+  const hasPublicConsent = p.hasPublicConsent;
+  let html = `<div class="pilot-card">`;
+
+  
+
+  if (isAvailable && loggedIn) {
+    
+
+if (!hasPublicConsent) {
+      // Pilot hasn't granted GDPR consent
+      html += `
+        <h3><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+        <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Pilot nepředal souhlas se zpracováním osobních údajů</p>
+        ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+        ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+        ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+        <p class="text-muted"><em>Kontaktní údaje nejsou dostupné, protože pilot neudělil GDPR souhlas.</em></p>
+      `;
+    } else if
+ (p.type_account === "Free") {
+      // Free účet - omezené informace
+       html += `
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      : ''}
+    ${p.id && Number(p.id) <= 80
+      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      : ''}
+  </div>
+`;
+  
+      if (p.volunteer === 'ANO') {
+        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      }
+      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+
+      
+      html += `</div>`;
+    } else if (p.type_account === "Basic") {
+  // Basic účet - více informací
+  html += `
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      : ''}
+    ${p.id && Number(p.id) <= 80
+      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      : ''}
+  </div>
+`;
+  
+if (p.volunteer === 'ANO') {
+        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      }
+
+  if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+  if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+  if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+  if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+  if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+
+  // Tlačítko pro napsání pilotovi
+  html += `
+    <div class="mt-3">
+      <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.email}')">
+        ✉️ Napsat pilotovi
+      </button>
+    </div>
+  `;
+}
+ else if (p.type_account === "Premium") {
+      // Premium účet - všechny informace
+      html += `
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      : ''}
+    ${p.id && Number(p.id) <= 80
+      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      : ''}
+  </div>
+`;
+  
+
+      if (p.volunteer === 'ANO') {
+        html += `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>`;
+      }
+      // Kontakty pro Premium účty
+      if (p.email) html += `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>`;
+      if (p.phone) html += `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>`;
+
+      html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+      if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+    }
+  } else if (!isAvailable) {
+    // Pilot není k dispozici
+    html += `
+      <h3><i class="bi bi-person-circle me-1"></i>${fakeName}</h3>
+      <br>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+      <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  } else {
+    // Nepřihlášený uživatel
+    html += `
+  <div class="d-flex justify-content-between align-items-center mb-1">
+    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${p.name}</h3>
+    ${p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16 
+      ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` 
+      : ''}
+    ${p.id && Number(p.id) <= 80
+      ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+      : ''}
+  </div>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
+      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
+      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+      <p class="text-muted"><em>Přihlaste se pro více informací o pilotovi.</em></p>
+    `;
+  }
+
+  html += `</div>`;
+  return html;
+})
+
+             markers.addLayer(circle);
+            pilotCircles.push(circle);
+          }
+        });
+        map.addLayer(markers);
+        if (markers.getBounds().isValid()) {
+          map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+        }
+      });
+
+    map.on('zoomend', () => {
+  const zoom = map.getZoom();
+  pilotCircles.forEach(circle => {
+    const maxZoom = 14;
+    const minZoom = 7;
+    const minRadius = 100;
+    const maxRadius = 2000;
+
+    // Nastavení rádiusu pro různé typy účtů
+    let accountMinRadius = minRadius;
+    let accountMaxRadius = maxRadius;
+
+    if (circle.options.fillColor === 'darkgreen') { // Basic účet (tmavě zelený)
+      accountMinRadius = 100;   // Min rádius pro Basic
+      accountMaxRadius = 4000;  // Max rádius pro Basic
+    } else if (circle.options.fillColor === 'purple') { // Premium účet (fialový)
+      accountMinRadius = 100;  // Min rádius pro Premium
+      accountMaxRadius = 10000; // Max rádius pro Premium
+    }
+
+    const ratio = (zoom - minZoom) / (maxZoom - minZoom);
+    const radius = Math.max(accountMinRadius, accountMaxRadius - (accountMaxRadius - accountMinRadius) * ratio);
+    circle.setRadius(radius);
+
+    const opacity = 0.2 + 0.2 * (1 - ratio);
+    circle.setStyle({ fillOpacity: opacity });
+  });
+});
+
+function contactPilot(pilotEmail) {
+  console.log('Pilot email:', pilotEmail);  // Debugging: Zkontrolujte, zda je e-mail správně předán
+
+  const advertiserEmail = localStorage.getItem('inzerentEmail');
+  
+  if (!advertiserEmail) {
+    alert("Musíte být přihlášen jako inzerent.");
+    return;
+  }
+
+  if (!pilotEmail) {
+    alert("Chyba: Nelze najít kontaktní údaje pilota.");
+    return;
+  }
+
+  // Send a request to check for an existing conversation or create a new one
+  fetch('/create-conversation', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      pilotEmail,
+      advertiserEmail
+    })
+  })
+  .then(res => res.json())
+  .then(data => {
+    if (data.success) {
+      const chatUrl = `chat.html?conversationId=${data.conversationId}&pilotEmail=${encodeURIComponent(pilotEmail)}&inzerentEmail=${encodeURIComponent(advertiserEmail)}`;
+      window.location.href = chatUrl;  // Redirect to chat page with the conversationId and emails
+    } else {
+      alert("Chyba při vytváření konverzace.");
+    }
+  })
+  .catch(error => {
+    console.error('Chyba při odesílání požadavku:', error);
+    alert("Nastala chyba při odesílání požadavku.");
+  });
+}
+
+
+function isVerifiedPilot(pilot) {
+  // např. CZE123456789AB
+  const regPattern = /^CZE[A-Za-z0-9]{13}$/;
+  return regPattern.test(pilot.registrationnumber || '');
+}
+
+
+
+function extractUniqueSpecializations(pilots) {
+  const specs = new Set();
+  pilots.forEach(p => {
+    if (p.specialization) {
+      p.specialization.split(",").forEach(spec => specs.add(spec.trim()));
+    }
+  });
+  return Array.from(specs).sort((a, b) => a.localeCompare(b));
+}
+
+function populateSpecializationFilter(pilots) {
+  const select = document.getElementById("filter-specialization");
+  if (!select) return;
+  const uniqueSpecs = extractUniqueSpecializations(pilots);
+  select.innerHTML = '<option value="">Všechny specializace</option>' + 
+    uniqueSpecs.map(s => `<option value="${s}">${s}</option>`).join('');
+}
+
+
+  fetch('/pilots')
+  .then(res => res.json())
+  .then(data => {
+    allPilots = data;
+    populateSpecializationFilter(allPilots); // ⬅️ Tady se doplní filtr
+    renderPilots(allPilots);
+    applyFilters();
+  });
+
+
+  document.getElementById('filter-specialization').addEventListener('change', applyFilters);
+document.getElementById('filter-region').addEventListener('change', applyFilters);
+document.getElementById('filter-availability').addEventListener('change', applyFilters);
+document.getElementById('filter-volunteer').addEventListener('change', applyFilters);
+document.getElementById('filter-verified').addEventListener('change', applyFilters);
+
+document.getElementById('reset-filters-btn').addEventListener('click', resetFilters);
+
+
+document.getElementById('center-map-btn').addEventListener('click', function() {
+  document.getElementById('sekce-mapa').scrollIntoView({ behavior: 'smooth' });
+});
+
+function resetFilters() {
+  document.getElementById('filter-specialization').value = '';
+  document.getElementById('filter-region').value = '';
+  document.getElementById('filter-availability').value = '';
+  document.getElementById('filter-volunteer').value = '';
+  const fv = document.getElementById('filter-verified'); if (fv) fv.value = '';
+
+  applyFilters();
+}
+
+
+// ⚙️ jednorázové napojení dat pilota na existující kruhy podle přesné shody lat|lon
+let __pilotAttachmentDone = false;
+function __ensurePilotAttached() {
+  if (__pilotAttachmentDone) return;
+  if (!Array.isArray(allPilots) || allPilots.length === 0) return;
+
+  const byLatLon = new Map();
+  allPilots.forEach(p => {
+    if (p && p.latitude != null && p.longitude != null) {
+      byLatLon.set(`${p.latitude}|${p.longitude}`, p);
+    }
+  });
+
+  pilotCircles.forEach(c => {
+    if (!c.__pilot && c.getLatLng) {
+      const ll = c.getLatLng();
+      const key = `${ll.lat}|${ll.lng}`;
+      if (byLatLon.has(key)) c.__pilot = byLatLon.get(key);
+    }
+  });
+
+  __pilotAttachmentDone = true;
+}
+
+
+function applyFilters() {
+  __ensurePilotAttached(); // zajistí, že každý kruh má c.__pilot (pokud to jde)
+
+  const selectedSpec = (document.getElementById('filter-specialization')?.value || '').toLowerCase();
+  const selectedRegion = (document.getElementById('filter-region')?.value || '').toLowerCase();
+  const selectedAvailability = document.getElementById('filter-availability')?.value || '';
+  const selectedVolunteer = document.getElementById('filter-volunteer')?.value || '';
+  const selectedVerified = document.getElementById('filter-verified')?.value || '';
+
+  // rebuild cluster pouze z existujících kruhů
+  markers.clearLayers();
+
+  pilotCircles.forEach(circle => {
+    const p = circle.__pilot || {}; // pokud se nepodaří napojit, necháme projít většinu filtrů
+    const spec = (p.specialization || '').toLowerCase();
+    const region = (p.region || '').toLowerCase();
+    const isVerified = isVerifiedPilot(p);
+
+
+    const match =
+      (!selectedSpec || spec.includes(selectedSpec)) &&
+      (!selectedRegion || region.includes(selectedRegion)) &&
+      (!selectedAvailability || p.available === selectedAvailability) &&
+      (!selectedVolunteer || p.volunteer === selectedVolunteer) &&
+      (!selectedVerified ||
+        (selectedVerified === 'YES' && isVerified) ||
+        (selectedVerified === 'NO' && !isVerified));
+
+    if (match) {
+      markers.addLayer(circle);
+    }
+  });
+
+  if (markers.getLayers().length > 0 && markers.getBounds().isValid()) {
+    map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+  }
+}
+
+fetch('/chat.html')
+  .then(response => response.text())
+  .then(data => {
+    document.getElementById('chat-container').innerHTML = data;
+  })
+  .catch(error => console.error('Error loading chat.html:', error));
+
+</script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const advertiserEmail = localStorage.getItem("inzerentEmail");
+    const banner = document.getElementById("advertiser-banner");
+
+    if (advertiserEmail && banner) {
+      document.getElementById("advertiser-text").innerHTML = `Přihlášen jako: <strong>${advertiserEmail}</strong>`;
+      banner.style.display = "flex";
+
+      const logoutBtn = document.getElementById("logout-btn");
+      logoutBtn.addEventListener("click", () => {
+        localStorage.removeItem("inzerentEmail");
+        window.location.href = "/index.html";
+      });
+    }
+  });
+
+// Vytvoření ovládacího prvku pro tlačítko s šipkou
+const centerMapButton = L.control({ position: 'topright' });
+
+centerMapButton.onAdd = function (map) {
+  const button = L.DomUtil.create('button', 'btn btn-sm');
+  button.innerHTML = '<i class="bi bi-arrow-up-square-fill"></i>';  // Šipka dolů (Bootstrap Icon)
+  button.style.backgroundColor = 'transparent';  // Průhledné pozadí
+  button.style.border = 'none';  // Bez okraje
+  button.style.fontSize = '36px';  // Velikost ikony
+  button.style.cursor = 'pointer';  // Kurzoru na tlačítko
+
+  button.onclick = function () {
+    // Posune stránku na sekci filtrů
+    const filterSection = document.getElementById('filter-section');
+    if (filterSection) {
+      filterSection.scrollIntoView({ behavior: 'smooth' });  // Plynulý posun
+    }
+  };
+
+  return button;
+};
+
+// Přidání ovládacího prvku do mapy
+centerMapButton.addTo(map);
+
+</script>
+
+<footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+  <div class="container">
+    <div class="row gy-3 justify-content-between">
+      
+      <!-- Logo a popis -->
+      <div class="col-md-4">
+        <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+          <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+          <span class="fw-bold fs-5">NajdiPilota.cz</span>
+        </a>
+        <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+      </div>
+
+      <!-- Navigace -->
+      <div display="no" class="col-md-2">
+        <h6 class="fw-bold">Navigace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/index.html?inzerent=1" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+          <li><a href="/o-projektu.html?inzerent=1" class="text-decoration-none text-muted">O projektu</a></li>
+          <li><a href="/kontakt.html?inzerent=1" class="text-decoration-none text-muted">Kontakt</a></li>
+         <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
+        </ul>
+      </div>
+
+      <!-- Právní -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Informace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+        </ul>
+      </div>
+
+      <!-- Kontakt -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Provozovatel</h6>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: 08578591<br>Praha, Česká republika</p>
+        <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+      </div>
+
+    </div>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+      <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+      <div>
+        <a href="/gdpr.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+        <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Vloží aktuální rok do copyrightu
+  document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("year").textContent = new Date().getFullYear();
+  });
+</script>
+
+</body>
+</html>

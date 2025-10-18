@@ -1944,7 +1944,7 @@ app.get('/poptavky', async (req, res) => {
     if (mine === '1' && sessionEmail) {
       // moje poptávky (nezávisle na public)
       const r = await pool.query(
-        `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at
+        `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at, status
          FROM demands
          WHERE LOWER(advertiser_email) = $1
          ORDER BY created_at DESC`,
@@ -1958,8 +1958,8 @@ app.get('/poptavky', async (req, res) => {
     let where = `public = TRUE`;
     if (region) { params.push(region); where += ` AND region = $${params.length}`; }
 
-    const r = await pool.query(
-      `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at
+     const r = await pool.query(
+      `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at, status
        FROM demands
        WHERE ${where}
        ORDER BY created_at DESC`,

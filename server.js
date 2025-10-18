@@ -244,6 +244,27 @@ app.get("/", (req, res) => {
 });
 */
 
+app.post('/admin-send-custom-email', requireAdminLogin, async (req,res)=>{
+  try{
+    const { to, subject, body } = req.body;
+    if(!to || !subject || !body)
+      return res.status(400).send('❌ Chybí příjemce, předmět nebo zpráva.');
+
+    const html = wrapEmailContent(`<p>${escapeHtml(body).replace(/\n/g,'<br>')}</p>`, "NajdiPilota.cz");
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to,
+      subject,
+      html
+    });
+    res.send(`✅ E-mail úspěšně odeslán na ${to}`);
+  }catch(err){
+    console.error('Chyba při odesílání vlastního e-mailu:', err);
+    res.status(500).send('❌ Chyba při odesílání e-mailu.');
+  }
+});
+
+
 
 
 function buildUnreadDigestText(pilotName, items) {

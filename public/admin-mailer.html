@@ -39,6 +39,17 @@
   .danger { background:#d6336c; }
   .ghost { background:transparent; color:#222; border:1px solid #e1e5ea; }
   .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:12px; }
+  .mass-mail-section {
+  background: #E8F4FF; /* světle modrá */
+  border: 2px solid #B3DEFF;
+}
+
+.single-mail-section {
+  background: #E9F9EE; /* světle zelená */
+  border: 2px solid #B8EABF;
+}
+
+
 </style>
 </head>
 <body>
@@ -46,10 +57,10 @@
 
 <div class="wrap">
 
-  <div class="grid">
+   <div class="grid mass-mail-section" style="padding:16px; border-radius:12px; margin-bottom:24px;">
     <!-- KONTAKTY -->
     <section class="card">
-      <h2>Kontakty</h2>
+      <h2>📋 Kontakty pro hromadný e-mail</h2>
       <div class="flex">
         <input id="newName" type="text" placeholder="Název firmy">
         <input id="newEmail" type="email" placeholder="E-mail">
@@ -84,7 +95,7 @@
 
     <!-- ŠABLONA + NÁHLED + ODESLÁNÍ -->
     <section class="card">
-      <h2>Šablona e-mailu</h2>
+      <h2>💌 Šablona a odeslání hromadných e-mailů</h2>
       <label for="template">Vyber šablonu</label>
       <select id="template">
   <option value="general">Obecný — NajdiPilota.cz</option>
@@ -113,7 +124,32 @@
 
       <div id="log" class="mono" style="margin-top:12px; white-space:pre-wrap;"></div>
     </section>
-  </div>
+</div>
+ <!-- 📬 JEDNOTLIVÝ E-MAIL -->
+  <section class="card single-mail-section">
+    <h2>📬 Napsat e-mail jednotlivci</h2>
+    <label for="customTo">Příjemce</label>
+    <input id="customTo" type="email" placeholder="např. info@firma.cz" />
+
+    <label for="customSubject">Předmět</label>
+    <input id="customSubject" type="text" placeholder="Předmět e-mailu" />
+
+    <label for="customBody">Zpráva</label>
+    <textarea id="customBody" placeholder="Napište text zprávy…" rows="8"></textarea>
+
+    <div class="flex" style="margin-top:10px;">
+      <button id="btnPreviewCustom" class="secondary">👁️ Náhled</button>
+      <button id="btnSendCustom">📤 Odeslat e-mail</button>
+    </div>
+
+    <div id="customPreview" class="card" style="margin-top:14px; background:#fafafa;">
+      <div class="muted">Zde se zobrazí náhled zprávy…</div>
+    </div>
+
+    <div id="customLog" class="mono" style="margin-top:12px; white-space:pre-wrap;"></div>
+  </section>
+
+</div>
 
 </div>
 
@@ -477,6 +513,30 @@ $('#btnSend').addEventListener('click', async () => {
   }
   state.sending = false;
 });
+
+// ======= Vlastní e-mail =======
+$('#btnPreviewCustom').addEventListener('click', ()=>{
+  const html = wrapEmailContent(escapeHtml($('#customBody').value).replaceAll('\n','<br>'));
+  $('#customPreview').innerHTML = html;
+});
+
+$('#btnSendCustom').addEventListener('click', async ()=>{
+  const to = $('#customTo').value.trim();
+  const subject = $('#customSubject').value.trim();
+  const body = $('#customBody').value.trim();
+  if(!to || !subject || !body){
+    alert('Vyplňte všechny údaje.');
+    return;
+  }
+  const res = await fetch('/admin-send-custom-email', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ to, subject, body })
+  });
+  const text = await res.text();
+  $('#customLog').textContent = text;
+});
+
 </script>
 </body>
 </html>

@@ -133,6 +133,23 @@ fetch('/check-admin-session')
     </table>
   </div>
 
+<div class="chart mt-4">
+  <h2>👥 Piloti, kteří přivedli nové uživatele</h2>
+  <table id="refTable" class="table table-striped">
+    <thead>
+      <tr>
+        <th>Jméno</th>
+        <th>E-mail</th>
+        <th>Kód</th>
+        <th>Počet přivedených</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+</div>
+
+
+
   <script>
     async function loadStats() {
       try {
@@ -224,6 +241,22 @@ fetch('/check-admin-session')
           .map(s => `<tr><td>${s.label}</td><td>${s.y}</td></tr>`)
           .join('');
 
+// 👥 Top doporučující piloti
+if (data.top_referrers && data.top_referrers.length > 0) {
+  const refTable = document.querySelector('#refTable tbody');
+  refTable.innerHTML = data.top_referrers.map(r => `
+    <tr>
+      <td>${r.name || '(neznámé)'}</td>
+      <td>${r.email}</td>
+      <td><code>${r.ref_code}</code></td>
+      <td>${r.invited_count}</td>
+    </tr>
+  `).join('');
+} else {
+  document.querySelector('#refTable tbody').innerHTML =
+    '<tr><td colspan="4" class="text-center">Zatím žádní doporučující piloti.</td></tr>';
+}
+
       } catch (err) {
         console.error("❌ Chyba při načítání statistik:", err);
         alert("Nepodařilo se načíst data pro statistiky.");
@@ -231,6 +264,10 @@ fetch('/check-admin-session')
     }
 
     window.onload = loadStats;
+
+
+
+
   </script>
 </body>
 </html>

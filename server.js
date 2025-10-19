@@ -27,6 +27,8 @@ function makeRefCode(userId) {
   return `${idBase}-${check}`.toUpperCase();
 }
 
+
+
 function parseRefCode(code) {
   if (!code || !/^[A-Z0-9]+-[A-F0-9]{6}$/i.test(code)) return null;
   const [idBase, check] = code.split('-');
@@ -37,20 +39,68 @@ function parseRefCode(code) {
   return ok ? userId : null;
 }
 
-// Vrátí kód pro přihlášeného pilota (dle e-mailu)
+// 🧩 Vrátí (a případně vytvoří) referral kód pro přihlášeného pilota
 app.get('/ref-code', async (req, res) => {
   try {
     const email = req.query.email;
     if (!email) return res.status(400).json({ error: 'Missing email' });
-    const r = await pool.query('SELECT id FROM pilots WHERE email = $1', [email]);
-    if (!r.rowCount) return res.status(404).json({ error: 'Pilot not found' });
-    const code = makeRefCode(r.rows[0].id);
-    res.json({ code, url: `https://najdipilota.cz/register.html?ref=${code}` });
+
+    // 1️⃣ Najdi pilota
+    const result = await pool.query('SELECT id, ref_code FROM pilots WHERE email = $1 LIMIT 1', [email]);
+    if (result.rowCount === 0) {
+      return res.status(404).json({ error: 'Pilot not found' });
+    }
+
+    let pilot = result.rows[0];
+    let code = pilot.ref_code;
+
+    // 2️⃣ Pokud ještě žádný kód nemá → vytvoř a ulož
+    if (!code || code.trim() === '') {
+      code = makeRefCode(pilot.id); // např. W-02DC37
+      await pool.query('UPDATE pilots SET ref_code = $1 WHERE id = $2', [code, pilot.id]);
+      console.log(`🔧 Nový referral kód pro ${email}: ${code}`);
+    }
+
+    // 3️⃣ Odpověď pro frontend
+    res.json({
+      code,
+      url: `https://najdipilota.cz/register.html?ref=${code}`
+    });
+
   } catch (e) {
-    console.error(e);
-    res.status(500).json({ error: 'Failed to make ref code' });
+    console.error('❌ Chyba v /ref-code:', e);
+    res.status(500).json({ error: 'Failed to make or fetch ref code' });
   }
 });
+
+// 🧩 ADMIN: doplní ref_code pro všechny piloty, kteří ho zatím nemají
+/*
+app.get('/admin/fill-refcodes', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT id, email, ref_code
+      FROM pilots
+      ORDER BY id ASC
+    `);
+
+    let updated = 0;
+    for (const pilot of rows) {
+      if (!pilot.ref_code || pilot.ref_code.trim() === '') {
+        const code = makeRefCode(pilot.id);
+        await pool.query('UPDATE pilots SET ref_code = $1 WHERE id = $2', [code, pilot.id]);
+        console.log(`💾 ${pilot.email} → ${code}`);
+        updated++;
+      }
+    }
+
+    res.send(`✅ Doplněno ${updated} kódů.`);
+  } catch (err) {
+    console.error('❌ Chyba při doplňování ref_code:', err);
+    res.status(500).send('Chyba při doplňování ref_code');
+  }
+});
+*/
+
 
 // 🧹 Automatické skrytí e-mailů a telefonních čísel v poznámce
 function sanitizeNote(text, defaultCountry = 'CZ') {
@@ -1141,10 +1191,10 @@ app.get('/admin.html', allowLocalhostOnly, requireAdminLogin, (req, res) => {
 });
 
 
-// 📊 STATISTIKY PILOTŮ (viditelní na mapě)
+// 📊 STATISTIKY PILOTŮ (včetně referral přehledu)
 app.get('/api/statistics', async (req, res) => {
   try {
-    const [typeAccounts, regions, specializations, volunteers, totalVisible] = await Promise.all([
+    const [typeAccounts, regions, specializations, volunteers, totalVisible, referrers] = await Promise.all([
       pool.query(`
         SELECT type_account, COUNT(*) AS count
         FROM pilots
@@ -1173,7 +1223,22 @@ app.get('/api/statistics', async (req, res) => {
         LIMIT 10
       `),
       pool.query(`SELECT COUNT(*) AS volunteers FROM pilots WHERE visible = 'ANO' AND volunteer = 'ANO'`),
-      pool.query(`SELECT COUNT(*) AS total FROM pilots WHERE visible = 'ANO'`)
+      pool.query(`SELECT COUNT(*) AS total FROM pilots WHERE visible = 'ANO'`),
+
+      // 🧩 nový dotaz – TOP 5 pilotů, kteří přivedli nové uživatele
+      pool.query(`
+        SELECT
+          p.id,
+          p.name,
+          p.email,
+          p.ref_code,
+          COUNT(invited.id) AS invited_count
+        FROM pilots invited
+        JOIN pilots p ON invited.ref_by_email = p.ref_code
+        GROUP BY p.id, p.name, p.email, p.ref_code
+        ORDER BY invited_count DESC
+        LIMIT 5
+      `)
     ]);
 
     res.json({
@@ -1181,13 +1246,15 @@ app.get('/api/statistics', async (req, res) => {
       regions: regions.rows,
       specializations: specializations.rows,
       volunteers: volunteers.rows[0].volunteers,
-      total_visible: totalVisible.rows[0].total
+      total_visible: totalVisible.rows[0].total,
+      top_referrers: referrers.rows
     });
   } catch (err) {
     console.error("❌ Chyba při načítání statistik:", err);
     res.status(500).json({ error: "Chyba při načítání statistik" });
   }
 });
+
 
 
 

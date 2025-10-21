@@ -682,7 +682,7 @@ const transporter = nodemailer.createTransport({
   secure: true,
   auth: {
     user: 'dronadmin@seznam.cz',
-    pass: 'letamsdrony12'
+    pass: 'Letamsdrony12'
   }
 });
 
@@ -2910,6 +2910,102 @@ cron.schedule('0 0 */5 * *', async () => {
 });
 
 
+// === CRON: 08:00 (Praha) – automatické přepnutí účtu na Free po vypršení viditelnosti ===
+cron.schedule(
+  '0 8 * * *',
+  async () => {
+    console.log('⏰ CRON 08:00: kontrola expirací účtů (auto Free) …');
+
+    try {
+      // 1️⃣ Najdeme piloty s vypršelou platností (visible_valid <= dnešní datum)
+      const { rows: expiring } = await pool.query(`
+        SELECT id, email, name
+        FROM pilots
+        WHERE visible_valid IS NOT NULL
+          AND visible_valid::date <= CURRENT_DATE
+          AND type_account <> 'Free'
+      `);
+
+      if (expiring.length === 0) {
+        console.log('✅ Nikdo k přepnutí.');
+        return;
+      }
+
+      // 2️⃣ Přepneme typ účtu na Free
+      const ids = expiring.map(p => p.id);
+      await pool.query(
+        `UPDATE pilots SET type_account = 'Free' WHERE id = ANY($1::int[])`,
+        [ids]
+      );
+
+      // 3️⃣ Pošleme každému pilotovi e-mail
+      let sent = 0;
+      for (const p of expiring) {
+        try {
+          const html = wrapEmailContent(`
+            <p>Dobrý den ${escapeHtml(p.name || '')},</p>
+            <p>platnost Vaší viditelnosti na <strong>NajdiPilota.cz</strong> právě vypršela. 
+               Váš účet byl proto automaticky přepnut zpět na <strong>Free</strong>.</p>
+            <p>Pokud chcete zůstat viditelný v mapě pilotů, můžete své členství jednoduše prodloužit
+               přímo ve svém profilu nebo na odkazu níže:</p>
+            <p style="text-align:center; margin: 20px 0;">
+              <a href="https://www.najdipilota.cz/subscription.html"
+                 style="background-color:#007BFF;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">
+                 🔄 Prodloužit viditelnost
+              </a>
+            </p>
+            <p>Děkujeme, že jste součástí komunity pilotů na NajdiPilota.cz.<br>
+                NajdiPilota.cz 🚁</p>
+          `, 'Vaše viditelnost vypršela – účet přepnut na Free');
+
+          await transporter.sendMail({
+            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+            to: p.email,
+            bcc: 'drboom@seznam.cz',
+            subject: 'Vaše viditelnost vypršela – účet přepnut na Free',
+            html
+          });
+          sent++;
+        } catch (err) {
+          console.error(`❌ Chyba při odesílání e-mailu pilotovi ${p.email}:`, err.message);
+        }
+      }
+
+      // 4️⃣ Souhrnný e-mail adminovi
+      const summary = `Přepnuto na Free: ${expiring.length} účtů.\nE-mailů pilotům odesláno: ${sent}.`;
+
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: process.env.ADMIN_ALERT_EMAIL || 'dronadmin@seznam.cz',
+        bcc: 'drboom@seznam.cz',
+        subject: 'Cron 08:00 – Přepnutí účtů na Free (souhrn)',
+        html: wrapEmailContent(`
+          <h3>Cron – Přepnutí účtů na Free</h3>
+          <p>${expiring.length} pilotů přepnuto na Free.</p>
+          <p>E-mailů pilotům odesláno: ${sent}.</p>
+          <p>Spuštěno dne: ${new Date().toLocaleString('cs-CZ')}</p>
+        `, 'Cron souhrn – Auto Free')
+      });
+
+      console.log('✅ CRON hotov:', summary);
+    } catch (err) {
+      console.error('❌ Chyba CRON 08:00 (auto Free):', err);
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: process.env.ADMIN_ALERT_EMAIL || 'dronadmin@seznam.cz',
+        bcc: 'drboom@seznam.cz',
+        subject: '❌ Cron 08:00 – Chyba při přepínání účtů',
+        html: wrapEmailContent(`
+          <p>Došlo k chybě při kontrole expirací:</p>
+          <pre style="white-space:pre-wrap;">${escapeHtml(err.message)}</pre>
+        `, 'Cron – chyba auto Free')
+      });
+    }
+  },
+  { timezone: 'Europe/Prague' }
+);
+
+
 
 // ──────────────────────────────────────────────────────────────
 // CRON: Každý den v 08:00 odešle expirační e-maily (Europe/Prague)
@@ -3701,6 +3797,60 @@ function membershipExpiry0DaysEmail(refCode) {
   return wrapEmailContent(content, "Upomínka členství");
 }
 
+// ---------------------------------------------------------------------
+// E-mail při vypršení viditelnosti – přepnutí účtu na Free
+// ---------------------------------------------------------------------
+function expiredMembershipEmailContent(name) {
+  const content = `
+    <p>Dobrý den ${escapeHtml(name || '')},</p>
+
+    <p>platnost Vaší viditelnosti na 
+       <strong style="color:#0077B6;">NajdiPilota.cz</strong> právě vypršela. 
+       Váš účet byl automaticky přepnut na typ 
+       <strong style="color:#b0f759;">Free</strong>.</p>
+
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Co to znamená?</h2>
+    <ul style="padding-left:20px;">
+      <li><strong style="color:#b0f759;">Free účet</strong> má omezenou viditelnost v mapě a inzerenti nevidí vaše kontaktní údaje.</li>
+      <li>Můžete nadále spravovat svůj profil, přidávat projekty a aktualizovat data.</li>
+      <li>K plné viditelnosti a kontaktům se můžete vrátit kdykoliv – prodloužením členství.</li>
+    </ul>
+
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Jak prodloužit viditelnost?</h2>
+    <p>Pro prodloužení stačí navštívit stránku 
+      <a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;text-decoration:none;font-weight:600;">Subscription</a> 
+      nebo použít tlačítko níže:</p>
+
+    <p style="text-align:center; margin: 25px 0;">
+      <a href="https://www.najdipilota.cz/subscription.html" 
+         style="background-color:#0077B6;color:#fff;padding:12px 20px;border-radius:6px;
+                text-decoration:none;font-size:16px;">
+        🔄 Prodloužit viditelnost
+      </a>
+    </p>
+
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Proč zůstat viditelný?</h2>
+    <ul style="padding-left:20px;">
+      <li><strong style="color:#258f01;">Basic účet</strong> – zelená značka v mapě, kontakt viditelný inzerentům.</li>
+      <li><strong style="color:#8f06bd;">Premium účet</strong> – fialová značka, neomezené specializace, přímé kontakty.</li>
+      <li>Více zakázek, více zobrazení, vyšší důvěra u klientů.</li>
+    </ul>
+
+    <p>Členství můžete obnovit přímo ze svého 
+      <a href="https://www.najdipilota.cz/profil.html" style="color:#0077B6;">profilu pilota</a> 
+      nebo přes stránku <a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">subscription</a>.</p>
+
+    <p style="margin-top:30px;">Děkujeme, že jste součástí komunity pilotů! 🚁<br>
+       <strong>Tým NajdiPilota.cz</strong></p>
+
+    <p style="font-size:13px;color:#6c757d;">Více informací naleznete na stránkách 
+      <a href="https://www.najdipilota.cz/o-projektu.html" style="color:#0077B6;">O projektu</a> 
+      a <a href="https://www.najdipilota.cz/faq.html" style="color:#0077B6;">FAQ</a>.
+    </p>
+  `;
+  return wrapEmailContent(content, "Vaše viditelnost vypršela – účet přepnut na Free");
+}
+
 
 // ---------------------------------------------------------------------
 // Přehled nepřečtených zpráv
@@ -3855,6 +4005,74 @@ cron.schedule(
   },
   { timezone: 'Europe/Prague' }
 );
+
+
+// ──────────────────────────────────────────────────────────────
+// === CRON: 08:00 (Praha) – přepnutí na Free + e-maily ===
+// ──────────────────────────────────────────────────────────────
+cron.schedule(
+  '0 8 * * *',
+  async () => {
+    console.log('⏰ CRON 08:00: kontrola expirací účtů …');
+    try {
+      const { rows: expiring } = await pool.query(`
+        SELECT id, email, name
+        FROM pilots
+        WHERE visible_valid IS NOT NULL
+          AND visible_valid::date <= CURRENT_DATE
+          AND type_account <> 'Free'
+      `);
+
+      if (expiring.length === 0) {
+        console.log('✅ Nikdo k přepnutí.');
+        return;
+      }
+
+      const ids = expiring.map(r => r.id);
+      await pool.query(
+        `UPDATE pilots SET type_account = 'Free' WHERE id = ANY($1::int[])`,
+        [ids]
+      );
+
+      let sent = 0;
+      for (const p of expiring) {
+        try {
+          await transporter.sendMail({
+            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+            to: p.email,
+            bcc: 'drboom@seznam.cz',
+            subject: 'Vaše viditelnost vypršela – účet přepnut na Free',
+            html: expiredMembershipEmailContent(p.name)
+          });
+          sent++;
+        } catch (err) {
+          console.error(`❌ E-mail pilotovi ${p.email} selhal:`, err.message);
+        }
+      }
+
+      // souhrnný report
+      const summaryHtml = wrapEmailContent(`
+        <h3>Cron 08:00 – Přepnutí účtů na Free</h3>
+        <p>Pilotů přepnuto: <strong>${expiring.length}</strong></p>
+        <p>E-mailů odesláno: <strong>${sent}</strong></p>
+        <p>Datum: ${new Date().toLocaleString('cs-CZ')}</p>
+      `, 'Cron souhrn – Auto Free');
+
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: 'drboom@seznam.cz',
+        subject: 'Cron – Přepnutí účtů na Free (souhrn)',
+        html: summaryHtml
+      });
+
+      console.log(`✅ Cron hotov: ${sent}/${expiring.length} e-mailů odesláno.`);
+    } catch (err) {
+      console.error('❌ Chyba CRON 08:00:', err);
+    }
+  },
+  { timezone: 'Europe/Prague' }
+);
+
 
 // ---------------------------------------------------------------------
 // GPS fix e-mail

@@ -198,6 +198,17 @@ fetch('/check-admin-session', {
       const table = document.getElementById('pilot-table');
       table.innerHTML = '';  // Vyčistí stávající řádky tabulky
 
+// Seřazení: nejdříve podle typu účtu (Premium > Basic > Free > Ne), pak podle ID
+data.sort((a, b) => {
+  const order = { "Premium": 1, "Basic": 2, "Free": 3, "Ne": 4, null: 5, undefined: 5, "": 5 };
+  const typeA = order[a.type_account] || 5;
+  const typeB = order[b.type_account] || 5;
+
+  if (typeA !== typeB) return typeA - typeB;
+  return a.id - b.id;
+});
+
+
       data.forEach(p => {
   const row = document.createElement('tr');
 

@@ -3804,7 +3804,7 @@ function expiredMembershipEmailContent(name) {
   const content = `
     <p>Dobrý den ${escapeHtml(name || '')},</p>
 
-    <p>platnost Vaší viditelnosti na 
+    <p>Vaše platnost na 
        <strong style="color:#0077B6;">NajdiPilota.cz</strong> právě vypršela. 
        Váš účet byl automaticky přepnut na typ 
        <strong style="color:#b0f759;">Free</strong>.</p>
@@ -3812,33 +3812,29 @@ function expiredMembershipEmailContent(name) {
     <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Co to znamená?</h2>
     <ul style="padding-left:20px;">
       <li><strong style="color:#b0f759;">Free účet</strong> má omezenou viditelnost v mapě a inzerenti nevidí vaše kontaktní údaje.</li>
-      <li>Můžete nadále spravovat svůj profil, přidávat projekty a aktualizovat data.</li>
+      <li>Můžete nadále spravovat svůj profil a aktualizovat data.</li>
       <li>K plné viditelnosti a kontaktům se můžete vrátit kdykoliv – prodloužením členství.</li>
     </ul>
 
-    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Jak prodloužit viditelnost?</h2>
-    <p>Pro prodloužení stačí navštívit stránku 
-      <a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;text-decoration:none;font-weight:600;">Subscription</a> 
-      nebo použít tlačítko níže:</p>
+    <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Jak zvýšit viditelnost?</h2>
+    <p>Pro prodloužení navštivte 
+      <a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;text-decoration:none;font-weight:600;">Možnosti členství a jejich výhody</a> 
+      nebo se přihlašte do vašeho účtu níže:</p>
 
     <p style="text-align:center; margin: 25px 0;">
-      <a href="https://www.najdipilota.cz/subscription.html" 
+      <a href="https://www.najdipilota.cz/index.html" 
          style="background-color:#0077B6;color:#fff;padding:12px 20px;border-radius:6px;
                 text-decoration:none;font-size:16px;">
-        🔄 Prodloužit viditelnost
+        🔄 Přihlásit se a prodloužit viditelnost
       </a>
     </p>
 
     <h2 style="color:#0077B6;font-size:17px;margin-top:20px;">Proč zůstat viditelný?</h2>
     <ul style="padding-left:20px;">
       <li><strong style="color:#258f01;">Basic účet</strong> – zelená značka v mapě, kontakt viditelný inzerentům.</li>
-      <li><strong style="color:#8f06bd;">Premium účet</strong> – fialová značka, neomezené specializace, přímé kontakty.</li>
+      <li><strong style="color:#8f06bd;">Premium účet</strong> – fialová značka, až 10 specializací, přímé kontakty a prioritní notofikace od inzerentů.</li>
       <li>Více zakázek, více zobrazení, vyšší důvěra u klientů.</li>
     </ul>
-
-    <p>Členství můžete obnovit přímo ze svého 
-      <a href="https://www.najdipilota.cz/profil.html" style="color:#0077B6;">profilu pilota</a> 
-      nebo přes stránku <a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">subscription</a>.</p>
 
     <p style="margin-top:30px;">Děkujeme, že jste součástí komunity pilotů! 🚁<br>
        <strong>Tým NajdiPilota.cz</strong></p>

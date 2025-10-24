@@ -85,8 +85,9 @@
 </nav>
 
 <div id="advertiser-banner" class="alert alert-warning text-center m-3 d-flex justify-content-center align-items-center" style="display: none;">
-  <div id="advertiser-text" class="me-3 fw-semibold"></div>
-  <button id="logout-btn" class="btn btn-warning w-100">Odhlásit se</button>
+  <div class="me-3 fw-semibold"><strong id="advertiser-text"></strong></div>
+  <div id="credit-display" class="badge bg-success me-3 p-2 fw-bold" style="font-size:1.0em;">Kredit: 0.00 Kč</div>
+  <button id="logout-btn" class="btn btn-warning">Odhlásit se</button>
 </div>
 
 <div id="filter-section" class="filter-section bg-light p-3 rounded-3 mb-4 shadow-sm">
@@ -222,6 +223,7 @@ document.addEventListener('DOMContentLoaded', async function () {
                     const inzerentData = await response.json();
                     loggedInzerentId = inzerentData.id;
                     localStorage.setItem('advertiserId', loggedInzerentId);
+                    loadCredit(advertiserEmail);
                 } else {
                     console.warn("Inzerent není přihlášen. Možná vypršela session.");
                     localStorage.removeItem("inzerentEmail");
@@ -442,14 +444,29 @@ document.addEventListener('DOMContentLoaded', async function () {
       `;
     }
 
-    // === FREE účet – jen stručné info ===
-    else {
-      html += `
-        ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-        ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-        
-      `;
-    }
+// === FREE účet – jen stručné info + DECENTNÍ TLAČÍTKO SPONZORSTVÍ ===
+else {
+  html += `
+    ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+    
+    <p class="text-muted small mt-3 mb-2">
+    Pilot má Free účet, komunikace je nedostupná. 
+    <br>
+    Odpověď není garantována.
+</p>
+<button class="btn btn-sm btn-outline-success w-100" 
+        style="font-size: 13px;
+               padding: 4px 8px;
+               border-color: #28a745; 
+               color: #28a745;" 
+        onmouseover="this.style.backgroundColor='#e6ffe9'" 
+        onmouseout="this.style.backgroundColor='transparent'"
+        onclick="sponsorPilotUpgrade('${p.id}', '${p.name.replace(/'/g, "\\'")}', 3, 40.00)">
+    🎁 Darovat 3 dny Basic účtu pro kontakt
+</button>
+  `;
+}
   }
 
   // --- Nepřihlášený inzerent ---
@@ -606,6 +623,76 @@ async function contactPilot(pilotId) {
 }
 
 
+/**
+ * Spustí proces sponzorství. Přijímá dynamické dny a částku.
+ */
+async function sponsorPilotUpgrade(pilotId, pilotName, days, amount) {
+  const advertiserId = localStorage.getItem('advertiserId');
+  const advertiserEmail = localStorage.getItem('inzerentEmail');
+
+  if (!advertiserEmail || !advertiserId) {
+    alert("Musíte být přihlášen jako inzerent.");
+    return;
+  }
+
+  const confirmation = confirm(`
+    Opravdu chcete darovat pilotovi "${pilotName}" ${days} dní Basic účtu?
+    
+    Cena: ${amount.toFixed(2)} Kč bude odečtena z Vašeho kreditu.
+    POZOR: Odpověď pilota není garantována.
+  `);
+  if (!confirmation) return;
+  
+  try {
+    const upgradeRes = await fetch('/api/sponsor-upgrade', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        pilotId: pilotId,
+        sponsorEmail: advertiserEmail,
+        days: days, // PŘEDÁVÁME DYNAMICKY (nyní 3)
+        type: 'Basic', 
+        amount: amount // PŘEDÁVÁME DYNAMICKY (nyní 40.00)
+      }),
+      credentials: 'include'
+    });
+
+    const upgradeData = await upgradeRes.json();
+
+    if (!upgradeData.success) {
+      alert('❌ Transakce selhala: ' + (upgradeData.message || 'Nedostatečný kredit nebo neznámá chyba.'));
+      return;
+    }
+
+    alert(`✅ Transakce úspěšná. Pilot ${pilotName} má nyní ${days} dní Basic účtu. Budete přesměrován do chatu.`);
+
+    // Znovu načíst a zobrazit nový kredit
+    loadCredit(advertiserEmail);
+    
+    // Vytvořit konverzaci
+    contactPilot(pilotId); 
+    
+  } catch (error) {
+    console.error("Chyba při sponzorování pilota:", error);
+    alert('Došlo k chybě při komunikaci se serverem.');
+  }
+}
+
+async function loadCredit(advertiserEmail) {
+    try {
+        const res = await fetch(`/api/advertiser-credit?email=${advertiserEmail}`);
+        const data = await res.json();
+        const creditDisplay = document.getElementById('credit-display');
+
+        if (res.ok) {
+            creditDisplay.textContent = `Kredit: ${data.credit} Kč`;
+        } else {
+            creditDisplay.textContent = `Kredit: Chyba`;
+        }
+    } catch (e) {
+        console.error('Nelze načíst kredit:', e);
+    }
+}
 
 </script>
 <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">

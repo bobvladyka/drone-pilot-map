@@ -1255,6 +1255,131 @@ app.get('/api/statistics', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------
+// 💸 NOVÝ ENDPOINT: Sponzorství 7 dní Basic účtu (s kontrolou KREDITU)
+// ---------------------------------------------------------------------
+app.post('/api/sponsor-upgrade', async (req, res) => {
+  const { pilotId, sponsorEmail, days, type, amount } = req.body;
+
+  // Převod 'days' na číslo a kontrola platných hodnot (např. 3, 7, 30...)
+  const daysNum = parseInt(days, 10);
+  const isValidDays = daysNum > 0 && daysNum <= 365; // Povolíme cokoli do 1 roku 
+  
+  if (!pilotId || !sponsorEmail || !isValidDays || type !== 'Basic' || !amount) {
+    return res.status(400).json({ success: false, message: 'Neplatné parametry sponzorství.' });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN"); // START TRANSACTION
+
+    // 1) Získání a kontrola zůstatku kreditu Inzerenta
+    const advRes = await client.query(
+      'SELECT id, credit_balance FROM advertisers WHERE email = $1 FOR UPDATE', // ZAMKNUTÍ řádku
+      [sponsorEmail]
+    );
+    if (advRes.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, message: 'Inzerent nenalezen.' });
+    }
+    const advertiserId = advRes.rows[0].id;
+    const currentCredit = parseFloat(advRes.rows[0].credit_balance);
+    const cost = parseFloat(amount); // Zde je cena sponzorství (např. 100)
+
+    if (currentCredit < cost) {
+      await client.query("ROLLBACK");
+      return res.status(403).json({ success: false, message: 'Nedostatečný kredit pro sponzorství.' });
+    }
+
+    // 2) ODČTENÍ KREDITU
+    await client.query(
+      'UPDATE advertisers SET credit_balance = credit_balance - $1 WHERE id = $2',
+      [cost, advertiserId]
+    );
+
+    // 3) Aktualizace visible_valid pilota
+    const updatePilot = await client.query(
+      `UPDATE pilots 
+       SET 
+         type_account = $1,
+         visible_valid = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '${daysNum} days'
+       WHERE id = $2
+       RETURNING id, email, name, type_account, visible_valid`,
+      [type, pilotId]
+    );
+
+    if (updatePilot.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ success: false, message: 'Pilot nenalezen.' });
+    }
+    const pilot = updatePilot.rows[0];
+
+    // 4) Zaznamenání sponzorské platby (log)
+    await client.query(
+      `INSERT INTO sponsorship_logs (pilot_id, sponsor_email, days_added, amount)
+       VALUES ($1, $2, $3, $4)`,
+      [pilotId, sponsorEmail, daysNum, cost]
+    );
+
+    await client.query("COMMIT"); // END TRANSACTION
+
+    // 5) E-mailová notifikace pilotovi o daru (stejná jako předtím)
+    // ... (zde ponechte kód pro odeslání notifikačního emailu pilotovi) ...
+    await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: pilot.email,
+        bcc: 'drboom@seznam.cz',
+        subject: `🎁 Gratulujeme! Máte darovaných ${daysNum} dní Basic účtu!`, // days -> daysNum
+        html: wrapEmailContent(`
+            <p>Dobrý den ${escapeHtml(pilot.name || '')},</p>
+            <p>Díky zájemci o Vaše služby (inzerent: <strong>${escapeHtml(sponsorEmail)}</strong>) Vám bylo <strong>darováno ${daysNum} dní</strong> Basic účtu!</p> // days -> daysNum
+            <p>Váš účet byl automaticky přepnut na <strong>Basic</strong>, což Vám umožní ihned komunikovat se sponzorem a zviditelnit se pro další zakázky.</p>
+            <p>Nová platnost končí: <strong>${new Date(pilot.visible_valid).toLocaleDateString("cs-CZ")}</strong></p>
+            <p>Odpovězte sponzorovi co nejdříve!</p>
+            <p style="margin:24px 0;">
+            <a href="https://www.najdipilota.cz/moje-zpravy.html"
+                style="background:#0077B6;color:#fff;text-decoration:none;
+                        padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+                Otevřít zprávy a domluvit zakázku
+            </a>
+            </p>
+        `, "Dárek Basic účtu")
+    });
+
+
+    res.json({ success: true, message: `Pilot ${pilotId} upgradován na Basic (${daysNum} dní).`, newCredit: currentCredit - cost }); // days -> daysNum
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error('❌ Chyba při sponzorství:', err);
+    res.status(500).json({ success: false, message: 'Chyba serveru při sponzorování.' });
+  } finally {
+    client.release();
+  }
+});
+
+// ---------------------------------------------------------------------
+// 💰 NOVÝ ENDPOINT: Načtení kreditu (pro UI inzerenta)
+// ---------------------------------------------------------------------
+app.get('/api/advertiser-credit', async (req, res) => {
+    const email = req.session?.email || req.query.email;
+    if (!email) {
+        return res.status(401).json({ credit: 0, error: 'Nepřihlášen' });
+    }
+    try {
+        const result = await pool.query(
+            'SELECT credit_balance FROM advertisers WHERE email = $1', 
+            [email]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json({ credit: 0, error: 'Inzerent nenalezen' });
+        }
+        res.json({ credit: parseFloat(result.rows[0].credit_balance).toFixed(2) });
+    } catch (e) {
+        console.error('Chyba při načítání kreditu:', e);
+        res.status(500).json({ credit: 0, error: 'Chyba serveru' });
+    }
+});
 
 
 
@@ -2427,7 +2552,7 @@ app.post('/admin-send-gdpr-reminder', requireAdminLogin, async (req, res) => {
             Kliknutím na tlačítko níže se můžete přihlásit a souhlas snadno potvrdit:
           </p>
           <p style="margin:24px 0;">
-            <a href="https://www.najdipilota.cz/index.html"
+            <a href="https://www.najdipilota.cz/login.html"
                style="background:#0077B6;color:#fff;text-decoration:none;
                       padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
               Přihlaš se a uděl souhlas GDPR
@@ -2947,11 +3072,11 @@ cron.schedule(
             <p>platnost Vaší viditelnosti na <strong>NajdiPilota.cz</strong> právě vypršela. 
                Váš účet byl proto automaticky přepnut zpět na <strong>Free</strong>.</p>
             <p>Pokud chcete zůstat viditelný v mapě pilotů, můžete své členství jednoduše prodloužit
-               přímo ve svém profilu nebo na odkazu níže:</p>
+               přímo ve svém profilu</p>
             <p style="text-align:center; margin: 20px 0;">
-              <a href="https://www.najdipilota.cz/subscription.html"
+              <a href="https://www.najdipilota.cz/login.html"
                  style="background-color:#007BFF;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;">
-                 🔄 Prodloužit viditelnost
+                 🔄 Přihlásit se a prodloužit viditelnost
               </a>
             </p>
             <p>Děkujeme, že jste součástí komunity pilotů na NajdiPilota.cz.<br>
@@ -3754,7 +3879,7 @@ function membershipExpiry7DaysEmail(refCode) {
       <li>Přihlaste se na svůj účet pilota.</li>
       <li>V profilu klikněte na <strong>"Prodloužit členství"</strong>.</li>
     </ol>
-    <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Možnosti předplatného</a></p>
+    <p><a href="https://www.najdipilota.cz/login.html" style="color:#0077B6;">Přihlašte se a prodlužte členství</a></p>
     <hr>
     <h3 style="color:#258f01;">🎁 Přiveďte kamarád a získejte +7 dní zdarma!</h3>
     <p>Pozvěte kamaráda přes tento odkaz:</p>
@@ -3772,7 +3897,7 @@ function membershipExpiry3DaysEmail(refCode) {
     <h2 style="color:red;">⚠️ Poslední 3 dny pro prodloužení!</h2>
     <p>Vaše členství vyprší už za <strong>3 dny</strong>. Poté bude účet převeden na 
        <strong style="color:#b0f759;">Free</strong>.</p>
-    <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Prodloužit členství</a></p>
+    <p><a href="https://www.najdipilota.cz/login.html" style="color:#0077B6;">Přihlašte se a prodlužte členství</a></p>
     <hr>
     <h3 style="color:#258f01;">🎁 Přiveďte kamarád a získejte +7 dní zdarma!</h3>
     <div style="background:#f1f1f1;padding:10px;text-align:center;border-radius:6px;">${refUrl}</div>
@@ -3789,7 +3914,7 @@ function membershipExpiry0DaysEmail(refCode) {
     <h2 style="color:red;">⚠️ Členství vyprší dnes!</h2>
     <p>Vaše členství vyprší <strong>dnes</strong>. Pokud si jej neprodloužíte,
        účet bude převeden na <strong style="color:#b0f759;">Free</strong>.</p>
-    <p><a href="https://www.najdipilota.cz/subscription.html" style="color:#0077B6;">Prodloužit členství</a></p>
+    <p><a href="https://www.najdipilota.cz/login.html" style="color:#0077B6;">Přihlašte se a prodlužte členství</a></p>
     <hr>
     <h3 style="color:#258f01;">🎁 Přiveďte kamarád a získejte +7 dní zdarma!</h3>
     <div style="background:#f1f1f1;padding:10px;text-align:center;border-radius:6px;">${refUrl}</div>
@@ -3822,7 +3947,7 @@ function expiredMembershipEmailContent(name) {
       nebo se přihlašte do vašeho účtu níže:</p>
 
     <p style="text-align:center; margin: 25px 0;">
-      <a href="https://www.najdipilota.cz/index.html" 
+      <a href="https://www.najdipilota.cz/login.html" 
          style="background-color:#0077B6;color:#fff;padding:12px 20px;border-radius:6px;
                 text-decoration:none;font-size:16px;">
         🔄 Přihlásit se a prodloužit viditelnost
@@ -3884,7 +4009,7 @@ function buildUnreadDigestEmail(pilotName, items) {
       <tbody>${rows}</tbody>
     </table>
     <p style="margin-top:20px;">
-      <a href="https://www.najdipilota.cz/moje-zpravy.html" style="color:#0077B6;">👉 Otevřít zprávy</a>
+      <a href="https://www.najdipilota.cz/login.html" style="color:#0077B6;">👉 Přihlaš se a otevři nepřečtené zprávy</a>
     </p>
   `;
   return wrapEmailContent(content, "Nepřečtené zprávy");
@@ -3920,7 +4045,7 @@ function buildNewDemandsDigestEmailFancy(pilotName, demands) {
       <tbody>${rows}</tbody>
     </table>
     <div style="text-align:center;margin-top:24px;">
-      <a href="https://www.najdipilota.cz/index.html" 
+      <a href="https://www.najdipilota.cz/login.html" 
          style="background:#27ae60;color:#fff;text-decoration:none;padding:12px 20px;border-radius:6px;font-weight:bold;">
         👉 Přihlaš se a zobraz všechny poptávky
       </a>
@@ -3944,10 +4069,10 @@ function buildNewDemandAlertEmail(pilotName, demand) {
       ${demand.deadline ? `<li>Termín: ${demand.deadline}</li>` : ''}
     </ul>
     <p>
-      <a href="https://www.najdipilota.cz/poptavky.html"
+      <a href="https://www.najdipilota.cz/login.html"
          style="background:#0077B6;color:#fff;text-decoration:none;padding:10px 18px;
                 border-radius:6px;font-size:14px;font-weight:500;">
-        Zobrazit poptávku
+        Přihlašte se a zobrazte poptávku
       </a>
     </p>
     <p style="color:#8f06bd;font-weight:600;margin-top:25px;">
@@ -4082,7 +4207,7 @@ function gpsFixEmailContent() {
     <p>Pro správné zobrazení prosím doplňte nebo opravte svou adresu v účtu:</p>
 
     <p style="margin:24px 0;">
-      <a href="https://www.najdipilota.cz/"
+      <a href="https://www.najdipilota.cz/login.html"
          style="background:#0077B6;color:#fff;text-decoration:none;
                 padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
         Přihlásit se do účtu

@@ -64,6 +64,7 @@
 
       if (data.success) {
         localStorage.setItem("advertiserId", data.id);      // ✅ rovnou z odpovědi
+        localStorage.setItem("advertiserUid", data.uid);         // ← NOVĚ
         localStorage.setItem("inzerentEmail", data.email);
         localStorage.removeItem("loggedEmail"); // pro jistotu smažeme pilotí login
         window.location.href = "/onlymap.html";

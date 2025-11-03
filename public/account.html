@@ -402,6 +402,17 @@ if (pilot.type_account === "Basic") {
   });
 }
 
+if (pilot.type_account === "Premium") {
+  // Max 10 specializací
+  const specializationSelect = document.getElementById("specialization");
+  specializationSelect.addEventListener("change", function () {
+    if (this.selectedOptions.length > 10) {
+      alert("V Premium účtu lze vybrat maximálně 10 specializací.");
+      this.selectedOptions[this.selectedOptions.length - 1].selected = false;
+    }
+  });
+}
+
 // Po načtení pilota (tam, kde je currentPilot = pilot)
 if (!pilot.latitude || !pilot.longitude) {
   const warning = document.createElement("div");

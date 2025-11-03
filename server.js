@@ -864,6 +864,11 @@ const oldPilotData = oldDataResult.rows[0];
         .filter(Boolean)
         .join(", ") || null;
     }
+if (oldPilotData.type_account === "Premium") {
+  // Premium: max 10 specializací
+  if (specIds.length > 10) specIds = specIds.slice(0, 10);
+}
+
   }
 
   // 🛡️ available vždy jen ANO/NE
@@ -1114,6 +1119,18 @@ console.log("Záznam uložen do databáze.");
   }
 });
 
+// GET /api/v2/advertisers/:uid
+app.get('/api/v2/advertisers/:uid', async (req, res) => {
+  const { uid } = req.params;
+  const sql = `
+    SELECT id, uid, name, email, credit_balance, created_at
+    FROM advertisers
+    WHERE uid = $1
+  `;
+  const r = await pool.query(sql, [uid]);
+  if (!r.rowCount) return res.status(404).json({ error: 'Not found' });
+  res.json(r.rows[0]);
+});
 
 
 app.post("/inzerent", async (req, res) => {
@@ -1142,6 +1159,14 @@ return res.json({             // ✅ tady
       id: advertiser.id,
       email: advertiser.email
     });
+
+// po ověření hesla:
+res.json({
+  success: true,
+  id: advertiser.id,
+  uid: advertiser.uid,      // ← NOVĚ
+  email: advertiser.email
+});
 
 
     res.json({ success: true, message: "Přihlášení proběhlo úspěšně." });

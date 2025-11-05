@@ -110,7 +110,8 @@
                     data.conversations.forEach(conv => {
                         const conversationCard = document.createElement("a");
                         const pilotId = conv.pilot_id || "";
-                        conversationCard.href = `/chat.html?conversationId=${encodeURIComponent(conv.id || conv.conversation_id)}&pilotId=${encodeURIComponent(pilotId)}&advertiserId=${encodeURIComponent(advertiserId)}`;
+                        conversationCard.href = `/chat.html?conversationId=${encodeURIComponent(conv.id || conv.conversation_id)}&uid=${encodeURIComponent(conv.uid)}&pilotId=${encodeURIComponent(pilotId)}&advertiserId=${encodeURIComponent(advertiserId)}`;
+
                         conversationCard.className = `conversation-card d-block p-3 border-bottom ${conv.unread ? 'unread' : ''}`;
                         
                         const lastMessage = conv.last_message || 'Žádné zprávy';

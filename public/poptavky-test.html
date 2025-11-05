@@ -415,21 +415,19 @@ async function handleReactById(id) {
     const advertiserId = advertiserData.id;
 
     // 3) Vytvoř / najdi konverzaci (nový endpoint)
-const { success, conversationId, conversationUid, message } = await apiJson('/api/v2/create-conversation', {
-  pilotId,
-  advertiserId,
-  advertiserTable: 'advertisers'
-});
-if (!success || !conversationId) throw new Error(message || 'Nepodařilo se vytvořit konverzaci');
-
-// 4) Přesměruj do chatu (kombinace ID + UID + role)
-const url = new URL(location.origin + '/chat.html');
-url.searchParams.set('conversationId', conversationId);
-if (conversationUid) url.searchParams.set('uid', conversationUid);
-url.searchParams.set('pilotId', pilotId);
-url.searchParams.set('advertiserId', advertiserId);
-location.href = url.toString();
-
+    const { success, conversationId, message } = await apiJson('/api/v2/create-conversation', {
+      pilotId,
+      advertiserId,
+      advertiserTable: 'advertisers'
+    });
+    if (!success || !conversationId) throw new Error(message || 'Nepodařilo se vytvořit konverzaci');
+    
+    // 4) Přesměruj do chatu (nové URL s ID)
+    const url = new URL(location.origin + '/chat.html');
+    url.searchParams.set('conversationId', conversationId);
+    url.searchParams.set('pilotId', pilotId);
+    url.searchParams.set('advertiserId', advertiserId);
+    location.href = url.toString();
 
   } catch (err) {
     console.error(err);

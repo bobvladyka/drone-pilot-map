@@ -1665,33 +1665,39 @@ app.post('/create-conversation', async (req, res) => {
 
     // Check if a conversation already exists between this pilot and advertiser
     const existingConversation = await pool.query(
-      'SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 LIMIT 1',
+      'SELECT id, uid FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 LIMIT 1',
       [pilotId, advertiserId]
     );
 
     let conversationId;
+    let conversationUid;
 
     if (existingConversation.rowCount > 0) {
       // If the conversation exists, use the existing conversationId
       conversationId = existingConversation.rows[0].id;
+      conversationUid = existingConversation.rows[0].uid;
     } else {
       // If no conversation exists, create a new one
       const conversationResult = await pool.query(
-        `INSERT INTO conversations (pilot_id, advertiser_id) 
-         VALUES ($1, $2) 
-         RETURNING id`,
+        `INSERT INTO conversations (pilot_id, advertiser_id)
+         VALUES ($1, $2)
+         RETURNING id, uid`,
         [pilotId, advertiserId]
       );
+
       conversationId = conversationResult.rows[0].id;
+      conversationUid = conversationResult.rows[0].uid;
     }
 
-    res.json({ success: true, conversationId });
+    // ✅ Tahle závorka ti chyběla ↓↓↓↓↓
+    res.json({ success: true, conversationId, conversationUid });
 
   } catch (err) {
     console.error("Chyba při vytváření konverzace:", err);
     res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
   }
 });
+
 
 
 // GET /get-advertiser-conversations?advertiserEmail=...
@@ -2706,6 +2712,7 @@ app.get('/api/v2/pilot-conversations', async (req, res) => {
     const conversations = await pool.query(`
       SELECT 
         c.id,
+        c.uid,
         c.advertiser_id, -- Přidáno, aby se ID předalo na frontend
         c.pilot_id,      -- Přidáno, aby se ID předalo na frontend
         c.advertiser_table,
@@ -2764,6 +2771,53 @@ app.get('/api/v2/pilot-conversations', async (req, res) => {
   }
 });
 
+// ✅ Získání konverzace podle UID (např. /api/v2/conversation/f1a1bfc81c32)
+app.get('/api/v2/conversation/:uid', async (req, res) => {
+  const { uid } = req.params;
+  const userId = req.query.userId || null; // volitelně můžeš posílat i ID uživatele z frontendu
+
+  try {
+    const result = await pool.query(`
+      SELECT 
+        c.id,
+        c.uid,
+        c.pilot_id,
+        c.advertiser_id,
+        c.advertiser_table,
+        p.name AS pilot_name,
+        p.email AS pilot_email,
+        a.name AS advertiser_name,
+        a.email AS advertiser_email,
+        c.created_at,
+        c.updated_at,
+        CASE 
+          WHEN $2::integer = c.pilot_id THEN 'pilot'
+          WHEN $2::integer = c.advertiser_id THEN 'advertiser'
+          ELSE NULL
+        END AS current_user_role
+      FROM conversations c
+      LEFT JOIN pilots p ON c.pilot_id = p.id
+      LEFT JOIN advertisers a ON c.advertiser_table = 'advertisers' AND c.advertiser_id = a.id
+      WHERE c.uid = $1
+      LIMIT 1
+    `, [uid, userId]);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Konverzace s tímto UID nenalezena' });
+    }
+
+    res.json({
+      success: true,
+      conversation: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error("❌ Chyba při načítání konverzace podle UID:", err);
+    res.status(500).json({ success: false, message: 'Chyba serveru při načítání konverzace podle UID' });
+  }
+});
+
+
 
 // 2. Endpoint pro získání konverzací inzerenta podle ID
 app.get('/api/v2/advertiser-conversations', async (req, res) => {
@@ -2776,6 +2830,7 @@ app.get('/api/v2/advertiser-conversations', async (req, res) => {
     const conversations = await pool.query(`
       SELECT
         c.id,
+        c.uid,
         c.pilot_id,
         c.advertiser_id,
         p.name AS pilot_name,
@@ -2921,35 +2976,52 @@ app.post('/api/v2/send-message', async (req, res) => {
 });
 
 app.post('/api/v2/create-conversation', async (req, res) => {
-  const { pilotId, advertiserId, advertiserTable } = req.body;
+  let { pilotId, advertiserId, advertiserTable } = req.body;
+
+  // 🧩 1️⃣ Výchozí hodnota (pokud frontend neposlal advertiserTable)
+  if (!advertiserTable) advertiserTable = 'advertisers';
 
   try {
-    // Zkontroluj, zda konverzace už neexistuje
-    const existingConversation = await pool.query(
-      `SELECT id FROM conversations WHERE pilot_id = $1 AND advertiser_id = $2 AND advertiser_table = $3 LIMIT 1`,
-      [pilotId, advertiserId, advertiserTable]
-    );
+    // 🧠 2️⃣ Atomický insert – pokud existuje, neudělá nic
+    const insertQuery = `
+      INSERT INTO conversations (pilot_id, advertiser_id, advertiser_table)
+      VALUES ($1, $2, $3)
+      ON CONFLICT (pilot_id, advertiser_id)
+      DO NOTHING
+      RETURNING id, uid;
+    `;
 
-    let conversationId;
-    if (existingConversation.rowCount > 0) {
-      conversationId = existingConversation.rows[0].id;
-    } else {
-      const conversationResult = await pool.query(
-        `INSERT INTO conversations (pilot_id, advertiser_id, advertiser_table)
-         VALUES ($1, $2, $3)
-         RETURNING id`,
+    let conversationResult = await pool.query(insertQuery, [pilotId, advertiserId, advertiserTable]);
+
+    // 🧠 3️⃣ Pokud nebylo vloženo nic (už existuje), načteme existující
+    if (conversationResult.rowCount === 0) {
+      conversationResult = await pool.query(
+        `SELECT id, uid FROM conversations 
+         WHERE pilot_id = $1 AND advertiser_id = $2 AND advertiser_table = $3 
+         LIMIT 1`,
         [pilotId, advertiserId, advertiserTable]
       );
-      conversationId = conversationResult.rows[0].id;
     }
 
-    res.json({ success: true, conversationId });
+    // 🧠 4️⃣ Ověření, že jsme opravdu něco našli
+    if (conversationResult.rowCount === 0) {
+      console.error("⚠️ Konverzace se nepodařila vložit ani najít:", { pilotId, advertiserId, advertiserTable });
+      return res.status(404).json({ success: false, message: "Konverzaci se nepodařilo vytvořit ani načíst." });
+    }
+
+    const { id: conversationId, uid: conversationUid } = conversationResult.rows[0];
+    res.json({ success: true, conversationId, conversationUid });
 
   } catch (err) {
-    console.error("❌ Chyba při vytváření konverzace:", err);
-    res.status(500).json({ success: false, message: 'Chyba serveru při vytváření konverzace' });
+    console.error("❌ Chyba při vytváření konverzace:", err.message, err.code, err.detail);
+    res.status(500).json({ 
+      success: false, 
+      message: err.message || 'Chyba serveru při vytváření konverzace' 
+    });
   }
 });
+
+
 
 app.listen(PORT, () => {
   console.log(`Server běží na portu ${PORT}`);

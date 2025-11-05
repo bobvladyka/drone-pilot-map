@@ -102,7 +102,8 @@
 
                 if (data.success && data.conversations.length > 0) {
                     data.conversations.forEach(conv => {
-                        const chatUrl = `/chat.html?conversationId=${conv.id}&pilotId=${pilotId}&advertiserId=${conv.advertiser_id}`;
+                        const chatUrl = `/chat.html?conversationId=${conv.id}&uid=${conv.uid}&pilotId=${pilotId}&advertiserId=${conv.advertiser_id}`;
+
                         
                         const containerCard = document.createElement('div');
                         containerCard.className = `conv-item p-3 mb-3 ${conv.unread ? 'unread' : ''}`;

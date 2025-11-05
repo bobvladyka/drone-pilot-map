@@ -321,24 +321,41 @@ function tplFollowup2(company){
 function tplRealty(company){
   const note = ($('#customNote').value||'').trim();
   return wrapEmailContent(`
-    <h2>🏡 Dronní záběry, které prodávají</h2>
+    <h2>🏡 Chcete prodávat nemovitosti rychleji?</h2>
     <p>Dobrý den${company?.name?`, ${escapeHtml(company.name)}`:''},</p>
-    <p>máme síť více než <strong>70 ověřených pilotů po celé ČR</strong>, kteří pomáhají realitkám a developerům prezentovat
-       nemovitosti atraktivněji — a rychleji prodávat.</p>
+    
+    <p>Pro realitní kanceláře a developery jako jste vy provozujeme portál <strong>NajdiPilota.cz</strong>. 
+       Naše síť <strong>ověřených pilotů po celé ČR</strong> vám pomůže získat záběry, které prodávají.</p>
+       
+    <p>Naši piloti pokrývají široké spektrum služeb pro reality – od atraktivních leteckých fotografií až po technické inspekce. Můžete poptat například:</p>
     <ul>
-      <li>8–12 leteckých fotek + 60–90s video</li>
-      <li>krátké vertikály pro Reels/Stories</li>
-      <li>inspekce střech/fasád (i termál) u staveb</li>
+      <li>Atraktivní <strong>letecké fotografie</strong> pro Váš inzerát</li>
+      <li>Profesionální <strong>propagační video</strong> nemovitosti (včetně střihu)</li>
+      <li>Krátké záběry pro sociální sítě (Reels, Stories)</li>
+      <li>Technické <strong>inspekce střech</strong>, fasád nebo pozemků</li>
     </ul>
-    ${note ? `<p><em>${escapeHtml(note)}</em></p>` : ``}
-    <p><a href="https://www.najdipilota.cz/poptavky.html"
+    
+    <p>Finální podoba zakázky, rozsah prací i cena je ale vždy <strong>na přímé a férové domluvě</strong> mezi vámi a pilotem.</p>
+
+    ${note ? `<p style="background:#E8F4FF; border-left:4px solid #0077B6; padding:10px;"><em>${escapeHtml(note)}</em></p>` : ``}
+    
+    <p><strong>Registrace pro inzerenty je zdarma, bez provizí a nezávazná.</strong></p>
+    
+    <p style="margin-top:20px;"><a href="https://www.najdipilota.cz/"
       style="background:#0077B6;color:#fff;text-decoration:none;
-      padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
-      Vložit poptávku – zdarma během 1 minuty
+      padding:12px 20px;border-radius:8px;font-size:15px;font-weight:600;">
+      Začněte zdarma na NajdiPilota.cz
     </a></p>
-    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong></p>
-  `, 'NajdiPilota.cz – Pro realitní kanceláře');
+
+    <p style="font-size:13px;color:#555;margin-top:10px;">
+      Můžete se <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">přihlásit jako inzerent</a> a zadat hromadnou poptávku,
+      nebo si jen prohlédnout piloty přímo na mapě.
+    </p>
+
+    <p style="margin-top:24px;">S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong></p>
+  `, 'NajdiPilota.cz – Ověření piloti dronů pro Vaše nemovitosti');
 }
+
 
 function tplLogistics(company){
   const note = ($('#customNote').value||'').trim();
@@ -482,7 +499,7 @@ $('#btnSend').addEventListener('click', async () => {
   if(selected.length===0){ alert('Vyber aspoň jeden kontakt'); return; }
 
   const template = $('#template').value;
-  const subject  = $('#subject').value.trim() || 'NajdiPilota.cz – dronní služby';
+  const subject  = $('#subject').value.trim() || 'NajdiPilota.cz – droní služby';
   const customNote = $('#customNote').value || '';
 
   state.sending = true;

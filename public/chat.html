@@ -220,10 +220,53 @@ img.emoji {
   <script>
 document.addEventListener("DOMContentLoaded", function() {
   const urlParams = new URLSearchParams(window.location.search);
-  const conversationId = urlParams.get('conversationId');
+const conversationId = urlParams.get('conversationId');
+const conversationUid = urlParams.get('uid'); // ✅ nově
 
-  const pilotId = parseInt(urlParams.get('pilotId'));
-  const advertiserId = parseInt(urlParams.get('advertiserId'));
+let pilotId = parseInt(urlParams.get('pilotId'));
+let advertiserId = parseInt(urlParams.get('advertiserId'));
+
+// ✅ Pokud je v URL UID, získáme jeho ID, pilot_id a advertiser_id
+if (conversationUid && !conversationId) {
+  fetch(`/api/v2/conversation/${conversationUid}`)
+    .then(res => res.json())
+    .then(data => {
+      if (data.success && data.conversation) {
+        const conv = data.conversation;
+
+        // 🧩 Určíme roli uživatele z localStorage (dokud backend neposílá current_user_role)
+        const pilotStoredId = parseInt(localStorage.getItem('pilotId'));
+        const advertiserStoredEmail = localStorage.getItem('inzerentEmail');
+
+        if (pilotStoredId && pilotStoredId === conv.pilot_id) {
+          localStorage.setItem('userRole', 'pilot');
+          loggedRole = 'pilot';
+          loggedId = conv.pilot_id;
+        } else {
+          localStorage.setItem('userRole', 'advertiser');
+          loggedRole = 'advertiser';
+          loggedId = conv.advertiser_id;
+        }
+
+        // 💡 Aktualizujeme URL a proměnné
+        window.history.replaceState({}, "", `/chat.html?conversationId=${conv.id}&pilotId=${conv.pilot_id}&advertiserId=${conv.advertiser_id}`);
+        pilotId = conv.pilot_id;
+        advertiserId = conv.advertiser_id;
+
+        initializeChat(); // 🚀 teď můžeme načíst chat
+      } else {
+        alert("Konverzace nenalezena.");
+        window.location.href = "/moje-zpravy.html";
+      }
+    })
+    .catch(err => {
+      console.error("Chyba při načítání konverzace podle UID:", err);
+      alert("Chyba při načítání konverzace.");
+      window.location.href = "/moje-zpravy.html";
+    });
+  return;
+}
+
   
   let loggedId = null;
   let loggedRole = null;

@@ -215,32 +215,49 @@ document.addEventListener('DOMContentLoaded', async function () {
     const centerMapBtn = document.getElementById('center-map-btn');
 
     async function getAdvertiserIdAndLoadMap() {
-        const advertiserEmail = localStorage.getItem("inzerentEmail");
-        if (advertiserEmail) {
-            try {
-                const response = await fetch('/get-my-advertiser', { credentials: 'include' });
-                if (response.ok) {
-                    const inzerentData = await response.json();
-                    loggedInzerentId = inzerentData.id;
-                    localStorage.setItem('advertiserId', loggedInzerentId);
-                    loadCredit(advertiserEmail);
-                } else {
-                    console.warn("Inzerent není přihlášen. Možná vypršela session.");
-                    localStorage.removeItem("inzerentEmail");
-                    localStorage.removeItem("advertiserId");
-                    window.location.href = '/index.html';
-                    return;
-                }
-            } catch (e) {
-                console.error("Chyba při ověřování přihlášeného inzerenta:", e);
-                localStorage.removeItem("inzerentEmail");
-                localStorage.removeItem("advertiserId");
-                window.location.href = '/index.html';
-                return;
-            }
+  const advertiserEmail = localStorage.getItem("inzerentEmail");
+  let advertiserUid = localStorage.getItem("advertiserUid");
+  let advertiserId = localStorage.getItem("advertiserId");
+
+  if (advertiserEmail) {
+    try {
+      // 🧠 Pokud nemáme UID, pokus se ho zjistit z /get-user-id
+      if (!advertiserUid) {
+        const res = await fetch(`/get-user-id?email=${encodeURIComponent(advertiserEmail)}&type=advertiser`);
+        const data = await res.json();
+        if (data?.uid) {
+          advertiserUid = data.uid;
+          advertiserId = data.id;
+          localStorage.setItem("advertiserUid", advertiserUid);
+          localStorage.setItem("advertiserId", advertiserId);
         }
-        await loadPilots();
+      }
+
+      if (advertiserUid) {
+        // Načtení kreditu
+        loadCredit(advertiserEmail);
+      } else {
+        console.warn("❌ Nepodařilo se zjistit UID inzerenta.");
+        localStorage.removeItem("inzerentEmail");
+        localStorage.removeItem("advertiserId");
+        localStorage.removeItem("advertiserUid");
+        window.location.href = '/index.html';
+        return;
+      }
+
+    } catch (e) {
+      console.error("Chyba při ověřování přihlášeného inzerenta:", e);
+      localStorage.removeItem("inzerentEmail");
+      localStorage.removeItem("advertiserId");
+      localStorage.removeItem("advertiserUid");
+      window.location.href = '/index.html';
+      return;
     }
+  }
+
+  await loadPilots();
+}
+
 
     async function loadPilots() {
         try {
@@ -571,7 +588,8 @@ scrollUpBtn.addEventListener('click', () => {
     const advertiserId = localStorage.getItem("advertiserId"); // Corrected to use 'advertiserId'
     const banner = document.getElementById("advertiser-banner");
 
-    if (advertiserEmail && advertiserId && banner) {
+    if (advertiserEmail && (advertiserId || advertiserUid) && banner)
+ {
         document.getElementById("advertiser-text").innerHTML = `Přihlášen jako: <strong>${advertiserEmail}</strong>`;
         banner.style.display = "flex";
         const logoutBtn = document.getElementById("logout-btn");
@@ -588,10 +606,11 @@ scrollUpBtn.addEventListener('click', () => {
 });
 
 async function contactPilot(pilotId) {
+  const advertiserUid = localStorage.getItem('advertiserUid');
   const advertiserId = localStorage.getItem('advertiserId');
   const advertiserEmail = localStorage.getItem('inzerentEmail');
 
-  if (!advertiserEmail || !advertiserId) {
+  if (!advertiserEmail || (!advertiserId && !advertiserUid)) {
     alert("Musíte být přihlášen jako inzerent.");
     return;
   }
@@ -602,26 +621,26 @@ async function contactPilot(pilotId) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         pilotId: pilotId,
-        advertiserId: advertiserId,
-        advertiserTable: 'advertisers'
+        advertiserId: advertiserId || null,
+        advertiserUid: advertiserUid || null
       }),
       credentials: 'include'
     });
 
     const createConvData = await createConvRes.json();
 
-    if (createConvData.success && (createConvData.conversationId || createConvData.conversationUid)) {
-  const chatUrl = `chat.html?conversationId=${createConvData.conversationId}&uid=${createConvData.conversationUid}&pilotId=${pilotId}&advertiserId=${advertiserId}`;
-  window.location.href = chatUrl;
-} else {
-  alert('Nepodařilo se vytvořit nebo načíst konverzaci: ' + (createConvData.message || 'Neznámá chyba.'));
-}
-
+    if (createConvData.success && createConvData.conversationId) {
+      const chatUrl = `chat_test.html?conversationId=${createConvData.conversationId}&pilotId=${pilotId}&advertiserId=${advertiserId || ''}&advertiserUid=${advertiserUid || ''}`;
+      window.location.href = chatUrl;
+    } else {
+      alert('Nepodařilo se vytvořit konverzaci: ' + (createConvData.message || 'Neznámá chyba.'));
+    }
   } catch (error) {
     console.error("Chyba při vytváření konverzace:", error);
     alert('Došlo k chybě při vytváření konverzace.');
   }
 }
+
 
 
 /**

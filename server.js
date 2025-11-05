@@ -1157,6 +1157,7 @@ req.session.role   = 'advertiser';
 return res.json({             // ✅ tady
       success: true,
       id: advertiser.id,
+      uid: advertiser.uid,
       email: advertiser.email
     });
 

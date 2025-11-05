@@ -88,6 +88,10 @@
         
         <li class="nav-item"><a class="nav-link" href="/o-projektu.html">O projektu</a></li>
         <li class="nav-item"><a class="nav-link" href="/kontakt.html">Kontakt</a></li>
+        <li class="nav-item" id="poptavky-nav-item" style="display:none;">
+  <a class="nav-link" href="/poptavky.html"><i class="bi bi-briefcase me-1"></i>Poptávky</a>
+</li>
+
         <li class="nav-item dropdown">
           <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
             🌐 Jazyk
@@ -1151,6 +1155,27 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 
+</script>
+
+<script>
+  function updateNavbarForPilot() {
+    // Skryj „O projektu“ a „Kontakt“
+    document.querySelectorAll('a[href="/o-projektu.html"], a[href="/kontakt.html"]').forEach(el => {
+      el.closest('li').style.display = 'none';
+    });
+
+    // Zobraz „Poptávky“
+    const poptavky = document.getElementById('poptavky-nav-item');
+    if (poptavky) poptavky.style.display = 'block';
+  }
+
+  // Po přihlášení pilota (např. po localStorage)
+  document.addEventListener('DOMContentLoaded', () => {
+    const loggedEmail = localStorage.getItem('loggedEmail');
+    if (loggedEmail) {
+      updateNavbarForPilot();
+    }
+  });
 </script>
 
 </body>

@@ -370,11 +370,25 @@ app.post('/register', async (req, res) => {
   } = req.body;
   console.log("🔍 Request body:", req.body);
 
+  // ✅ Normalizace e-mailu
+    const normalizedEmail = email.trim().toLowerCase();
+
   let referrerId = null;
   if (ref) {
     const parsed = parseRefCode(String(ref).trim()); // vrátí userId nebo null
     if (parsed) referrerId = parsed;
   }
+
+
+   // 🧩 Kontrola, jestli už e-mail existuje (bez ohledu na velikost)
+    const existing = await pool.query(
+      `SELECT 1 FROM pilots WHERE LOWER(email) = $1 LIMIT 1`,
+      [normalizedEmail]
+    );
+    if (existing.rowCount > 0) {
+      console.warn(`⚠️ Pokus o registraci existujícího e-mailu: ${normalizedEmail}`);
+      return res.status(400).send("Tento e-mail je již registrován.");
+    }
 
   // Nejprve najdeme nejnižší volné ID
   let nextFreeId;
@@ -471,7 +485,7 @@ console.log("Datum po přidání 7 dní: ", visible_valid);
       [
         nextFreeId, // Explicitně nastavíme ID
         name,
-        email,
+        normalizedEmail, // ✅ uloží se malými písmeny
         password_hash,
         phone,
         street,
@@ -557,6 +571,8 @@ if (req.body.public_contact === 'on') {
 
 
   console.log(`✅ Pilot ${name} zaregistrován a GDPR souhlas uložen.`);
+      console.log(`✅ Pilot ${name} (${normalizedEmail}) zaregistrován.`);
+
   
 await transporter.sendMail({
    from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
@@ -569,7 +585,7 @@ await transporter.sendMail({
 const notifyContent = `
   <h2 style="color:#0077B6;">🧑‍✈️ Nový pilot na palubě!</h2>
   <p><strong>Jméno:</strong> ${escapeHtml(name)}</p>
-  <p><strong>E-mail:</strong> ${escapeHtml(email)}</p>
+  <p><strong>E-mail:</strong> ${escapeHtml(normalizedEmail)}</p>
   <p><strong>Místo:</strong> ${escapeHtml(city || "")}, ${escapeHtml(region || "")}</p>
 `;
 await transporter.sendMail({
@@ -720,19 +736,30 @@ app.post('/reset-password', async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).send("E-mail je povinný.");
 
-  try {
-    const result = await pool.query(`SELECT * FROM pilots WHERE email = $1`, [email]);
+  // ✅ Normalizace e-mailu
+  email = email.trim().toLowerCase();
+
+   try {
+    // ✅ Vyhledávání bez ohledu na velikost písmen
+    const result = await pool.query(
+      `SELECT * FROM pilots WHERE LOWER(email) = $1`,
+      [email]
+    );
     const user = result.rows[0];
     if (!user) return res.status(404).send("Uživatel s tímto e-mailem nebyl nalezen.");
 
     const newPassword = Math.random().toString(36).slice(-8);
     const hash = await bcrypt.hash(newPassword, 10);
 
-    await pool.query(`UPDATE pilots SET password_hash = $1 WHERE email = $2`, [hash, email]);
+    // ✅ Update podle normalizované adresy
+    await pool.query(
+      `UPDATE pilots SET password_hash = $1 WHERE LOWER(email) = $2`,
+      [hash, email]
+    );
 
     await transporter.sendMail({
       from: '"Dronová mapa" <dronadmin@seznam.cz>',
-      to: email,
+      to: user.email,
       subject: "Nové heslo k účtu",
       text: `Vaše nové heslo je: ${newPassword}\n\nDoporučujeme jej po přihlášení ihned změnit.`
     });

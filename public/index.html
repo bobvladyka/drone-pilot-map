@@ -965,6 +965,42 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
   </div>
 </div>
 
+<!-- INSTAGRAM FEED -->
+<section id="instagram-feed" class="py-5 bg-light border-top" data-aos="fade-up">
+  <div class="container text-center">
+    <h2 class="fw-bold mb-3">Z komunity #NajdiPilota 🚁</h2>
+    <p class="text-muted mb-4">Poslední záběry z našeho Instagramu</p>
+
+    <div id="insta-gallery" class="d-flex flex-wrap justify-content-center gap-3"></div>
+
+    <div class="mt-4">
+      <a href="https://www.instagram.com/najdipilota/" target="_blank" class="btn btn-outline-dark">
+        <i class="bi bi-instagram me-1"></i> Sleduj nás na Instagramu
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+fetch('/api/instagram-feed.php')
+  .then(res => res.json())
+  .then(data => {
+    const gallery = document.getElementById('insta-gallery');
+    if (!data.data) return;
+    data.data.slice(0, 3).forEach(post => {
+      const imgUrl = post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url;
+      const a = document.createElement('a');
+      a.href = post.permalink;
+      a.target = '_blank';
+      a.innerHTML = `<img src="${imgUrl}" class="rounded shadow-sm" style="width:200px;height:200px;object-fit:cover;">`;
+      gallery.appendChild(a);
+    });
+  })
+  .catch(err => console.error('Chyba při načítání Instagram feedu:', err));
+</script>
+
+
+
 <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
   <div class="container">
     <div class="row gy-3 justify-content-between">

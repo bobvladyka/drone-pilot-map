@@ -9,25 +9,31 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
   <meta name="robots" content="index, follow">
 
- <!-- Leaflet a MarkerCluster -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
-<!-- Favicony -->
 <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/icons/site.webmanifest">
-<link rel="icon" href="/icons/favicon.ico" type="image/x-icon">  
+<link rel="icon" href="/icons/favicon.ico" type="image/x-icon"> 
+
+<style>
+  /* Styl pro otáčení šipky u skrývatelného náhledu */
+  button[data-bs-target="#collapsePreview"][aria-expanded="true"] .collapse-arrow {
+    transform: rotate(180deg);
+  }
+  .collapse-arrow {
+    transition: transform 0.2s ease-in-out;
+  }
+</style> 
 
 
 </head>
 <body>
-  <div class="card shadow-sm p-4" style="border-radius: var(--radius); background-color: white;">
-<!-- Quickbar: akce po přihlášení -->
-<div id="account-quickbar" class="sticky-top bg-light border-bottom py-2 shadow-sm">
+  <div id="account-quickbar" class="sticky-top bg-light border-bottom py-2 shadow-sm">
   <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
     <div class="d-flex flex-wrap align-items-center gap-2">
       <a href="/index.html" class="btn btn-outline-secondary btn-sm">
@@ -39,8 +45,47 @@
       <a id="poptavkyBtn" href="/poptavky.html" class="btn btn-outline-secondary btn-sm ms-2 d-none">
         <i class="bi bi-clipboard-plus me-1"></i>Poptávky
       </a>
+
+      <a class="btn btn-outline-secondary btn-sm ms-2" 
+   data-bs-toggle="collapse" 
+   href="#collapsePreview" 
+   role="button" 
+   aria-expanded="false" 
+   aria-controls="collapsePreview">
+    <i class="bi bi-eye me-1"></i>Náhled
+    <i class="bi bi-chevron-down collapse-arrow ms-1"></i>
+</a>
+
     </div>
     <span id="loggedAs" class="text-muted small d-none d-md-inline"></span>
+  </div>
+</div>
+<br>
+
+<div class="collapse" id="collapsePreview">
+  <div class="container">
+    <div class="p-3 border-bottom bg-white">
+
+      <div class="btn-group d-flex w-100 mb-3" role="group">
+        <input type="radio" class="btn-check" name="preview-toggle" id="preview-advertiser" autocomplete="off" checked>
+        <label class="btn btn-outline-warning" for="preview-advertiser" style="font-size: 0.9em;">
+          <i class="bi bi-person-check-fill me-1"></i> Jako přihlášený Inzerent
+        </label>
+      
+        <input type="radio" class="btn-check" name="preview-toggle" id="preview-public" autocomplete="off">
+        <label class="btn btn-outline-secondary" for="preview-public" style="font-size: 0.9em;">
+          <i class="bi bi-person-fill me-1"></i> Jako Veřejnost (nepřihlášen)
+        </label>
+      </div>
+      <p class="text-center text-muted small mb-2" id="preview-helper-text">
+        Náhled se automaticky aktualizuje při změně ve formuláři.
+      </p>
+      <div id="map-preview-container" class="d-flex justify-content-center">
+        <div id="map-preview-content" style="width: 100%; max-width: 450px; border: 1px solid #ddd; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); background-image: url('/icons/bg-map.png'); background-size: 300%; background-position: 30% 40%;">
+          <div class="p-3 text-center text-muted">Načítám náhled...</div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 <br>
@@ -247,15 +292,11 @@
 
 <div id="status"></div>
 
-  </div>
 
- <div id="chat-content">
-    <!-- Zde se dynamicky načtou konverzace pilota -->
-  </div>
 
 
   <script>
-
+// --- Hlavní skript pro formulář ---
 let currentPilot = null;
     const storedEmail = localStorage.getItem("loggedEmail");
 const params = new URLSearchParams(window.location.search);
@@ -300,6 +341,7 @@ function addDroneField(value = "") {
   })
   .then(pilot => {
   currentPilot = pilot;
+  renderMapPreview(); // <-- TADY POPRVÉ KRESLÍME NÁHLED
   console.log("Data pilota:", pilot);
 
 // Načti kategorie až teď (už známe currentPilot)
@@ -340,12 +382,13 @@ if (pilot.type_account === "Free") {
   if (btn) btn.disabled = false;
 }
 
-  fetch('/get-my-consents?email=' + encodeURIComponent(pilot.email))
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById('publicContactConsent').checked = data.hasPublicConsent;
-    })
-    .catch(err => console.warn(err));
+//  Tento blok 'get-my-consents' je nahrazen novou logikou v 'initGdprToggle'
+//  fetch('/get-my-consents?email=' + encodeURIComponent(pilot.email))
+//    .then(res => res.json())
+//    .then(data => {
+//      document.getElementById('publicContactConsent').checked = data.hasPublicConsent;
+//    })
+//    .catch(err => console.warn(err));
 
     // 🔒 Omezení pro Free účet
 if (pilot.type_account === "Free") {
@@ -360,8 +403,10 @@ if (pilot.type_account === "Free") {
   document.getElementById("registrationnumber").disabled = true;
 
   // 🚫 Ponechat jen 1 dron a zakázat přidávání
-  const addBtn = document.querySelector('button[onclick="addDroneField()"]');
-  if (addBtn) addBtn.remove();
+  // Odebíráme tlačítko podle ID, ne podle onclick
+  const addBtn = document.getElementById("add-drone-btn");
+  if (addBtn) addBtn.style.display = 'none'; // Skryjeme tlačítko
+  
   // Odstranit nadbytečné drony (ponechat jen první)
   const dronesContainer = document.getElementById("drones");
   if (dronesContainer.children.length > 1) {
@@ -452,14 +497,22 @@ if (!pilot.latitude || !pilot.longitude) {
       throw new Error('Chyba při načítání souhlasu');
     })
     .then(data => {
-      if (data && data.timestamp) {
+      const hasConsent = data && data.timestamp;
+      if (currentPilot) currentPilot.hasPublicConsent = !!hasConsent; // <-- AKTUALIZACE STAVU
+      
+      if (hasConsent) {
         const when = new Date(data.timestamp).toLocaleString('cs-CZ', { timeZone: 'Europe/Prague' });
         setConsentUI(true, when);
       } else {
         setConsentUI(false);
       }
+      renderMapPreview(); // <-- PŘEKRESLENÍ PO NAČTENÍ SOUHLASU
     })
-    .catch(() => setConsentUI(false));
+    .catch(() => {
+        if (currentPilot) currentPilot.hasPublicConsent = false; // <-- AKTUALIZACE STAVU
+        setConsentUI(false);
+        renderMapPreview(); // <-- PŘEKRESLENÍ I PŘI CHYBĚ
+    });
 
   // 2) Přepínač – udělit/odvolat
   if (toggleConsentBtn) {
@@ -484,6 +537,9 @@ if (!pilot.latitude || !pilot.longitude) {
       .then(res => {
         if (!res.ok) throw new Error('Chyba při ukládání souhlasu');
         setConsentUI(grant, grant ? formattedDate : null);
+        
+        if (currentPilot) currentPilot.hasPublicConsent = grant; // <-- AKTUALIZACE STAVU
+        renderMapPreview(); // <-- PŘEKRESLENÍ PO ZMĚNĚ
       })
       .catch(err => {
         consentStatusElement.textContent = 'Chyba při ukládání souhlasu';
@@ -524,7 +580,7 @@ if (!pilot.latitude || !pilot.longitude) {
       membershipBox.classList.add("alert-danger");
       
       // Popup alert when membership is expired or 0 days left
-      alert("Vaše členství vypršelo nebo je již neplatné. Buďto si můžete předplatit členství na stránce <a href='/prodlouzit-clenstvi.html'>Prodloužit členství</a> nebo pokračovat v režimu Free.");
+      alert("Vaše členství vypršelo nebo je již neplatné. Buďto si můžete předplatit členství na stránce /prodlouzit-clenstvi.html nebo pokračovat v režimu Free.");
     } else if (daysLeft <= 5) {
       membershipBox.classList.add("alert-warning");
     } else {
@@ -630,27 +686,11 @@ console.log("Odesílaná data:", data);
 	status.classList.toggle("text-success", res.ok);
   status.classList.toggle("text-danger", !res.ok);
     });
+</script>
 
-document.getElementById("copy-btn").addEventListener("click", () => {
-  const refLink = document.getElementById("ref-link");
-  const textToCopy = refLink.textContent.trim();
 
-  // Vytvoření dočasného textarea elementu pro kopírování do schránky
-  const textarea = document.createElement("textarea");
-  textarea.value = textToCopy;
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  document.body.removeChild(textarea);
-
-  // Změna textu tlačítka po úspěšném zkopírování
-  const copyBtn = document.getElementById("copy-btn");
-  copyBtn.textContent = "Zkopírováno!";
-  setTimeout(() => {
-    copyBtn.textContent = "Kopírovat";
-  }, 2000);  // Obnoví text po 2 vteřinách
-});
-
+<script>
+// --- Skript pro počítadlo znaků a dynamické listenery ---
 document.addEventListener("DOMContentLoaded", () => {
   const noteInput = document.getElementById("note");
   const counter = document.getElementById("noteCounter");
@@ -662,8 +702,27 @@ document.addEventListener("DOMContentLoaded", () => {
 
   noteInput.addEventListener("input", updateCounter);
   updateCounter(); // inicializace při načtení stránky
-});
+  
+  // Přidání listenerů pro dynamický náhled
+  const form = document.getElementById("account-form");
+  if (form) {
+      // 'input' reaguje na psaní (text, textarea)
+      form.addEventListener('input', renderMapPreview); 
+      // 'change' reaguje na změnu (select, checkbox)
+      form.addEventListener('change', renderMapPreview); 
+  }
 
+  // --- ⬇️ PŘIDÁNO ⬇️ ---
+  // Listenery pro přepínač náhledu
+  document.getElementById('preview-advertiser').addEventListener('change', renderMapPreview);
+  document.getElementById('preview-public').addEventListener('change', renderMapPreview);
+  // --- ⬆️ KONEC PŘIDÁNÍ ⬆️ ---
+});
+</script>
+
+
+<script>
+// --- Skript pro Quickbar a Poptávky ---
 document.addEventListener('DOMContentLoaded', () => {
   const loggedEmail = localStorage.getItem('loggedEmail');
   const loggedAs = document.getElementById('loggedAs');
@@ -685,10 +744,11 @@ document.addEventListener('DOMContentLoaded', () => {
     })
     .catch(err => console.warn('Chyba při načítání pilota:', err));
 });
+</script>
 
-  </script>
 
 <script>
+// --- Skript pro Referral kód ---
 document.addEventListener('DOMContentLoaded', async () => {
   const loggedEmail = localStorage.getItem('loggedEmail');
   const codeEl = document.getElementById('ref-code');
@@ -725,7 +785,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 });
 </script>
 
+
 <script>
+// --- Skript pro Unread Badge ---
   // badge do quickbaru (account.html)
   function renderUnreadBadgeIntoAccount(count) {
     const btn = document.querySelector('#account-quickbar a[href="/moje-zpravy.html"]');
@@ -765,13 +827,249 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 </script>
 
+
 <script>
+// --- Závislosti zkopírované z onlymap.html ---
+const fakeNames = [
+    "Rychlý Sysel", "Létající Brambor", "Dronislav Nebešťák", "Turbo Rákosník", "Bezpilotní Emil", "Pískající Páv", "Pilotka Haluz", "František Vrtulník", "Levý Joystick", "Kapitán Stín", "Dr. Rotor", "Pan Točivý", "Letuška Landová", "Střemhlavý Franta", "Nadzvukový Ježek", "Létající Čenda", "Rotorová Róza", "Šumící Fanda", "Bezpečný Béďa", "Maják z Oblak", "Droný Karel", "Letec Šmatla", "Startér Staník", "Přistávací Pepa", "Helikoptérník Honza", "Navigátor Novák", "Senzorová Soňa", "Pán Mraků", "Letící Lojza", "Kamera Kamil", "Rotor Ríša", "Výškoměr Vašek", "Vzdušný Vojta", "Tichý Šumák", "Drnčivý Dan", "Mlha Milda", "Optika Otakar", "Ztracený Signál", "Mistr Gimbal", "Anténa Anička", "Vrtulka Věrka", "Letmo Lída", "Flyboy Felix", "Vzdušná Víla", "Navigační Norbert", "Modrá Letka", "Křídlatý Karel", "Polní Přízrak", "Mapový Mirek", "Kličkující Kuba"
+];
+
+function normalizeConsent(v) {
+    if (typeof v === 'boolean') return v;
+    const s = String(v ?? '').trim().toLowerCase();
+    return s === 'true' || s === 't' || s === '1' || s === 'ano' || s === 'yes';
+}
+
+/**
+ * Zkopírovaná a upravená funkce z onlymap.html pro generování HTML náhledu.
+ */
+function createPreviewPopup(p, loggedIn) { // 'loggedIn' je nyní parametr
+  if (!p) return '<div class="p-3 text-center text-muted">Data pilota zatím nejsou načtena.</div>';
+
+  const popupContent = document.createElement('div');
+  popupContent.className = 'pilot-card p-3'; // Přidána třída p-3 pro vnitřní odsazení
+
+  const isAvailable = p.available === "ANO";
+  const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+  const hasBuildBadge = p.id && Number(p.id) <= 80;
+  const buildBadge = hasBuildBadge
+    ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+    : "";
+  const pilotNameWithBadge = `${p.name || 'Pilot bez jména'}${buildBadge}`;
+  const fakeNameWithBadge = `${fakeName}${buildBadge}`;
+  
+  const hasPublicConsent = normalizeConsent(p.hasPublicConsent ?? false); 
+  
+  const isVerified =
+    p.registrationnumber &&
+    p.registrationnumber.startsWith("CZE") &&
+    p.registrationnumber.length === 16;
+
+  let html = '';
+
+  // --- GDPR nesouhlas ---
+  if (!hasPublicConsent) {
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0" style="font-size: 1.25rem;"><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+      </div>
+      <div class="d-flex flex-wrap gap-2 mb-2">
+        ${p.volunteer === 'ANO' ? `<span class="badge-volunteer" style="background-color: #0d6efd; color: #fff; padding: .35em .65em; font-size: .75em; font-weight: 700; border-radius: .25rem;">Dobrovolník</span>` : ''}
+        <span class="badge-gdpr" style="background-color: #dc3545; color: white; padding: .35em .65em; font-size: .75em; font-weight: 700; border-radius: .25rem;">Bez GDPR souhlasu – kontakt přes administrátora</span>
+      </div>
+      ${p.specialization ? `<p class="mb-1"><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  }
+
+  // --- Nedostupný pilot ---
+  else if (!isAvailable) {
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0" style="font-size: 1.25rem;"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+      </div>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer" style="background-color: #0d6efd; color: #fff; padding: .35em .65em; font-size: .75em; font-weight: 700; border-radius: .25rem;">Dobrovolník</span></div>` : ''}
+      <p class="text-danger mb-1"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
+      ${p.specialization ? `<p class="mb-1"><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+    `;
+  }
+
+  // --- Přihlášený inzerent (hlavní logika) ---
+  else if (loggedIn) { 
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0" style="font-size: 1.25rem;"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+      </div>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer" style="background-color: #0d6efd; color: #fff; padding: .35em .65em; font-size: .75em; font-weight: 700; border-radius: .25rem;">Dobrovolník</span></div>` : ''}
+    `;
+
+    // === BASIC účet ===
+    if (p.type_account === "Basic") {
+      if (p.drones) html += `<p class="mb-1"><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+      if (p.note) html += `<p class="mb-1"><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+      if (p.travel) html += `<p class="mb-1"><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+      if (p.licenses) html += `<p class="mb-1"><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+      if (p.specialization) html += `<p class="mb-1"><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+
+      html += `
+        <div class="mt-3">
+          <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" disabled title="Toto je pouze náhled">
+            ✉️ Napsat pilotovi (Náhled)
+          </button>
+        </div>
+      `;
+    }
+
+    // === PREMIUM účet ===
+    else if (p.type_account === "Premium") {
+      html += `
+        ${p.email ? `<p class="mb-1"><i class="bi bi-envelope-at me-1"></i><a href="#" onclick="return false;">${p.email}</a></p>` : ''}
+        ${p.phone ? `<p class="mb-1"><i class="bi bi-telephone-fill me-1"></i><a href="#" onclick="return false;">${p.phone}</a></p>` : ''}
+        ${p.drones ? `<p class="mb-1"><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+        ${p.specialization ? `<p class="mb-1"><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+        ${p.note ? `<p class="mb-1"><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+        ${p.travel ? `<p class="mb-1"><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+        ${p.licenses ? `<p class="mb-1"><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+      `;
+    }
+        
+    // === FREE účet ===
+    else {
+      html += `
+        ${p.specialization ? `<p class="mb-1"><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+        ${p.drones ? `<p class="mb-1"><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+        
+        <p class="text-muted small mt-3 mb-2">
+        Pilot má Free účet, komunikace je nedostupná. 
+        <br>
+        Odpověď není garantována.
+        </p>
+        <button class="btn btn-sm btn-outline-success w-100" 
+            style="font-size: 13px; padding: 4px 8px; border-color: #28a745; color: #28a745;" 
+            disabled title="Toto je pouze náhled">
+            🎁 Darovat 3 dny Basic účtu pro kontakt (Náhled)
+        </button>
+      `;
+    }
+  }
+  
+  // --- Veřejný návštěvník (NEPŘIHLÁŠEN) ---
+  else { 
+    
+    // 1. Kontaktní řádky (pouze pro Premium)
+    let contactInfoHtml = ''; 
+    if (p.type_account === 'Premium') {
+        contactInfoHtml = `
+            <p class="mb-1"><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
+            ${p.phone ? `<p class="mb-1"><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
+        `;
+    }
+    // Pro Basic a Free zůstane prázdný
+
+    // 2. Patička (jiná pro Basic)
+    let footerHtml = '';
+    if (p.type_account === 'Basic') {
+        // Speciální text pro Basic
+        footerHtml = `
+        <p class="text-muted small mt-3">
+          <em><i class="bi bi-chat-dots-fill me-1"></i>Pro kontaktování pilota se přihlaste jako inzerent.</em>
+        </p>
+        `;
+    } else {
+        // Standardní text pro Free a Premium
+        footerHtml = `
+        <p class="text-muted small mt-3">
+          <em>Přihlaste se jako inzerent pro zobrazení kontaktů a více informací.</em>
+        </p>
+        `;
+    }
+
+    html = `
+      <div class="d-flex justify-content-between align-items-center mb-1">
+        <h3 class="mb-0" style="font-size: 1.25rem;"><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+      </div>
+      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer" style="background-color: #0d6efd; color: #fff; padding: .35em .65em; font-size: .75em; font-weight: 700; border-radius: .25rem;">Dobrovolník</span></div>` : ''}
+      
+      ${contactInfoHtml} ${p.specialization ? `<p class="mb-1"><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+      ${p.travel ? `<p class="mb-1"><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+      
+      ${footerHtml} `;
+  }
+
+  popupContent.innerHTML = html;
+  return popupContent.outerHTML;
+}
+/**
+ * Shromáždí data z formuláře a zkombinuje je s daty z DB (např. type_account).
+ */
+function getPilotDataFromForm() {
+    // Pokud 'currentPilot' (z DB) ještě není načtený, nemůžeme nic dělat
+    if (!currentPilot) return null; 
+
+    const specSelect = document.getElementById("specialization");
+    const specializationText = [...specSelect.selectedOptions].map(o => o.textContent).join(", ");
+    
+    // Vrátíme objekt, který vypadá jako pilot, ale bere hodnoty z formuláře
+    return {
+        ...currentPilot, // Základ z DB (id, type_account, a hlavně hasPublicConsent)
+        
+        // Přepíšeme hodnotami z formuláře
+        name: document.getElementById("name").value,
+        email: document.getElementById("email").value, // pro Premium
+        phone: document.getElementById("phone").value, // pro Premium
+        website: document.getElementById("website").value,
+        drones: Array.from(document.getElementsByName("drones[]")).map(i => i.value.trim()).filter(v => v).join(", "),
+        note: document.getElementById("note").value,
+        travel: document.getElementById("travel").value,
+        licenses: Array.from(document.querySelectorAll("input[name='licenses']:checked")).map(cb => cb.value).join(", "),
+        specialization: specializationText,
+        volunteer: document.getElementById("volunteer").checked ? "ANO" : "NE",
+        available: document.getElementById("available").value,
+        registrationnumber: document.getElementById("registrationnumber").value
+    };
+}
+
+/**
+ * Hlavní funkce, která překreslí náhled.
+ */
+function renderMapPreview() {
+    // Malé zpoždění (1ms) zajistí, že se funkce spustí až poté, co prohlížeč
+    // stihne zaregistrovat změnu hodnoty v selectu nebo checkboxu.
+    setTimeout(() => {
+        const container = document.getElementById("map-preview-content");
+        if (!container) return;
+        
+        const pilotData = getPilotDataFromForm(); // Získá čerstvá data z formuláře
+
+        if (!pilotData) {
+            container.innerHTML = '<div class="p-3 text-center text-muted">Načítám data pilota...</div>';
+            return;
+        }
+
+        // --- TATO ČÁST JE NOVÁ ---
+        // Zjistí stav přepínače
+        const isLoggedIn = document.getElementById('preview-advertiser').checked;
+        // --- KONEC NOVÉ ČÁSTI ---
+        
+        // Vygeneruje a vloží HTML náhled
+        container.innerHTML = createPreviewPopup(pilotData, isLoggedIn); // <-- Předá stav do funkce
+    }, 1);
+}
+</script>
+
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+
+<script>
+// --- Skript pro Tooltipy (musí být až po Bootstrap JS) ---
   document.addEventListener('DOMContentLoaded', () => {
     const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
     tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
   });
 </script>
-
 
  
 </body>

@@ -235,39 +235,52 @@ function wrapEmailContent(innerHtml, title = "NajdiPilota.cz"){
 function tplGeneral(company){
   const note = ($('#customNote').value||'').trim();
   return wrapEmailContent(`
-    <h2>🚀 NajdiPilota.cz – váš přístup k ověřeným droním pilotům v celé ČR</h2>
-    <p><strong>Zdravím z NajdiPilota.cz!</strong></p>
-    <p>Spustili jsme novou českou platformu, která propojuje firmy, agentury a jednotlivce
-    s <strong>ověřenými droními piloty po celé republice</strong>.</p>
-    <p>Pokud potřebujete <strong>rychle nafotit, natočit nebo zkontrolovat objekt z výšky</strong>,
-    najdete na <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a>
-    ideálního pilota během několika minut.</p>
-    <p><strong>Co platforma nabízí:</strong></p>
+    <h2>🚀 NajdiPilota.cz – ověření piloti dronů pro firmy a projekty</h2>
+
+    <p>Dobrý den${company?.name?`, ${escapeHtml(company.name)}`:''},</p>
+
+    <p>rád bych vám představil platformu <strong>NajdiPilota.cz</strong> – český portál, který propojuje firmy a organizace 
+    s <strong>ověřenými droními piloty po celé České republice</strong>.</p>
+
+    <p>Pokud potřebujete:</p>
     <ul>
-      <li>🗺️ Interaktivní mapa pilotů – vyberte si konkrétního pilota ve vašem regionu,</li>
-      <li>📸 Rychlé poptávky – zadáte, co potřebujete, a piloti vám pošlou nabídky,</li>
-      <li>🤝 Bezplatné členství pro inzerenty – žádné poplatky ani závazky,</li>
-      <li>⚡ Odpovědi během několika hodin – přímý kontakt s piloty bez prostředníků.</li>
+      <li>📦 nafotit nebo natočit <strong>areál, sklad, provoz či stavbu</strong>,</li>
+      <li>🏡 vytvořit <strong>prezentační záběry nemovitosti</strong>,</li>
+      <li>🔍 provést <strong>technickou inspekci střech, solárů nebo konstrukcí</strong>,</li>
+      <li>🎬 nebo připravit <strong>promo video</strong> vaší firmy či projektu,</li>
     </ul>
-    <p>Pomáháme firmám z různých oblastí:</p>
-    <ul>
-      <li>🏡 Reality a developeři – letecké fotky a videa nemovitostí,</li>
-      <li>🎬 Marketing a produkce – reklamy, eventy, firemní spoty,</li>
-      <li>🏗️ Stavebnictví a průmysl – dokumentace a inspekce staveb,</li>
-      <li>📦 Logistika – přehled a vizuální kontrola areálů.</li>
-    </ul>
-    <p>👉 Vyzkoušejte <strong>NajdiPilota.cz</strong> – registrace i zadání poptávky jsou zcela zdarma.</p>
-    ${note ? `<p><em>${escapeHtml(note)}</em></p>` : ``}
-    <p><a href="https://www.najdipilota.cz/" target="_blank"
-      style="background:#0077B6;color:#fff;text-decoration:none;
-      padding:10px 18px;border-radius:6px;font-size:15px;font-weight:600;">
-      Navštívit NajdiPilota.cz zdarma
-    </a></p>
-    <p style="color:#555;">📍 Pomůžeme vám najít pilota ještě dnes. Stačí pár kliknutí a první nabídky budete mít do několika hodin.</p>
-    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong><br>
-    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span></p>
-  `, 'NajdiPilota.cz – Letecké záběry pro firmy a projekty');
+
+    <p>Na platformě <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a> 
+    najdete vhodného pilota během několika minut.</p>
+
+    <p><strong>Registrace inzerenta je zdarma</strong> a bez jakýchkoli závazků.  
+    <br><strong>Cena za provedení práce</strong> se vždy domlouvá přímo mezi vámi a pilotem – férově a individuálně.</p>
+
+    <p>👉 Můžete si rovnou <a href="https://www.najdipilota.cz/poptavky.html" target="_blank" style="color:#0077B6;font-weight:600;">vložit poptávku</a> 
+    nebo si vybrat pilota podle lokality na mapě.</p>
+
+    ${note ? `<p style="background:#E8F4FF; border-left:4px solid #0077B6; padding:10px;"><em>${escapeHtml(note)}</em></p>` : ``}
+
+    <p style="margin:24px 0;">
+      <a href="https://www.najdipilota.cz/" 
+         style="background:#0077B6;color:#fff;text-decoration:none;
+         padding:12px 22px;border-radius:8px;font-weight:600;">
+         Vyzkoušet NajdiPilota.cz zdarma
+      </a>
+    </p>
+
+    <p>Pokud byste se chtěli o službě dozvědět více, <strong>mohu s vámi domluvit krátký online meeting</strong> 
+    (cca 15 minut), kde vám platformu ukážu v praxi.</p>
+
+    <p style="color:#555;">📍 NajdiPilota.cz pomáhá firmám šetřit čas i náklady – získejte profesionální záběry z ptačí perspektivy už dnes.</p>
+
+    <p>S pozdravem,<br>
+    <strong>Bohuslav z NajdiPilota.cz</strong><br>
+    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span><br>
+    <a href="mailto:dronadmin@seznam.cz" style="color:#0077B6;">dronadmin@seznam.cz</a></p>
+  `, 'NajdiPilota.cz – Droní záběry a inspekce pro firmy');
 }
+
 
 function tplFollowup1(company){
   return wrapEmailContent(`

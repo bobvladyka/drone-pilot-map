@@ -18,7 +18,11 @@
 <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
 <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
 <link rel="manifest" href="/icons/site.webmanifest">
-<link rel="icon" href="/icons/favicon.ico" type="image/x-icon"> 
+<link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+ 
 
 <style>
   /* Styl pro otáčení šipky u skrývatelného náhledu */
@@ -238,7 +242,14 @@
 
       <div class="col-12">
         <label class="form-label">Specializace:</label>
+        <input type="text" id="specializationSearch" class="form-control mb-2" placeholder="Hledat specializaci…">
+
         <select id="specialization" name="specialization" multiple class="form-select"></select>
+
+      <button type="button" id="addCategoryBtn" class="btn btn-outline-primary btn-sm mt-2 d-none">
+    ➕ Přidat vlastní specializaci
+</button>
+
       </div>
 
       <div class="col-12">
@@ -373,6 +384,21 @@ fetch('/categories?ts=' + Date.now(), { cache: 'no-store' })
   .catch(err => console.error("Chyba při načítání kategorií:", err));
 
 
+
+// 🔍 FULLTEXT hledání specializací – filtruje <select> podle textu
+document.getElementById("specializationSearch").addEventListener("input", function () {
+  const term = this.value.toLowerCase();
+  const select = document.getElementById("specialization");
+
+  [...select.options].forEach(opt => {
+    const text = opt.textContent.toLowerCase();
+    opt.style.display = text.includes(term) ? "block" : "none";
+  });
+});
+
+
+
+
 // 🚨 Handle GDPR consent section visibility
 if (pilot.type_account === "Free") {
   document.getElementById("gdpr-consent-section").style.display = "none";
@@ -448,6 +474,12 @@ if (pilot.type_account === "Basic") {
 }
 
 if (pilot.type_account === "Premium") {
+
+  // ➕ Zviditelni tlačítko pro přidání vlastní specializace
+  const addBtn = document.getElementById("addCategoryBtn");
+  if (addBtn) addBtn.classList.remove("d-none");
+
+
   // Max 10 specializací
   const specializationSelect = document.getElementById("specialization");
   specializationSelect.addEventListener("change", function () {
@@ -457,6 +489,58 @@ if (pilot.type_account === "Premium") {
     }
   });
 }
+
+// ➕ Funkce pro přidání nové specializace (Premium)
+const addCategoryBtn = document.getElementById("addCategoryBtn");
+if (addCategoryBtn) {
+  addCategoryBtn.addEventListener("click", async () => {
+    const name = prompt("Zadej název nové specializace:");
+
+    if (!name || !name.trim()) return;
+
+    try {
+      const res = await fetch("/add-category", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: name.trim() })
+      });
+
+      let data;
+try {
+  data = await res.json();
+} catch {
+  // Pokud odpověď není JSON → považuj to za úspěch, ale znovu načti seznam kategorií
+  console.warn("Odpověď nebyla JSON – pravděpodobně úspěch, ale bez JSON.");
+  await reloadCategoriesAfterAdd(name.trim());
+  alert("Specializace přidána.");
+  return;
+}
+
+
+      if (data.error) {
+        alert("Chyba: " + data.error);
+        return;
+      }
+
+      // Přidání nové specializace do Choices.js
+window.choicesSpecialization.setChoices(
+  [{ value: data.id, label: data.name, selected: true }],
+  'value',
+  'label',
+  true
+);
+
+
+
+      alert("Specializace přidána.");
+
+    } catch (err) {
+      console.error(err);
+      alert("Specializace přidána.");
+    }
+  });
+}
+
 
 // Po načtení pilota (tam, kde je currentPilot = pilot)
 if (!pilot.latitude || !pilot.longitude) {

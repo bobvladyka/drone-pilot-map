@@ -1191,7 +1191,7 @@ app.delete("/delete-my-account", async (req, res) => {
       await transporter.sendMail({
         from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
         to: email,
-        bcc: drboom@seznam.cz,
+        bcc: 'drboom@seznam.cz',
         subject: "Potvrzení o smazání účtu",
         html: deleteAccountEmailContent(pilotName),
         attachments: [

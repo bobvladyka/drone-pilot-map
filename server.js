@@ -741,7 +741,7 @@ app.post("/change-email", async (req, res) => {
 
 
 app.post('/reset-password', async (req, res) => {
-  const { email } = req.body;
+  let { email } = req.body;
   if (!email) return res.status(400).send("E-mail je povinný.");
 
   // ✅ Normalizace e-mailu
@@ -1110,6 +1110,116 @@ app.post('/add-category', async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 });
+
+// =======================================================
+// DELETE: Kompletní smazání účtu pilota + potvrzovací e-mail
+// =======================================================
+app.delete("/delete-my-account", async (req, res) => {
+  const client = await pool.connect();
+
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).send("Chybí e-mail.");
+
+    const lower = email.toLowerCase();
+
+    await client.query("BEGIN");
+
+    // 1) Najdi pilota (včetně jména pro e-mail)
+    const pilotRes = await client.query(
+      "SELECT id, name FROM pilots WHERE LOWER(email) = $1",
+      [lower]
+    );
+
+    if (pilotRes.rowCount === 0) {
+      await client.query("ROLLBACK");
+      return res.status(404).send("Pilot nenalezen.");
+    }
+
+    const pilotId = pilotRes.rows[0].id;
+    const pilotName = pilotRes.rows[0].name || "";
+
+    // 2) Najdi všechny konverzace pilota
+    const convRes = await client.query(
+      "SELECT id FROM conversations WHERE pilot_id = $1",
+      [pilotId]
+    );
+    const conversationIds = convRes.rows.map(r => r.id);
+
+    if (conversationIds.length > 0) {
+
+      // 3) Smazat zprávy v konverzacích
+      await client.query(
+        `DELETE FROM messages 
+         WHERE conversation_id = ANY($1::int[])`,
+        [conversationIds]
+      );
+
+      // 4) Smazat conversation_views
+      await client.query(
+        `DELETE FROM conversation_views 
+         WHERE conversation_id = ANY($1::int[])`,
+        [conversationIds]
+      );
+
+      // 5) Smazat samotné konverzace
+      await client.query(
+        `DELETE FROM conversations 
+         WHERE id = ANY($1::int[])`,
+        [conversationIds]
+      );
+    }
+
+    // 6) Smazat consents
+    await client.query(
+      "DELETE FROM consents WHERE user_id = $1",
+      [pilotId]
+    );
+
+    // 7) Nakonec smazat pilota
+    await client.query(
+      "DELETE FROM pilots WHERE id = $1",
+      [pilotId]
+    );
+
+    await client.query("COMMIT");
+
+    // ----------------------------------------------------------
+    // ✉️ ODESLAT POTVRZOVACÍ E-MAIL O SMAZÁNÍ ÚČTU (po úspěšném COMMITu)
+    // ----------------------------------------------------------
+    try {
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: email,
+        bcc: drboom@seznam.cz,
+        subject: "Potvrzení o smazání účtu",
+        html: deleteAccountEmailContent(pilotName),
+        attachments: [
+          {
+            filename: "logo.png",
+            path: "./icons/logo.png",
+            cid: "logoNP"
+          }
+        ]
+      });
+
+      console.log("📨 E-mail o smazání účtu odeslán:", email);
+    } catch (mailErr) {
+      console.error("❌ Nepodařilo se odeslat e-mail o smazání účtu:", mailErr);
+    }
+
+    res.send("Účet byl úspěšně smazán.");
+
+  } catch (err) {
+    await client.query("ROLLBACK");
+    console.error("❌ Chyba při mazání účtu:", err);
+    res.status(500).send("Chyba při mazání účtu.");
+  } finally {
+    client.release();
+  }
+});
+
+
 
 
 
@@ -4085,6 +4195,81 @@ function onboardingEmailContent() {
 
   return wrapEmailContent(content, "Vítejte na NajdiPilota.cz!");
 }
+
+// ---------------------------------------------------------------------
+// E-mail po smazání účtu – zachován jednotný styl a barvy
+// ---------------------------------------------------------------------
+function deleteAccountEmailContent(name = "") {
+  const content = `
+    <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f4f7fa" style="padding:30px 0;">
+      <tr>
+        <td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" bgcolor="#ffffff" 
+                 style="border-radius:10px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.08);">
+
+            <!-- LOGO + HEADER -->
+            <tr>
+              <td align="center" style="padding:25px 20px 0;background:#ffffff;">
+                <img src="cid:logoNP" alt="NajdiPilota.cz" 
+                     style="height:80px;display:block;margin-bottom:12px;">
+                <div style="font-size:19px;color:#0077B6;font-weight:600;margin-bottom:10px;">
+                  Účet byl smazán
+                </div>
+              </td>
+            </tr>
+
+            <tr><td style="padding:0 40px;">
+              <hr style="border:none;border-top:1px solid #e0e6ed;margin:20px 0;" />
+            </td></tr>
+
+            <!-- MAIN CONTENT -->
+            <tr>
+              <td style="padding:0 40px 20px;color:#495057;font-size:15px;line-height:1.6;">
+
+                <p>Dobrý den${name ? `, <strong>${name}</strong>` : ""},</p>
+
+                <p>potvrzujeme, že váš účet na 
+                <strong style="color:#0077B6;">NajdiPilota.cz</strong> byl úspěšně smazán.</p>
+
+                <p>Je nám líto, že odcházíte – vždy jsme se snažili poskytovat co nejlepší prostředí
+                pro profesionální piloty i začátečníky. Pokud k tomu máte chvilku, budeme rádi za jakoukoliv zpětnou vazbu,
+                která nám pomůže platformu vylepšit.</p>
+
+                <h2 style="color:#0077B6;font-size:17px;margin-top:25px;">Co bylo odstraněno?</h2>
+                <ul style="padding-left:20px;">
+                  <li>Účet uživatele a všechny osobní údaje</li>
+                  <li>Veškeré veřejné informace o profilu</li>
+                  <li>Zprávy, konverzace a historie komunikace</li>
+                  <li>GDPR souhlasy vázané na váš účet</li>
+                </ul>
+
+                <p style="margin-top:20px;">
+                  Pokud byste si to někdy rozmysleli, <strong style="color:#0077B6;">jste kdykoliv vítáni zpět</strong>.
+                  Registrace je opět otázkou jedné minuty.
+                </p>
+
+                <p style="margin-top:30px;">S pozdravem,<br>
+                <strong>Tým NajdiPilota.cz</strong></p>
+
+              </td>
+            </tr>
+
+            <!-- FOOTER -->
+            <tr>
+              <td style="padding:20px 40px 30px;color:#6c757d;font-size:12px;text-align:center;">
+                Tento e-mail byl odeslán z platformy <strong>NajdiPilota.cz</strong>.
+              </td>
+            </tr>
+
+          </table>
+        </td>
+      </tr>
+    </table>
+  `;
+
+  return wrapEmailContent(content, "Účet byl smazán");
+}
+
 
 
 /*

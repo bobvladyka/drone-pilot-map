@@ -324,6 +324,10 @@
 
 
         <button type="submit" class="pilot-login-btn w-100">💾 Uložit změny</button>
+        <button type="button" id="deleteAccountBtn" class="btn btn-danger w-100 mt-3">
+  🗑️ Smazat účet
+</button>
+
 
 
 
@@ -1186,6 +1190,59 @@ function renderMapPreview() {
     tooltipTriggerList.map(el => new bootstrap.Tooltip(el));
   });
 </script>
+
+<script>
+// --- Bezpečné smazání účtu ---
+document.getElementById("deleteAccountBtn").addEventListener("click", async () => {
+    const email = localStorage.getItem("loggedEmail");
+    if (!email) {
+        alert("Chyba: nejsi přihlášen.");
+        return;
+    }
+
+    // 1) první potvrzení
+    if (!confirm("Opravdu chceš smazat svůj účet? Tato akce je nevratná.")) {
+        return;
+    }
+
+    // 2) druhé potvrzení — zadání e-mailu
+    const verify = prompt(
+        "Pro potvrzení napiš svůj e-mail:\n\n" + email + "\n\nBez shody se účet nesmaže."
+    );
+
+    if (!verify || verify.trim().toLowerCase() !== email.toLowerCase()) {
+        alert("❌ E-mail nesouhlasí. Mazání zrušeno.");
+        return;
+    }
+
+    // 3) odeslání mazacího požadavku
+    try {
+        const res = await fetch("/delete-my-account", {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email })
+        });
+
+        if (!res.ok) {
+            const msg = await res.text();
+            alert("❌ Chyba: " + msg);
+            return;
+        }
+
+        // Odhlášení a přesměrování
+        localStorage.removeItem("loggedEmail");
+
+        alert("✅ Tvůj účet byl úspěšně smazán.");
+        window.location.href = "/index.html";
+
+    } catch (e) {
+        alert("Nastala chyba při mazání účtu.");
+        console.error(e);
+    }
+});
+</script>
+
+
 
  
 </body>

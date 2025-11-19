@@ -227,7 +227,13 @@ if (p.latitude && p.longitude) {
   row.innerHTML = `
   <td><input type="checkbox" class="row-checkbox" value="${p.id}" /></td>
   <td>${p.id}</td>
-  <td>${p.email || ''}</td>
+  <td>
+  ${p.email || ''}
+  ${p.hasPublicConsent 
+    ? '' 
+    : '<br><span style="color:red;font-weight:bold;">❗ Nepřijatý souhlas s GDPR</span>'
+  }
+</td>
   <td style="text-align:center;">${gpsStatus}</td>
   <td>${p.type_account || ''}</td>
   <td class="${getVisibilityClass(p.visible_valid)}">

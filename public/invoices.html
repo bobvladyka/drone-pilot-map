@@ -63,7 +63,12 @@ fetch('/check-admin-session')
 </script>
 
 <h1>📄 Správa faktur</h1>
+
+<div id="earnings" style="position: absolute; top: 20px; right: 20px; font-size: 20px; font-weight: bold;">Výdělek: 0 CZK</div>
+
+
 <p id="status"></p>
+
 
 <table id="invoice-table">
   <thead>
@@ -116,6 +121,7 @@ function loadInvoices() {
     .then(res => res.json())
     .then(data => {
       const tbody = document.querySelector('#invoice-table tbody');
+      let totalEarnings = 0; 
       tbody.innerHTML = '';
       data.forEach(inv => {
         tbody.innerHTML += `
@@ -129,7 +135,11 @@ function loadInvoices() {
             <td><a href="${inv.invoice_url}" target="_blank">Otevřít</a></td>
             <td>${new Date(inv.created_at).toLocaleDateString('cs-CZ')}</td>
           </tr>`;
+      totalEarnings += parseFloat(inv.amount);  // Přičítání částky do celkového výdělku
       });
+
+      // Aktualizace zobrazení výdělku
+      document.getElementById('earnings').textContent = `Výdělek: ${totalEarnings.toFixed(2)} CZK`;
     })
     .catch(err => {
       document.getElementById('status').textContent = 'Chyba při načítání faktur: ' + err;

@@ -507,11 +507,19 @@ function changeAccountType(id, type) {
 
 // pomocná funkce – najde email podle ID ze zobrazené tabulky
 function getEmailById(id) {
-  const row = [...document.querySelectorAll('#pilot-table tr')]
-    .find(r => r.children[1] && r.children[1].textContent == id);
-  return row ? row.children[2].textContent : null;
+  const row = [...document.querySelectorAll('#pilot-table tr')]
+    .find(r => r.children[1] && r.children[1].textContent == id);
+    
+  if (row) {
+    // Vezmeme textový obsah sloupce (index 2 = E-mail)
+    const rawText = row.children[2].textContent;
+    
+    // Z obsahu odstraníme text upozornění na GDPR souhlas a bílé znaky
+    return rawText.replace(/❗ Nepřijatý souhlas s GDPR/g, '').trim();
+  }
+  
+  return null;
 }
-
 
   </script>
 

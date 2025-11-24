@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog | NajdiPilota.cz | VPROCESU !!!</title>
+
+  <meta name="description" content="Blog NajdiPilota.cz – tipy, návody a inspirace pro piloty dronů i zákazníky. Jak začít létat, jak fotit, jak létat bezpečně a jak si vybrat správného pilota." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.najdipilota.cz/blog.html" />
+
+  <meta property="og:title" content="Blog o dronech | NajdiPilota.cz" />
+  <meta property="og:description" content="Články a návody pro piloty dronů a jejich klienty. Začátky s dronem, bezpečnost, focení z výšky a výběr profesionálního pilota." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.najdipilota.cz/blog.html" />
+  <meta property="og:image" content="https://www.najdipilota.cz/icons/logo.png" />
+
+  <meta name="google-site-verification" content="yxzi02d6ahPBVtx31lx_Mwg07khOFlY_fWUFdkyrsUE" />
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+  <link rel="stylesheet" href="style.css" />
+
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/icons/site.webmanifest">
+  <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+
+  <style>
+    /* Náhledové karty článků */
+    .blog-articles {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .blog-post {
+      display: flex;
+      flex-direction: row;
+      gap: 1.5rem;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 1.5rem;
+    }
+
+    .blog-post:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .blog-post-thumb {
+      flex: 0 0 220px;
+    }
+
+    .blog-post-thumb img {
+      width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    .blog-post-body {
+      flex: 1;
+    }
+
+    .blog-post h3 a {
+      text-decoration: none;
+      color: #0d6efd;
+    }
+
+    .blog-post h3 a:hover {
+      text-decoration: underline;
+    }
+
+    .blog-post .meta {
+      color: #6c757d;
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .read-more {
+      font-weight: 500;
+    }
+
+    @media (max-width: 768px) {
+      .blog-post {
+        flex-direction: column;
+      }
+
+      .blog-post-thumb {
+        flex: 0 0 auto;
+      }
+
+      .blog-post-thumb img {
+        height: 180px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+    <div class="container">
+      <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
+        <img src="/icons/logo.png" alt="Najdi pilota dronu v Praze, Brně a celé ČR – NajdiPilota.cz" height="60" class="me-2" loading="lazy" aria-hidden="true" />
+        <span class="fs-4">NajdiPilota.cz</span>
+      </a>
+
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      
+      <div class="collapse navbar-collapse justify-content-end align-items-center" id="mainNavbar">
+        <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+          <li class="nav-item" id="inzerent-nav-item" style="display:none;">
+            <a class="nav-link text-warning fw-bold" href="#" data-bs-toggle="modal" data-bs-target="#inzerentModal">
+              <i class="bi bi-megaphone-fill me-1"></i>Pro inzerenty
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" href="/index.html">Mapa</a>
+          </li>
+          <li class="nav-item" id="messages-nav-item" style="display:none;">
+            <a class="nav-link" href="/moje-zpravy.html"><i class="bi bi-envelope me-1"></i>Moje zprávy</a>
+          </li>
+          
+          
+          
+          <li class="nav-item"><a class="nav-link" href="/o-projektu.html">O projektu</a></li>
+          <li class="nav-item"><a class="nav-link" href="/kontakt.html">Kontakt</a></li>
+          <li class="nav-item" id="poptavky-nav-item" style="display:none;">
+            <a class="nav-link" href="/poptavky.html"><i class="bi bi-briefcase me-1"></i>Poptávky</a>
+          </li>
+          <li class="nav-item active"><a class="nav-link active" href="/v-procesu.html">Blog</a></li>
+
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="langDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              🌐 Jazyk
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="langDropdown">
+              <li><a class="dropdown-item" href="/index.html"><span class="fi fi-cz me-2"></span>Česky</a></li>
+              <li><a class="dropdown-item" href="/index_en.html"><span class="fi fi-gb me-2"></span>English</a></li>
+              </ul>
+          </li>
+        </ul>
+
+        <div class="account-buttons ms-lg-3" style="display:none;">
+          <span id="logged-info" class="fw-bold small"></span>
+
+          <button id="edit-profile-btn" style="display:none;" class="pilot-login-btn">
+            <i class="bi bi-pencil-square me-1"></i> <span>Můj účet</span>
+          </button>
+
+          <button id="login-button" class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2">
+            <i class="bi bi-person-badge me-2"></i>
+            <span id="login-toggle">Přihlásit se jako pilot</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container py-4">
+    <section class="mb-4">
+      <h1 class="mb-3">Blog NajdiPilota.cz</h1>
+      <p>
+        NajdiPilota.cz je platforma, která propojuje piloty dronů s klienty. 
+        Na našem blogu najdete články, tipy a zkušenosti z praxe – od prvních letů,
+        přes bezpečnost a focení až po to, jak si vybrat profesionálního pilota pro zakázku.
+      </p>
+    </section>
+
+    <section class="blog-articles mb-4" id="blog-list-container">
+        </section>
+
+    <section class="blog-categories mb-4">
+      <h3>Filtrovat články</h3>
+      <ul>
+        <li><a href="/blog.html?category=beginner">Začátečníci</a></li>
+        <li><a href="/blog.html?category=advanced">Pokročilí</a></li>
+        <li><a href="/blog.html?category=safety">Bezpečnost</a></li>
+        <li><a href="/blog.html?category=specializations">Specializace</a></li>
+      </ul>
+    </section>
+  </div>
+
+  <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+    <div class="container">
+      <div class="row gy-3 justify-content-between">
+        
+        <div class="col-md-4">
+          <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+            <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+            <span class="fw-bold fs-5">NajdiPilota.cz</span>
+          </a>
+          <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+        </div>
+
+        <div display="no" class="col-md-2">
+          <h6 class="fw-bold">Navigace</h6>
+          <ul class="list-unstyled">
+            <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+            <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
+            <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
+          </ul>
+        </div>
+
+        <div class="col-md-3">
+          <h6 class="fw-bold">Informace</h6>
+          <ul class="list-unstyled">
+            <li><a href="/gdpr.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+            <li><a href="/obchodni-podminky.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+            <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+          </ul>
+        </div>
+
+        <div class="col-md-3">
+          <h6 class="fw-bold">Provozovatel</h6>
+          <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: 08578591<br>Praha, Česká republika</p>
+          <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+        </div>
+
+      </div>
+
+
+      <p class="visually-hidden">
+        Pilot dronu Praha, pilot dronu Brno, letecké snímky dronem, dronové natáčení, inspekce dronem, dronové služby v celé ČR.
+      </p>
+
+      <hr class="my-4">
+
+      <div class="d-flex justify-content-between align-items-center small text-muted">
+        <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+
+        <div>
+        
+          <a href="https://www.instagram.com/najdipilota/" target="_blank" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+          
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // 1. DATA O ČLÁNCÍCH
+    // Pro přidání nového článku stačí přidat nový objekt do tohoto pole.
+    const blogData = [
+        {
+          "title": "Jak si vybrat správného pilota dronu pro svou zakázku",
+          "permalink": "/blogposts/20250902-jak-vybrat-spravneho-pilota-dronu-pro-zakazku.html",
+          "date": "2. září 2025",
+          "category": "Pro klienty",
+          "thumb_img": "/img/blog/vyber-pilota.webp",
+          "excerpt": "Potřebujete pilota pro natáčení, inspekci nebo mapování? Ukážeme vám, podle čeho vybírat, na jaké zkušenosti a vybavení se ptát a jak předejít nepříjemným překvapením."
+        },
+        {
+          "title": "Jak správně fotit s dronem: Základy pro začátečníky",
+          "permalink": "/blogposts/20250820-jak-spravne-fotit-s-dronem-zaklady-pro-zacatecniky.html",
+          "date": "20. srpna 2025",
+          "category": "Fotografování",
+          "thumb_img": "/img/blog/foceni-s-dronem.webp",
+          "excerpt": "Dron nabízí úplně novou perspektivu. Podíváme se na kompozici, světlo i nastavení kamery, aby vaše snímky z výšky vypadaly profesionálně i bez drahé techniky."
+        },
+        {
+          "title": "Začínáme s dronem: Základní tipy pro začátečníky",
+          "permalink": "blogposts/20250815-zaciname-s-dronem-zakladni-tipy.html",
+          "date": "15. srpna 2025",
+          "category": "Začátečníci",
+          "thumb_img": "/img/blog/zaciname-s-dronem.webp",
+          "excerpt": "Koupili jste si první dron nebo o tom teprve uvažujete? V tomto článku projdeme první kroky, které by měl udělat každý pilot, aby létal bezpečně a s jistotou."
+        },
+        {
+          "title": "Pokročilé techniky: Jak stabilizovat let dronu",
+          "permalink": "/blogposts/20250810-pokrocile-techniky-jak-stabilizovat-let-dronu.html",
+          "date": "10. srpna 2025",
+          "category": "Pokročilí piloti",
+          "thumb_img": "/img/blog/stabilizace-letu.webp",
+          "excerpt": "Stabilní let je základ pro kvalitní video i přesné mapování. Naučte se, jak pracovat s nastavením ovladače, větrem a gimbalem, abyste dosáhli maximálně plynulých záběrů."
+        },
+        {
+          "title": "Bezpečnost při létání: Co by měl každý pilot vědět",
+          "permalink": "/blogposts/20250805-bezpecnost-pri-letani-co-by-mel-kazdy-pilot-vedet.html",
+          "date": "5. srpna 2025",
+          "category": "Bezpečnost",
+          "thumb_img": "/img/blog/bezpecnost-letani.webp",
+          "excerpt": "Každý let je provoz v leteckém prostoru. V článku shrnujeme zásady bezpečného létání, předletovou přípravu, vzdálenosti od osob i význam pojištění a dokumentace."
+        }
+    ];
+
+    // 2. GENEROVACÍ FUNKCE
+    function renderBlogList(data) {
+        const container = document.getElementById('blog-list-container');
+        if (!container) return; 
+
+        container.innerHTML = ''; // Vyčistí kontejner
+
+        // Zde můžete data před generováním seřadit (např. podle data, od nejnovějšího)
+        data.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+        data.forEach(post => {
+            const articleHtml = `
+                <article class="blog-post">
+                    <div class="blog-post-thumb">
+                        <img src="${post.thumb_img}" alt="${post.title}" loading="lazy">
+                    </div>
+                    <div class="blog-post-body">
+                        <h3>
+                            <a href="${post.permalink}">
+                                ${post.title}
+                            </a>
+                        </h3>
+                        <p class="meta">Publikováno: ${post.date} &bull; Kategorie: ${post.category}</p>
+                        <p>
+                            ${post.excerpt}
+                        </p>
+                        <a href="${post.permalink}" class="read-more">Přečíst více</a>
+                    </div>
+                </article>
+            `;
+            // Přidání generovaného HTML do kontejneru
+            container.innerHTML += articleHtml;
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // Spustí generování náhledů článků při načtení stránky
+      renderBlogList(blogData);
+      
+      // Vloží aktuální rok do copyrightu
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      // Zajištění aktivního odkazu v navigaci
+      const currentPage = window.location.pathname;
+      const navLinks = document.querySelectorAll('.navbar-nav .nav-item .nav-link');
+      
+      navLinks.forEach(link => {
+        if (link.getAttribute('href') === '/v-procesu.html' && currentPage.includes('/blog')) {
+          link.parentElement.classList.add('active');
+          link.classList.add('active');
+        } else if (link.getAttribute('href') === currentPage) {
+          link.parentElement.classList.add('active');
+          link.classList.add('active');
+        }
+      });
+    });
+  </script>
+</body>
+</html>

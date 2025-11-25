@@ -5,6 +5,10 @@ const nodemailer = require('nodemailer');
 const fetch = require('node-fetch');
 const { Pool } = require('pg');
 const path = require('path');
+const fs = require("fs");
+const BLOG_DIR = path.join(__dirname, "public", "blogposts");
+
+
 const prerender = require('prerender-node');
 const session = require('express-session');
 const cors = require('cors'); // Přidejte tento require
@@ -707,7 +711,10 @@ const transporter = nodemailer.createTransport({
   auth: {
     user: 'dronadmin@seznam.cz',
     pass: 'Letamsdrony12'
-  }
+  },
+tls: {
+  rejectUnauthorized: false
+}
 });
 
 app.post("/change-email", async (req, res) => {
@@ -4054,6 +4061,58 @@ app.get('/test-digest', async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------------
+// BLOG
+// ---------------------------------------------------------------------
+app.get("/blog-list", (req, res) => {
+  try {
+    const files = fs.readdirSync(BLOG_DIR).filter(f => f.endsWith(".html"));
+
+    const posts = files.map(filename => {
+      const fullPath = path.join(BLOG_DIR, filename);
+      const html = fs.readFileSync(fullPath, "utf8");
+
+      const slug = filename.replace(".html", "");
+
+      // Title
+      const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
+      const title = titleMatch ? titleMatch[1] : "Bez názvu";
+
+      // Meta description
+      const descMatch = html.match(/<meta name="description" content="(.*?)"/);
+      const description = descMatch ? descMatch[1] : "";
+
+      // Date
+      const dateMatch = html.match(/Publikováno:\s*(.*?)\s*\|/);
+      const date = dateMatch ? dateMatch[1] : "";
+
+      // Category
+      const catMatch = html.match(/Kategorie:\s*(.*?)\s*\|/);
+      const category = catMatch ? catMatch[1] : "";
+
+      // Author
+      const authorMatch = html.match(/Autor:\s*(.*?)<\/p>/);
+      const author = authorMatch ? authorMatch[1] : "NajdiPilota";
+
+      // AUTO-GENERATED IMAGE (thumbnail = hero)
+      const image = `/blogposts_img/${slug}-hero.webp`;
+
+      return { title, description, image, date, category, author, slug };
+    });
+
+    // Sort newest first (because slugs begin with YYYYMMDD)
+    posts.sort((a, b) => b.slug.localeCompare(a.slug));
+
+    res.json(posts);
+
+  } catch (err) {
+    console.error("Blog error:", err);
+    res.status(500).json({ error: "Cannot load blog posts" });
+  }
+});
+
+
+
 
 
 
@@ -4195,6 +4254,84 @@ function onboardingEmailContent() {
 
   return wrapEmailContent(content, "Vítejte na NajdiPilota.cz!");
 }
+
+// ---------------------------------------------------------------------
+// E-mail služeb – zachovány všechny barvy účtů
+// ---------------------------------------------------------------------
+
+function serviceRequestEmailContent(p, serviceName) {
+  return `
+  <table width="100%" cellpadding="0" cellspacing="0" bgcolor="#f4f7fa" style="padding:30px 0;">
+    <tr>
+      <td align="center">
+
+        <table width="600" cellpadding="0" cellspacing="0" bgcolor="#ffffff"
+               style="border-radius:10px;overflow:hidden;box-shadow:0 4px 18px rgba(0,0,0,0.08);">
+
+          <!-- LOGO + HEADER -->
+          <tr>
+            <td align="center" style="padding:25px 20px 0;background:#ffffff;">
+              <img src="cid:logoNP" alt="NajdiPilota.cz"
+                   style="height:80px;display:block;margin-bottom:12px;">
+              <div style="font-size:19px;color:#0077B6;font-weight:600;margin-bottom:10px;">
+                Nová poptávka: ${serviceName}
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:0 40px;">
+              <hr style="border:none;border-top:1px solid #e0e6ed;margin:20px 0;" />
+            </td>
+          </tr>
+
+          <!-- MAIN CONTENT -->
+          <tr>
+            <td style="padding:0 40px 20px;color:#495057;font-size:15px;line-height:1.6;">
+
+              <p>Dobrý den,</p>
+
+              <p>Na platformě <strong style="color:#0077B6;">NajdiPilota.cz</strong>
+                 byla odeslána nová poptávka na službu:</p>
+
+              <h2 style="color:#0077B6;font-size:17px;margin:15px 0 10px;">
+                ${serviceName}
+              </h2>
+
+              <p><strong style="color:#0077B6;">Kontaktní údaje pilota:</strong></p>
+              <ul style="padding-left:20px;margin-top:10px;">
+                <li><strong>Jméno:</strong> ${p.name}</li>
+                <li><strong>E-mail:</strong> ${p.email}</li>
+                <li><strong>Telefon:</strong> ${p.phone || "Neuveden"}</li>
+                <li><strong>Lokalita:</strong> ${p.city || ""}, ${p.region || ""}</li>
+                <li><strong>Typ účtu:</strong> ${p.type_account}</li>
+              </ul>
+
+              <p style="margin-top:20px;">
+                Pilot obdržel potvrzení o přijetí poptávky.  
+                Nyní jej prosím kontaktujte a dořešte detaily zakázky.
+              </p>
+
+              <p style="margin-top:30px;">S pozdravem,<br>
+                <strong>Tým NajdiPilota.cz</strong></p>
+            </td>
+          </tr>
+
+          <!-- FOOTER -->
+          <tr>
+            <td style="padding:20px 40px 30px;color:#6c757d;font-size:12px;text-align:center;">
+              Tento e-mail byl vygenerován automaticky systémem <strong>NajdiPilota.cz</strong>.
+            </td>
+          </tr>
+
+        </table>
+
+      </td>
+    </tr>
+  </table>
+  `;
+}
+
 
 // ---------------------------------------------------------------------
 // E-mail po smazání účtu – zachován jednotný styl a barvy
@@ -4914,6 +5051,75 @@ app.post('/send-direct', async (req, res) => {
     res.status(500).json({ error:String(e?.message||e) });
   }
 });
+
+app.post("/service-request", async (req, res) => {
+  try {
+    const { email, type } = req.body;
+
+    if (!email || !type) {
+      return res.status(400).send("Missing parameters");
+    }
+
+    // 1) Najdeme pilota
+    const result = await pool.query(
+      `SELECT name, email, phone, city, region, type_account 
+       FROM pilots WHERE email = $1 LIMIT 1`,
+      [email]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).send("Pilot not found");
+    }
+
+    const p = result.rows[0];
+
+    // 2) Příprava obsahu e-mailu
+    const serviceNames = {
+      analyza: "Analýza provozu",
+      legislativa: "Legislativa"
+    };
+
+    const serviceName = serviceNames[type] || "Služba";
+
+    const adminHtml = serviceRequestEmailContent(p, serviceName);
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: "dronadmin@seznam.cz",
+      cc: "drboom@seznam.cz",
+      subject: `Poptávka – ${serviceName}`,
+      html: adminHtml,
+   attachments: [
+  {
+    filename: "logo.png",
+    path: path.join(__dirname, "public", "icons", "logo.png"),
+    cid: "logoNP"
+  }
+]
+    });
+
+    // 3) Potvrzení pilotovi
+    const userHtml = wrapEmailContent(`
+      <p>Dobrý den, ${p.name},</p>
+      <p>Vaše poptávka <strong>${serviceName}</strong> byla úspěšně odeslána.</p>
+      <p>Brzy se vám ozveme.</p>
+    `);
+
+    await transporter.sendMail({
+      from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+      to: p.email,
+      subject: `Poptávka odeslána – ${serviceName}`,
+      html: userHtml
+    });
+
+    res.send("OK");
+
+  } catch (err) {
+    console.error("Chyba service-request:", err);
+    res.status(500).send("Internal error");
+  }
+});
+
 
 
 

@@ -58,22 +58,20 @@
      data-bs-toggle="dropdown"
      aria-expanded="false">
 
-    <i class="bi bi-tools me-1"></i>Služby pilota | v TESTOVÁNÍ!!!
+    <i class="bi bi-tools me-1"></i>Služby pro pilota
   </a>
 
   <ul class="dropdown-menu">
     <li>
-      <a class="dropdown-item"
-         href="mailto:dronadmin@seznam.cz?subject=Analýza%20provozu&body=Chci%20poptat%20analýzu%20provozu.">
-        📍 Analýza provozu (250 Kč)
-      </a>
+      <a class="dropdown-item service-request" data-type="legislativa" href="#">
+  📝 Legislativa – individuální cena
+</a>
     </li>
 
     <li>
-      <a class="dropdown-item"
-         href="mailto:dronadmin@seznam.cz?subject=Legislativní%20služby&body=Chci%20poptat%20legislativní%20služby.">
-        📝 Legislativa – individuální cena
-      </a>
+      <a class="dropdown-item service-request" data-type="analyza" href="#">
+  📍 Analýza provozu (250 Kč)
+</a>
     </li>
   </ul>
 </div>
@@ -1242,7 +1240,72 @@ document.getElementById("deleteAccountBtn").addEventListener("click", async () =
 });
 </script>
 
+<script>
+document.querySelectorAll(".service-request").forEach(btn => {
+  btn.addEventListener("click", async (e) => {
+    e.preventDefault();
 
+    const type = btn.dataset.type;
+    const modal = new bootstrap.Modal(document.getElementById('serviceRequestModal'));
+
+    // reset modal states
+    document.getElementById("sr-loading").classList.remove("d-none");
+    document.getElementById("sr-success").classList.add("d-none");
+    document.getElementById("sr-error").classList.add("d-none");
+
+    modal.show();
+
+    try {
+      const res = await fetch("/service-request", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          email: currentPilot.email
+        })
+      });
+
+      if (!res.ok) throw new Error();
+
+      // success
+      document.getElementById("sr-loading").classList.add("d-none");
+      document.getElementById("sr-success").classList.remove("d-none");
+
+    } catch (err) {
+      document.getElementById("sr-loading").classList.add("d-none");
+      document.getElementById("sr-error").classList.remove("d-none");
+    }
+  });
+});
+</script>
+
+
+<!-- Service request modal -->
+<div class="modal fade" id="serviceRequestModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+
+      <div class="modal-body text-center p-4" id="serviceRequestModalBody">
+        <div id="sr-loading" class="my-3">
+          <div class="spinner-border" role="status"></div>
+          <p class="mt-3">Odesílám poptávku...</p>
+        </div>
+
+        <div id="sr-success" class="d-none my-3">
+          <h4 class="mb-3">✨ Hotovo!</h4>
+          <p class="text-muted">Poptávka byla úspěšně odeslána.<br>Brzy vás budeme kontaktovat.</p>
+          <button class="btn btn-primary mt-2 pilot-login-btn" data-bs-dismiss="modal">OK</button>
+        </div>
+
+        <div id="sr-error" class="d-none my-3">
+          <h4 class="mb-3 text-danger">Chyba!</h4>
+          <p class="text-muted">Poptávku se nepodařilo odeslat. Zkuste to znovu.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
 
  
 </body>

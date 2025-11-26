@@ -3704,26 +3704,30 @@ app.get('/send-email-only-1m', async (req, res) => {
 
 // Spouští se každý den v 8:00
 cron.schedule('0 8 * * *', async () => {
-  console.log('📬 Denní kontrola poptávek...');
+  console.log('📬 Denní kontrola poptávek (5 dní + 3 dny před deadlinem + uzavírání)...');
 
   try {
-    // === 1️⃣ Připomenutí po 5 dnech ===
+    // === 1️⃣ Připomenutí po 5 dnech od vytvoření (jen jednou) ===
     const remindDays = 5;
     const { rows: reminders } = await pool.query(`
       SELECT id, title, advertiser_email, created_at
       FROM demands
       WHERE status = 'Zpracovává se'
         AND created_at < NOW() - INTERVAL '${remindDays} days'
-        AND (last_reminder_at IS NULL OR last_reminder_at < NOW() - INTERVAL '${remindDays} days')
+        AND last_reminder_at IS NULL
     `);
 
     for (const d of reminders) {
       const html = wrapEmailContent(`
         <h2>🕓 Jak to vypadá s vaší poptávkou?</h2>
         <p>Poptávka <strong>${escapeHtml(d.title)}</strong> byla zveřejněna před více než ${remindDays} dny.</p>
-        <p>Pokud je již vyřešená, prosím označte ji jako <strong>Hotovo</strong> v rozhraní NajdiPilota.cz.</p>
-        <p><a href="https://www.najdipilota.cz/poptavky.html"
-          style="background:#0077B6;color:#fff;padding:10px 18px;text-decoration:none;border-radius:6px;">Otevřít poptávky</a></p>
+        <p>Je stále aktuální? Pokud je již vyřešená, prosím označte ji jako <strong>Hotovo</strong> v rozhraní NajdiPilota.cz.</p>
+        <p>
+          <a href="https://www.najdipilota.cz/poptavky.html"
+             style="background:#0077B6;color:#fff;padding:10px 18px;text-decoration:none;border-radius:6px;">
+             Otevřít moje poptávky
+          </a>
+        </p>
       `, 'NajdiPilota.cz – Stav poptávky');
 
       await transporter.sendMail({
@@ -3733,11 +3737,69 @@ cron.schedule('0 8 * * *', async () => {
         html
       });
 
-      await pool.query('UPDATE demands SET last_reminder_at = NOW() WHERE id = $1', [d.id]);
-      console.log(`📨 Připomínka odeslána: ${d.advertiser_email}`);
+      await pool.query(
+        'UPDATE demands SET last_reminder_at = NOW() WHERE id = $1',
+        [d.id]
+      );
+      console.log(`📨 5denní připomínka odeslána: ${d.advertiser_email}`);
     }
 
-    // === 2️⃣ Automatické označení jako neaktivní po 30 dnech ===
+    // === 2️⃣ Připomenutí 3 dny před deadlinem ===
+    // tady NEkontrolujeme last_reminder_at, aby šla i když už šla 5denní připomínka
+    const { rows: beforeDeadline } = await pool.query(`
+      SELECT id, title, advertiser_email, deadline
+      FROM demands
+      WHERE status = 'Zpracovává se'
+        AND deadline IS NOT NULL
+        AND deadline::date = CURRENT_DATE + INTERVAL '3 days'
+    `);
+
+    for (const d of beforeDeadline) {
+      const html = wrapEmailContent(
+        `
+          <h2>📅 Blíží se termín vaší poptávky</h2>
+
+          <p>Za tři dny uplyne termín dokončení vaší poptávky:</p>
+          <p><strong>${escapeHtml(d.title)}</strong></p>
+
+          <p>Rádi bychom se zeptali: <strong>Je tato poptávka stále aktuální?</strong></p>
+
+          <p>
+            Pokud ano, můžete pokračovat ve spolupráci nebo poptávku upravit.<br>
+            Pokud už je vše hotové, prosíme o označení poptávky jako <strong>Hotovo</strong>.
+          </p>
+
+          <p>
+            <a href="https://www.najdipilota.cz/poptavky.html"
+               style="
+                 background:#0077B6;
+                 color:#fff;
+                 padding:10px 18px;
+                 text-decoration:none;
+                 border-radius:6px;
+                 font-weight:bold;
+               ">
+               Zobrazit moje poptávky
+            </a>
+          </p>
+
+          <p>Děkujeme, že využíváte NajdiPilota.cz.</p>
+        `,
+        'NajdiPilota.cz – Je vaše poptávka stále aktuální?'
+      );
+
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+        to: d.advertiser_email,
+        bcc: 'drboom@seznam.cz',            // 👈 BCC pro reminder 3 dny před deadlinem
+        subject: 'Blíží se termín vaší poptávky – je stále aktuální?',
+        html
+      });
+
+      console.log(`📨 Připomínka 3 dny před deadlinem odeslána: ${d.advertiser_email} (BCC drboom@seznam.cz)`);
+    }
+
+    // === 3️⃣ Automatické označení jako neaktivní po 30 dnech ===
     const inactiveDays = 30;
     const { rows: expired } = await pool.query(`
       UPDATE demands
@@ -3747,7 +3809,6 @@ cron.schedule('0 8 * * *', async () => {
       RETURNING id, title, advertiser_email, created_at;
     `);
 
-    // === 3️⃣ Odeslat přehled adminovi ===
     if (expired.length > 0) {
       const htmlList = expired
         .map(d => `<li>${escapeHtml(d.title)} – ${d.advertiser_email} (vytvořeno ${new Date(d.created_at).toLocaleDateString('cs-CZ')})</li>`)
@@ -3774,6 +3835,7 @@ cron.schedule('0 8 * * *', async () => {
     console.error('❌ Chyba při kontrole poptávek:', err);
   }
 });
+
 
 
 

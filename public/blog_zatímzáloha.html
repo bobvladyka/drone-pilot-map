@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blog | NajdiPilota.cz</title>
+  <meta name="description" content="Hledáš pilota dronu nebo chceš být vidět na mapě? Najdi pilota podle lokality, specializace, vybavení a připoj se k ověřené komunitě." />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="https://www.najdipilota.cz/" />
+  <!-- Open Graph pro Facebook a další sítě -->
+  <meta property="og:title" content="Dronová mapa pilotů v Česku" />
+  <meta property="og:description" content="Spojujeme zákazníky s piloty dronů. Zobraz se na mapě nebo si najdi pilota ve svém okolí." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://www.najdipilota.cz/" />
+  <meta property="og:image" content="icons/logo.png" />
+  <meta name="google-site-verification" content="yxzi02d6ahPBVtx31lx_Mwg07khOFlY_fWUFdkyrsUE" />
+  <meta name="robots" content="index, follow">
+  
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
+  <!-- Vlastní styl -->
+  <link rel="stylesheet" href="style.css" />
+  
+  <!-- Leaflet a MarkerCluster -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+  
+  <!-- Favicony -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png">
+  <link rel="manifest" href="/icons/site.webmanifest">
+  <link rel="icon" href="/icons/favicon.ico" type="image/x-icon">
+</head>
+
+<body>
+
+  <!-- Navigace -->
+  <header>
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+      <div class="container">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
+          <img src="/icons/logo.png" alt="" height="60" class="me-2" loading="lazy" />
+          <span class="fs-4">NajdiPilota.cz | Blog</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+          <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="/index.html">Mapa</a></li>
+            <li class="nav-item"><a class="nav-link" href="/o-projektu.html">O projektu</a></li>
+            <li class="nav-item"><a class="nav-link" href="/kontakt.html">Kontakt</a></li>
+            <li class="nav-item active"><a class="nav-link" href="/blog.html">Blog</a></li> <!-- Aktuální stránka -->
+          </ul>
+        </div>
+      </div>
+    </nav>
+  </header>
+
+  <div class="container py-4">
+    <!-- Úvodní sekce -->
+    <section class="mb-4">
+      <h2>Vítejte na našem blogu!</h2>
+      <p>NajdiPilota.cz je platforma, která propojuje piloty dronů s klienty. Na našem blogu najdete články, tipy a triky, jak létat s dronem, jaké specializace jsou dostupné a jak být úspěšným pilotem.</p>
+    </section>
+
+    <!-- Seznam článků -->
+    <section class="blog-articles mb-4">
+      <!-- Přidání článku -->
+      <article class="blog-post">
+        <h3><a href="/blog/article1.html">Začínáme s dronem: Základní tipy pro začátečníky</a></h3>
+        <p class="meta">Publikováno: 15. srpna 2025</p>
+        <p>Pokud jste začali létat s dronem, tento článek vám poskytne základy, jak začít bezpečně a efektivně. Podíváme se na klíčové tipy pro začátečníky.</p>
+        <a href="/blog/article1.html" class="read-more">Přečíst více</a>
+      </article>
+
+      <article class="blog-post">
+        <h3><a href="/blog/article2.html">Pokročilé techniky: Jak stabilizovat let dronu</a></h3>
+        <p class="meta">Publikováno: 10. srpna 2025</p>
+        <p>Pro pokročilé piloty máme několik tipů, jak zlepšit stabilitu a ovládání při složitějších letech a manévrech.</p>
+        <a href="/blog/article2.html" class="read-more">Přečíst více</a>
+      </article>
+
+      <article class="blog-post">
+        <h3><a href="/blog/article3.html">Bezpečnost při létání: Co by měl každý pilot vědět</a></h3>
+        <p class="meta">Publikováno: 5. srpna 2025</p>
+        <p>Bezpečnost při létání s dronem je klíčová. Tento článek vám ukáže, jaké bezpečnostní postupy byste měli dodržovat při každém letu.</p>
+        <a href="/blog/article3.html" class="read-more">Přečíst více</a>
+      </article>
+      
+      <!-- Přidání nového článku -->
+      <article class="blog-post">
+        <h3>Jak správně fotit s dronem: Základy pro začátečníky</h3>
+        <p class="meta">Publikováno: 20. srpna 2025</p>
+        <p>Fotografování s dronem je umění, které může vytvořit ohromující snímky. Tento článek vám poskytne několik základních tipů, jak začít fotografovat s dronem.</p>
+        <a href="/blog/article4.html" class="read-more">Přečíst více</a>
+      </article>
+    </section>
+
+    <!-- Filtr článků -->
+    <section class="blog-categories mb-4">
+      <h3>Filtrovat články</h3>
+      <ul>
+        <li><a href="/blog.html?category=beginner">Začátečníci</a></li>
+        <li><a href="/blog.html?category=advanced">Pokročilí</a></li>
+        <li><a href="/blog.html?category=safety">Bezpečnost</a></li>
+        <li><a href="/blog.html?category=specializations">Specializace</a></li>
+      </ul>
+    </section>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+    <div class="container">
+      <div class="row gy-3 justify-content-between">
+        <div class="col-md-4">
+          <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+            <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+            <span class="fw-bold fs-5">NajdiPilota.cz</span>
+          </a>
+          <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR.</p>
+        </div>
+
+        <div class="col-md-2">
+          <h6 class="fw-bold">Navigace</h6>
+          <ul class="list-unstyled">
+            <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+            <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
+            <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+            <li><a href="/blog.html" class="text-decoration-none text-muted">Blog</a></li>
+          </ul>
+        </div>
+
+        <div class="col-md-3">
+          <h6 class="fw-bold">Informace</h6>
+          <ul class="list-unstyled">
+            <li><a href="/gdpr.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+            <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Cookies</a></li>
+            <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+            <li><a href="mailto:dronadmin@seznam.cz" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <hr class="my-4">
+      <div class="d-flex justify-content-between align-items-center small text-muted">
+        <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+        <div>
+          <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+          <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+          <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById("year").textContent = new Date().getFullYear();
+    });
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

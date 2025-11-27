@@ -1218,6 +1218,70 @@ html {
   font-size: 0.9rem;
 }
 
+/* === ÚPRAVA STYLU KARUSELU (Pro index.html) === */
+
+/* Zajištění, že tečky (indikátory) jsou viditelné */
+#blogCarousel .carousel-indicators {
+    display: flex !important; /* Mění 'none' z předchozího kroku na 'flex' */
+    position: absolute;
+    bottom: -40px; /* Posunutí teček pod hlavní obsah článku */
+}
+
+/* Skryje navigační tlačítka (šipky) */
+#blogCarousel .carousel-control-prev,
+#blogCarousel .carousel-control-next {
+    display: none !important; /* Ponecháme je skryté, jak jste dříve požadoval */
+}
+
+/* Zajištění, že se CarouselItem správně roztáhne */
+#blogCarousel .carousel-item {
+    min-height: 400px; 
+}
+
+/* === VIZUÁLNÍ ÚPRAVA BLOG KARUSELU: DESIGN TEČEK === */
+
+/* Kontejner teček (indicators) */
+#blogCarousel .carousel-indicators {
+    display: flex !important;
+    position: absolute;
+    bottom: -50px; /* Posuneme je níže od textu */
+    justify-content: center;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    gap: 10px; /* Mezera mezi tečkami */
+}
+
+/* Samotná tečka (button) - vypneme defaultní styly Bootstrapu */
+#blogCarousel .carousel-indicators button {
+    width: 10px; /* Malá velikost */
+    height: 10px;
+    padding: 0;
+    margin: 0;
+    background-color: transparent;
+    border: none;
+    opacity: 0.5; /* Jemné, pasivní */
+    transition: opacity 0.3s ease, background-color 0.3s ease;
+    border-radius: 50%; /* Aby pasivní tečky byly také kruhové */
+}
+
+/* Aktivní tečka */
+#blogCarousel .carousel-indicators .active {
+    opacity: 1; /* Plně viditelné */
+    background-color: var(--primary); /* Modrá barva webu */
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+/* Hover efekt */
+#blogCarousel .carousel-indicators button:hover {
+    opacity: 0.8;
+    background-color: var(--accent); /* Ledově modrá barva webu */
+}
+
+
 /* Efekt pro karty blogu */
 .article-card-hover:hover img {
   transform: scale(1.05);

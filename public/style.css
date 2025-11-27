@@ -1218,8 +1218,38 @@ html {
   font-size: 0.9rem;
 }
 
+/* Efekt pro karty blogu */
+.article-card-hover:hover img {
+  transform: scale(1.05);
+}
+.article-card-hover:hover h5 {
+  color: #0077B6; /* Vaše primární modrá */
+  text-decoration: underline;
+}
 
+/* Zajištění plynulého přechodu pro Instagram blok */
+.insta-item {
+  display: block;
+  /* ZPOMALENÍ: nastaveno na 0.5 sekundy pro plynulejší efekt */
+  transition: transform 0.5s ease-in-out, box-shadow 0.5s ease; 
+  position: relative; /* Nutné pro z-index */
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Decentní stín v klidovém stavu */
+  border-radius: var(--radius); /* Použijeme tvůj radius */
+}
 
+/* Zvětšení celého bloku při HOVERU (50% pomalejší než původní 0.3s) */
+.insta-item:hover {
+  transform: scale(1.1); /* Zvětšení o 10% – ideální pro web */
+  z-index: 10;
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.3); /* Větší stín pro zvýraznění */
+}
+
+/* Zajištění, aby se i obrázek uvnitř transformoval plynule */
+.insta-item img {
+  /* ZACHOVÁME transform pro plynulost vnitřního obsahu */
+  transition: transform 0.5s ease-in-out; 
+}
 
 
 

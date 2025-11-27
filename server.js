@@ -2609,6 +2609,60 @@ app.get('/categories', async (req, res) => {
 });
 
 
+// --- INSTAGRAM API ENDPOINT ---
+
+// 1. Proměnné pro caching (do paměti serveru)
+let instagramCache = null;
+let lastInstagramFetch = 0;
+const INSTAGRAM_CACHE_DURATION = 3600 * 1000; // 1 hodina v milisekundách
+
+app.get('/api/instagram-feed', async (req, res) => {
+  // Povolit data pro klienty z různých domén
+  res.setHeader('Access-Control-Allow-Origin', '*'); 
+  res.setHeader('Content-Type', 'application/json');
+
+  try {
+    // 2. Zkontrolujeme, zda máme platnou cache (je mladší než 1 hodina)
+    if (instagramCache && (Date.now() - lastInstagramFetch < INSTAGRAM_CACHE_DURATION)) {
+      console.log('✅ Instagram: Vráceno z cache.');
+      return res.json(instagramCache);
+    }
+
+    const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+    if (!token) {
+      console.warn("⚠️ Instagram: Chybí INSTAGRAM_ACCESS_TOKEN v .env");
+      // Můžeme vrátit 401, ale pro frontend je lepší prázdné 200 s logem
+      return res.status(200).json({ data: [] }); 
+    }
+
+    // 3. Stáhneme data z Instagramu (limit 6 příspěvků)
+    const url = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink&access_token=${token}&limit=6`;
+    
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.error) {
+      console.error("❌ Chyba Instagram API:", data.error.message);
+      // Při chybě zkusíme vrátit starou cache
+      if (instagramCache) return res.json(instagramCache);
+      return res.status(500).json({ error: data.error.message });
+    }
+
+    // 4. Uložíme do cache a odešleme
+    instagramCache = data;
+    lastInstagramFetch = Date.now();
+    
+    console.log('🔄 Instagram: Nová data načtena z API.');
+    res.json(data);
+
+  } catch (err) {
+    console.error("❌ Chyba serveru při stahování Instagramu:", err);
+    // V případě neočekávané chyby vrátíme starou cache, pokud existuje
+    if (instagramCache) return res.json(instagramCache); 
+    res.status(500).json({ error: "Interní chyba serveru" });
+  }
+});
+
 // Nastavení složky pro statické soubory
 app.use(express.static(path.join(__dirname, 'public')));
 

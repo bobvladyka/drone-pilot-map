@@ -1079,43 +1079,56 @@ document.getElementById('confirmPremiumConsent').addEventListener('click', funct
   </div>
 </div>
 
-<!-- INSTAGRAM FEED -->
-<section id="instagram-feed" class="py-5 bg-light border-top" data-aos="fade-up">
-  <div class="container text-center">
-    <h2 class="fw-bold mb-3">Z komunity #NajdiPilota 🚁</h2>
-    <p class="text-muted mb-4">Poslední záběry z našeho Instagramu</p>
-
-    <!-- Instagram Widget -->
-    <div class="lightwidget-widget-container">
-      <iframe src="//lightwidget.com/widgets/4025aa1c8f205d6d9652b265217cc6cb.html" scrolling="no" allowtransparency="true" class="lightwidget-widget" style="width:100%;border:0;overflow:hidden;"></iframe>
-    </div>
-
-    <div class="mt-4">
-      <a href="https://www.instagram.com/najdipilota/" target="_blank" class="btn btn-outline-dark">
-        <i class="bi bi-instagram me-1"></i> Sleduj nás na Instagramu
+<section id="latest-blog" class="section-spaced" data-aos="fade-up">
+  <div class="container">
+    
+    <div class="d-flex justify-content-between align-items-end mb-4">
+      <div>
+        <h2 class="fw-bold mb-2">Novinky ze světa dronů</h2>
+        <p class="text-muted mb-0">Tipy, legislativa a zajímavosti z našeho blogu.</p>
+      </div>
+      <a href="/blog.html" class="btn btn-outline-primary d-none d-md-inline-block">
+        Všechny články <i class="bi bi-arrow-right ms-1"></i>
       </a>
     </div>
+
+    <div id="homepage-blog-container" class="row g-4">
+      <div class="col-12 text-center py-5 text-muted">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Načítám články...</p>
+      </div>
+    </div>
+
+    <div class="text-center mt-4 d-md-none">
+      <a href="/blog.html" class="btn btn-outline-primary w-100">
+        Všechny články <i class="bi bi-arrow-right ms-1"></i>
+      </a>
+    </div>
+
   </div>
 </section>
 
+<!-- INSTAGRAM FEED -->
+<section id="instagram-feed" class="py-5 bg-light border-top" data-aos="fade-up">
+  <div class="container text-center">
+    <h2 class="fw-bold mb-3">Z komunity #NajdiPilota 🚁</h2>
+    <p class="text-muted mb-4">Poslední záběry z našeho Instagramu</p>
 
-<script>
-fetch('/api/instagram-feed.php')
-  .then(res => res.json())
-  .then(data => {
-    const gallery = document.getElementById('insta-gallery');
-    if (!data.data) return;
-    data.data.slice(0, 3).forEach(post => {
-      const imgUrl = post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url;
-      const a = document.createElement('a');
-      a.href = post.permalink;
-      a.target = '_blank';
-      a.innerHTML = `<img src="${imgUrl}" class="rounded shadow-sm" style="width:200px;height:200px;object-fit:cover;">`;
-      gallery.appendChild(a);
-    });
-  })
-  .catch(err => console.error('Chyba při načítání Instagram feedu:', err));
-</script>
+    <div id="insta-gallery" class="row g-3 justify-content-center">
+      <div class="col-12 py-4">
+        <div class="spinner-border text-primary" role="status">
+          <span class="visually-hidden">Načítám...</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-4">
+      <a href="https://www.instagram.com/najdipilota/" target="_blank" class="btn btn-outline-dark">
+        <i class="bi bi-instagram me-1"></i> Sleduj nás na Instagramu
+      </a>
+      </div>
+  </div>
+</section>
 
 
 
@@ -1337,6 +1350,123 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 </script>
+
+<script>
+  document.addEventListener("DOMContentLoaded", () => {
+    const container = document.getElementById("homepage-blog-container");
+
+    // Funkce pro zkrácení textu (aby karty byly stejně vysoké)
+    const truncate = (str, max) => str.length > max ? str.substring(0, max - 1) + "…" : str;
+
+    fetch("/blog-list")
+      .then(res => res.json())
+      .then(posts => {
+        // Pokud nejsou žádné články, celou sekci skryjeme
+        if (!posts || posts.length === 0) {
+          document.getElementById("latest-blog").style.display = "none";
+          return;
+        }
+
+        // Vezmeme maximálně 3 nejnovější
+        const latestPosts = posts.slice(0, 3);
+        
+        // Vymažeme loading spinner
+        container.innerHTML = "";
+
+        // Vygenerujeme HTML pro každý článek
+        latestPosts.forEach(post => {
+          // Fallback obrázek, kdyby chyběl
+          const imgUrl = post.image || '/icons/logo.png'; 
+          
+          const html = `
+            <div class="col-md-6 col-lg-4 d-flex">
+              <div class="card h-100 shadow-sm border-0 w-100 article-card-hover">
+                <a href="/blogposts/${post.slug}.html" class="text-decoration-none text-dark">
+                  <div style="position: relative; overflow: hidden; border-top-left-radius: 6px; border-top-right-radius: 6px;">
+                    <img src="${imgUrl}" class="card-img-top" alt="${post.title}" 
+                         style="height: 200px; object-fit: cover; transition: transform 0.3s ease;">
+                    <span class="badge bg-primary position-absolute top-0 end-0 m-2 shadow-sm">
+                      ${post.category || 'Blog'}
+                    </span>
+                  </div>
+                  <div class="card-body d-flex flex-column">
+                    <p class="text-muted small mb-2">
+                      <i class="bi bi-calendar3 me-1"></i>${post.date}
+                    </p>
+                    <h5 class="card-title fw-bold mb-3">${truncate(post.title, 50)}</h5>
+                    <p class="card-text text-muted flex-grow-1">
+                      ${truncate(post.description, 100)}
+                    </p>
+                    <div class="mt-3 text-primary fw-bold small">
+                      Číst více <i class="bi bi-arrow-right"></i>
+                    </div>
+                  </div>
+                </a>
+              </div>
+            </div>
+          `;
+          container.insertAdjacentHTML('beforeend', html);
+        });
+      })
+      .catch(err => {
+        console.error("Chyba při načítání blogu na HP:", err);
+        // V případě chyby sekci skryjeme, ať nestraší
+        document.getElementById("latest-blog").style.display = "none";
+      });
+  });
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const gallery = document.getElementById('insta-gallery');
+  const maxPosts = 6; // Počet příspěvků, které chceme zobrazit (max 6)
+
+  fetch('/api/instagram-feed')
+    .then(res => res.json())
+    .then(response => {
+      // Vyčistit loading spinner
+      gallery.innerHTML = '';
+
+      if (!response.data || response.data.length === 0) {
+        gallery.innerHTML = '<p class="text-muted">Zatím žádné příspěvky.</p>';
+        return;
+      }
+
+      // Vezmeme maximálně 6 příspěvků
+      const postsToShow = response.data.slice(0, maxPosts);
+
+      postsToShow.forEach(post => {
+        // Pokud je to VIDEO, Instagram pošle 'thumbnail_url', jinak 'media_url'
+        const imgUrl = post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url;
+        
+        // Vytvoření HTML pro jeden čtverec
+        const col = document.createElement('div');
+        // Nastavení responzivních tříd: 2 sloupce na mobilu (col-6), 3 na tabletu (col-md-4), 6 na desktopu (col-lg-2)
+        col.className = 'col-6 col-md-4 col-lg-2'; 
+        
+        col.innerHTML = `
+          <a href="${post.permalink}" target="_blank" class="d-block position-relative insta-item shadow-sm rounded overflow-hidden">
+            <img src="${imgUrl}" alt="${post.caption ? post.caption.substring(0, 50) : 'Instagram post'}" 
+                 class="w-100" 
+                 style="aspect-ratio: 4/5; object-fit: cover; transition: transform 0.3s;">
+            
+            ${post.media_type === 'VIDEO' ? // Přidáme ikonu pro video
+              '<i class="bi bi-play-circle-fill position-absolute top-50 start-50 translate-middle text-white fs-3" style="text-shadow: 0 0 5px rgba(0,0,0,0.5);"></i>' 
+              : ''}
+          </a>
+        `;
+        gallery.appendChild(col);
+      });
+    })
+    .catch(err => {
+      console.error('Chyba při načítání Instagramu:', err);
+      // Zobrazit zprávu o chybě, pokud selže server
+      gallery.innerHTML = '<p class="text-danger small col-12">Nepodařilo se načíst příspěvky z Instagramu. (Zkontrolujte, zda je token platný a server běží)</p>';
+    });
+});
+</script>
+
+
 
 </body>
 </html>

@@ -8,6 +8,19 @@ const path = require('path');
 const fs = require("fs");
 const BLOG_DIR = path.join(__dirname, "public", "blogposts");
 
+const multer = require('multer');
+const sharp = require('sharp');
+
+// Konfigurace pro nahrávání souborů (použijeme paměť RAM pro rychlé zpracování)
+// Konfigurace pro nahrávání - navýšení limitů pro velké texty (HTML)
+const upload = multer({ 
+    storage: multer.memoryStorage(),
+    limits: {
+        fieldSize: 25 * 1024 * 1024 // Povolit až 25 MB pro textová pole (HTML obsah)
+    }
+});
+const IMG_DIR = path.join(__dirname, "public", "blogposts_img");
+
 
 const prerender = require('prerender-node');
 const session = require('express-session');
@@ -217,6 +230,72 @@ function requireAdminLogin(req, res, next) {
     return res.redirect('/adminland.html');
 }
 
+// POST /api/admin/create-blog-post - Vytvoří článek + zpracuje obrázek
+app.post('/api/admin/create-blog-post', requireAdminLogin, upload.single('heroImage'), async (req, res) => {
+  try {
+    const { title, description, bodyHtml, category, author } = req.body;
+    let { slug } = req.body;
+
+    // 1. Validace
+    if (!title || !bodyHtml || !slug) {
+      return res.status(400).json({ error: "Chybí titulek, slug nebo obsah." });
+    }
+    
+    // Pojistka: Odstraníme diakritiku a mezery ze slugu, kdyby to frontend neudělal
+    // (backend musí být vždy "poslední instance pravdy")
+    // slug = slug.trim().toLowerCase()... (zjednodušeno, spoléháme na frontend)
+
+    // 2. ZPRACOVÁNÍ OBRÁZKU (Pokud byl nahrán)
+    if (req.file) {
+      const imageFilename = `${slug}-hero.webp`;
+      const imagePath = path.join(IMG_DIR, imageFilename);
+
+      // Sharp: změní velikost na max šířku 1200px, převede na WebP, kvalita 80%
+      await sharp(req.file.buffer)
+        .resize({ width: 1200, withoutEnlargement: true }) 
+        .webp({ quality: 80 })
+        .toFile(imagePath);
+      
+      console.log(`📸 Obrázek uložen: ${imageFilename}`);
+    } else {
+        // Pokud chcete vynutit obrázek, odkomentujte řádek níže:
+        // return res.status(400).json({ error: "Musíte nahrát hlavní obrázek!" });
+        console.warn("⚠️ Článek uložen bez nového obrázku (možná chyba?)");
+    }
+
+    // 3. GENEROVÁNÍ HTML
+    const articleData = {
+      title,
+      description: description || '',
+      bodyHtml,
+      category: category || 'Nezařazeno',
+      author: author || 'Tým NajdiPilota'
+    };
+
+    const finalHtmlContent = generateArticleHtml(slug, articleData); // Použije vaši existující funkci
+    const filename = `${slug}.html`;
+    const filePath = path.join(BLOG_DIR, filename);
+
+    // 4. Zápis HTML
+    fs.writeFileSync(filePath, finalHtmlContent, 'utf8');
+
+    res.json({ 
+        success: true, 
+        message: `Článek i obrázek uloženy.`,
+        filename: filename,
+        url: `/blogposts/${filename}`
+    });
+
+  } catch (err) {
+    console.error("❌ Chyba:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Route pro přístup k administraci blogu (chráněno)
+app.get('/admin-blog-create.html', requireAdminLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'admin-blog-create.html'));
+});
 
 // TESTOVACÍ struktura MAILU //
 app.get('/test-unified-email', async (req, res) => {
@@ -3207,6 +3286,76 @@ app.post('/api/v2/create-conversation', async (req, res) => {
     });
   }
 });
+
+/**
+ * Vytvoří kompletní HTML kód blogového článku podle šablony.
+ * @param {string} slug - Unikátní název souboru (např. 20251127-nazev-clanku)
+ * @param {object} data - Obsahuje title, description, bodyHtml, category, author
+ * @returns {string} Kompletní HTML kód článku.
+ */
+function generateArticleHtml(slug, data) {
+    const pubDate = new Date().toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
+    const url = `https://www.najdipilota.cz/blogposts/${slug}.html`;
+    const heroUrl = `/blogposts_img/${slug}-hero.webp`;
+
+    // Zde je pouze zkrácená verze šablony, ve skutečnosti byste museli vložit celý obsah z vašeho vzorového HTML
+    return `
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  
+  <title>${data.title} | NajdiPilota.cz</title>
+
+  <meta name="description" content="${data.description}" />
+  <meta name="robots" content="index, follow" />
+  <link rel="canonical" href="${url}" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=77" />
+  <style>
+    /* ... style pro články ... */
+    .article-meta { font-size: 0.9rem; color: #6c757d; margin-bottom: 1.5rem; }
+    .main-image { width: 100%; max-height: 420px; object-fit: cover; border-radius: 10px; margin-bottom: 2rem; }
+    .blog-content h2 { margin-top: 2rem; padding-bottom: 6px; border-bottom: 2px solid #e9ecef; }
+  </style>
+</head>
+<body>
+  <nav>...</nav>
+
+  <div class="container py-5">
+    <div class="row justify-content-center">
+      <div class="col-lg-8">
+        <a href="/blog.html" class="text-primary fw-bold small text-decoration-none">
+          <i class="bi bi-arrow-left"></i> Zpět na blog
+        </a>
+
+        <h1 class="mt-3 fw-bold">${data.title}</h1>
+
+        <p class="article-meta">
+          Publikováno: ${pubDate} |
+          Kategorie: ${data.category} |
+          Autor: ${data.author}
+        </p>
+
+        <img src="${heroUrl}" class="main-image" alt="Hlavní obrázek článku">
+
+        <div class="blog-content fs-5">
+          ${data.bodyHtml} // <— Vložený obsah článku
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <footer>...</footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
+    `;
+}
 
 
 

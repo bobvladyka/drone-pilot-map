@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ADMIN: Nový článek (Quill) | NajdiPilota.cz</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
+  
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  
+  <style>
+    /* === 1. Definice barev podle vašeho style.css === */
+    :root {
+      --primary: #0077B6;
+      --secondary: #495057;
+      --accent: #A9D6E5;
+      --background-light: #F8F9FA;
+    }
+
+    body { 
+        background-color: #f0f2f5; 
+        font-family: 'Poppins', sans-serif; /* Admin UI font */
+    }
+    
+    .container { max-width: 950px; }
+    .card { border: none; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    
+    /* === 2. Stylování EDITORU, aby vypadal jako článek === */
+    #editor-container {
+        height: 500px;
+        background: white;
+        border-bottom-left-radius: 5px;
+        border-bottom-right-radius: 5px;
+    }
+
+    /* Třída .ql-editor je vnitřek Quillu - simulujeme zde .blog-content */
+    .ql-editor {
+        font-family: 'Poppins', 'Segoe UI', sans-serif;
+        color: var(--secondary);
+        font-size: 1.25rem; /* Odpovídá Bootstrap .fs-5 v článku */
+        line-height: 1.6;
+    }
+
+    /* Nadpisy v editoru */
+    .ql-editor h1 { color: var(--primary); } /* Pro jistotu, i když H1 se v těle nepoužívá */
+    
+    .ql-editor h2 {
+        color: var(--secondary);
+        font-weight: 700;
+        margin-top: 2rem;
+        padding-bottom: 6px;
+        border-bottom: 2px solid #e9ecef; /* Podtržení jako v článku */
+        margin-bottom: 1rem;
+        line-height: 1.2;
+    }
+
+    .ql-editor h3 {
+        color: var(--secondary);
+        font-weight: 600;
+        margin-top: 1.5rem;
+        font-size: 1.3rem;
+    }
+
+    /* Odkazy v editoru */
+    .ql-editor a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 500;
+    }
+    .ql-editor a:hover {
+        text-decoration: underline;
+    }
+
+    /* Seznamy */
+    .ql-editor ul, .ql-editor ol {
+        margin-bottom: 1rem;
+    }
+    
+    /* Citace */
+    .ql-editor blockquote {
+        border-left: 4px solid var(--primary);
+        background: #f8f9fa;
+        padding: 10px 15px;
+        color: #555;
+        font-style: italic;
+    }
+
+  </style>
+</head>
+
+<body>
+
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold text-dark">✨ Nový blogový článek</h2>
+        <a href="/admin.html" class="btn btn-outline-secondary">Zpět do menu</a>
+    </div>
+    
+    <div class="card p-4">
+        <form id="smartForm" enctype="multipart/form-data">
+            
+            <div class="mb-4">
+                <label class="form-label fw-bold">Titulek článku</label>
+                <input type="text" class="form-control form-control-lg" id="inputTitle" name="title" required placeholder="Např. Jak létat s dronem v zimě">
+            </div>
+
+            <div class="row">
+                <div class="col-md-8 mb-3">
+                    <label class="form-label small text-muted">Automatická URL (Slug)</label>
+                    <div class="input-group">
+                        <span class="input-group-text bg-light">/blogposts/</span>
+                        <input type="text" class="form-control bg-light" id="inputSlug" name="slug" readonly required>
+                        <span class="input-group-text bg-light">.html</span>
+                    </div>
+                </div>
+                <div class="col-md-4 mb-3">
+                    <label class="form-label fw-bold">Kategorie</label>
+                    <select class="form-select" name="category">
+                        <option value="Srovnání">Srovnání</option>
+                        <option value="Tipy a triky">Tipy a triky</option>
+                        <option value="Legislativa">Legislativa</option>
+                        <option value="Novinky">Novinky</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="mb-4 p-3 bg-light rounded border border-dashed">
+                <label class="form-label fw-bold">Hlavní obrázek (Hero Image)</label>
+                <input type="file" class="form-control" name="heroImage" accept="image/*" required>
+                <div class="form-text">Nahrajte JPG nebo PNG. Systém ho automaticky převede na .webp a pojmenuje podle slugu.</div>
+            </div>
+
+            <div class="mb-3">
+                <label class="form-label fw-bold">Krátký popis (Meta Description)</label>
+                <textarea class="form-control" name="description" rows="2" maxlength="160" placeholder="Zobrazí se ve vyhledávačích a v náhledu..."></textarea>
+            </div>
+
+            <div class="mb-4">
+                <label class="form-label fw-bold">Obsah článku</label>
+                <div class="text-muted small mb-2">Editor zobrazuje přibližný vzhled na webu (písmo, barvy, nadpisy).</div>
+                
+                <div id="editor-container"></div>
+                
+                <input type="hidden" name="bodyHtml" id="hiddenBodyHtml">
+            </div>
+
+            <input type="hidden" name="author" value="Tým NajdiPilota">
+
+            <button type="submit" class="btn btn-primary btn-lg w-100 py-3 fw-bold">
+                🚀 Publikovat článek
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="resultModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Stav publikace</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body" id="modalBody"></div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+<script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+
+<script>
+    // --- 1. Inicializace Quill Editoru ---
+    var quill = new Quill('#editor-container', {
+        theme: 'snow',
+        placeholder: 'Zde napište svůj článek...',
+        modules: {
+            toolbar: [
+                [{ 'header': [2, 3, false] }], // Povolíme jen H2, H3 a normální text
+                ['bold', 'italic', 'underline', 'strike'],
+                [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                ['link', 'image', 'video'],
+                ['blockquote'],
+                ['clean']
+            ]
+        }
+    });
+
+    // --- 2. Automatický Slug ---
+    const titleInput = document.getElementById('inputTitle');
+    const slugInput = document.getElementById('inputSlug');
+
+    titleInput.addEventListener('input', function() {
+        const date = new Date().toISOString().slice(0, 10).replace(/-/g, ""); 
+        
+        let safeTitle = this.value
+            .toLowerCase()
+            .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9\s-]/g, '')
+            .trim()
+            .replace(/\s+/g, '-');
+
+        slugInput.value = `${date}-${safeTitle}`;
+    });
+
+    // --- 3. Odeslání formuláře ---
+    document.getElementById('smartForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        // Uložení HTML z editoru do skrytého inputu
+        const htmlContent = quill.root.innerHTML;
+        document.getElementById('hiddenBodyHtml').value = htmlContent;
+
+        const formData = new FormData(this);
+        const modal = new bootstrap.Modal(document.getElementById('resultModal'));
+        const modalBody = document.getElementById('modalBody');
+
+        try {
+            const res = await fetch('/api/admin/create-blog-post', {
+                method: 'POST',
+                body: formData
+            });
+
+            const result = await res.json();
+
+            if (res.ok) {
+                modalBody.innerHTML = `
+                    <div class="text-success text-center">
+                        <h3 class="display-6">✅ Hotovo!</h3>
+                        <p>Článek byl vytvořen.</p>
+                        <a href="${result.url}" target="_blank" class="btn btn-success mt-2">Zobrazit článek</a>
+                    </div>
+                `;
+                this.reset();
+                quill.setContents([]); 
+            } else {
+                throw new Error(result.error || 'Neznámá chyba');
+            }
+        } catch (err) {
+            modalBody.innerHTML = `<div class="text-danger">❌ Chyba: ${err.message}</div>`;
+        }
+        modal.show();
+    });
+</script>
+
+</body>
+</html>

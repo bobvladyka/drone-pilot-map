@@ -3342,7 +3342,7 @@ function generateArticleHtml(slug, data) {
         <img src="${heroUrl}" class="main-image" alt="Hlavní obrázek článku">
 
         <div class="blog-content fs-5">
-          ${data.bodyHtml} // <— Vložený obsah článku
+          ${data.bodyHtml} 
         </div>
 
       </div>

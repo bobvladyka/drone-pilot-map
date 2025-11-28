@@ -276,8 +276,12 @@ app.post('/api/admin/create-blog-post', requireAdminLogin, upload.single('heroIm
     const filename = `${slug}.html`;
     const filePath = path.join(BLOG_DIR, filename);
 
-    // 4. Zápis HTML
-    fs.writeFileSync(filePath, finalHtmlContent, 'utf8');
+    // Uložení HTML článku
+fs.writeFileSync(filePath, finalHtmlContent, 'utf8');
+
+// Git automatizace
+runGitCommands(slug);
+
 
     res.json({ 
         success: true, 
@@ -3409,6 +3413,28 @@ function generateArticleHtml(slug, data) {
 </body>
 </html>
     `;
+}
+
+const { exec } = require("child_process");
+
+function runGitCommands(slug) {
+    console.log("🔄 Spouštím Git automatizaci...");
+
+    exec(`git add public/blogposts/* public/blogposts_img/*`, (err) => {
+        if (err) return console.error("Git add error:", err);
+
+        exec(`git commit -m "AUTO: nový blogpost ${slug}"`, (err) => {
+            if (err) {
+                console.log("ℹ️ Žádné nové změny k commitnutí.");
+                return;
+            }
+
+            exec(`git push origin main`, (err) => {
+                if (err) return console.error("Git push error:", err);
+                console.log("🚀 Blogpost automaticky commitnut a pushnut.");
+            });
+        });
+    });
 }
 
 

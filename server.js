@@ -56,6 +56,8 @@ function parseRefCode(code) {
   return ok ? userId : null;
 }
 
+
+
 // 🧩 Vrátí (a případně vytvoří) referral kód pro přihlášeného pilota
 app.get('/ref-code', async (req, res) => {
   try {
@@ -2455,41 +2457,60 @@ app.get('/get-my-advertiser', async (req, res) => {
 
 // GET /poptavky – veřejné i „moje“
 app.get('/poptavky', async (req, res) => {
-  try {
-    const { region = '', mine = '0' } = req.query;
-    const sessionEmail = (req.session?.email || '').toLowerCase();
+    try {
+        const { region = '', mine = '0' } = req.query;
+        const sessionEmail = (req.session?.email || '').toLowerCase();
 
-    if (mine === '1' && sessionEmail) {
-      // moje poptávky (nezávisle na public)
-      const r = await pool.query(
-        `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at, status
-         FROM demands
-         WHERE LOWER(advertiser_email) = $1
-         ORDER BY created_at DESC`,
-         [sessionEmail]
-      );
-      return res.json(r.rows);
+        // 🏆 Seznam sloupců pro oba dotazy (včetně satisfaction)
+        const selectCols = `
+            id, title, description, location, region, budget, deadline, advertiser_email, created_at, status,
+            satisfaction, satisfaction_note
+        `;
+
+        let queryResult;
+
+        if (mine === '1' && sessionEmail) {
+            // moje poptávky (nezávisle na public)
+            queryResult = await pool.query(
+                `SELECT ${selectCols}
+                 FROM demands
+                 WHERE LOWER(advertiser_email) = $1
+                 ORDER BY created_at DESC`,
+                [sessionEmail]
+            );
+        } else {
+            // veřejné poptávky (volitelně s filtrem kraje)
+            const params = [];
+            let where = `public = TRUE`;
+            if (region) { params.push(region); where += ` AND region = $${params.length}`; }
+
+            queryResult = await pool.query(
+                `SELECT ${selectCols}
+                 FROM demands
+                 WHERE ${where}
+                 ORDER BY created_at DESC`,
+                params
+            );
+        }
+
+        // ⭐ KROK OPRAVY KÓDOVÁNÍ: Aplikace bestUtfVariant na všechny textové sloupce
+        const fixedRows = queryResult.rows.map(row => ({
+            ...row,
+            title: bestUtfVariant(row.title),
+            description: bestUtfVariant(row.description),
+            location: bestUtfVariant(row.location),
+            region: bestUtfVariant(row.region),
+            // KLÍČOVÁ OPRAVA: Oprava chybné diakritiky v komentáři
+            satisfaction_note: bestUtfVariant(row.satisfaction_note),
+        }));
+
+        // Zde je sjednocený výstup pro oba případy (mine i veřejné)
+        res.json(fixedRows);
+    } catch (err) {
+        console.error("Chyba při načítání poptávek:", err);
+        res.status(500).send("Chyba serveru při načítání poptávek");
     }
-
-    // veřejné poptávky (volitelně s filtrem kraje)
-    const params = [];
-    let where = `public = TRUE`;
-    if (region) { params.push(region); where += ` AND region = $${params.length}`; }
-
-     const r = await pool.query(
-      `SELECT id, title, description, location, region, budget, deadline, advertiser_email, created_at, status
-       FROM demands
-       WHERE ${where}
-       ORDER BY created_at DESC`,
-      params
-    );
-    res.json(r.rows);
-  } catch (err) {
-    console.error("Chyba při načítání poptávek:", err);
-    res.status(500).send("Chyba serveru při načítání poptávek");
-  }
 });
-
 app.put('/poptavky/:id/status', async (req, res) => {
   const { id } = req.params;
   const { status, satisfaction, note } = req.body; // ✨ přidáno hodnocení a poznámka
@@ -2514,18 +2535,18 @@ app.put('/poptavky/:id/status', async (req, res) => {
     await pool.query(`
       UPDATE demands
       SET status = $1,
-          satisfaction = COALESCE($2, satisfaction),
-          satisfaction_note = COALESCE($3, satisfaction_note)
+          satisfaction = $2,
+          satisfaction_note = $3
       WHERE id = $4
-    `, [status, satisfaction || null, note || null, id]);
+    `, [status, satisfaction, note, id]); // Odstraněno || null, protože PG driver zpracuje JS null/undefined jako SQL NULL
 
+    // ⚠️ Oprava: Odstraněna duplicitní odpověď, ponechána pouze jedna.
     res.json({ success: true });
   } catch (err) {
     console.error('❌ Chyba při změně stavu poptávky:', err);
     res.status(500).json({ error: 'Chyba serveru' });
   }
 });
-
 
 
 // POST /poptavky – vložení poptávky inzerentem

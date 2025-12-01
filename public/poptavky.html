@@ -221,6 +221,36 @@ function formatDateISO(d) {
 function escapeHtml(s) {
   return (s || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]));
 }
+
+// --- NOVÁ FUNKCE PRO RUČNÍ OPRAVU ZNAKŮ (Klient-side) ---
+function manualDiacriticsFix(text) {
+    if (typeof text !== 'string' || text === null) return text;
+    
+    let fixed = text;
+    
+    // Oprava chyb, které se kazí při převodu z Win-1250/Latin-2 na UTF-8
+    // Tuto sadu mapování je nutné udržovat podle toho, jaké chyby se v DB objevují
+    fixed = fixed.replace(/Ý/g, 'í');     // Chybné Ý -> í
+    fixed = fixed.replace(/ß/g, 'á');     // Chybné ß -> á
+    fixed = fixed.replace(/Ř/g, 'ě');     // Chybné Ř -> ě (probŘhlo -> proběhlo)
+    fixed = fixed.replace(/Ü/g, 'š');     // Chybné Ü -> š (ÜikovnÝ -> šikovný)
+    fixed = fixed.replace(/vřsledkem/g, 'výsledkem'); // Sekvence: vřs -> výs
+    fixed = fixed.replace(/jiÝ/g, 'již'); // Příklad sekvence: jiÝ -> již
+    fixed = fixed.replace(/hlavnŘ/g, 'hlavně'); // Oprava
+    fixed = fixed.replace(/vÜe/g, 'vše'); // Oprava
+    fixed = fixed.replace(/problÝm¨/g, 'problémů'); // Oprava
+
+    // Dodatečné opravy z Vašeho posledního výpisu (pokud selhaly jinde)
+    fixed = fixed.replace(/probŘhl/g, 'proběhl');
+    fixed = fixed.replace(/poý dku/g, 'pořádku');
+    
+    // Často se chyby kombinují. Použití Vaší bestUtfVariant v Node.js je stále lepší,
+    // ale toto Vám pomůže jako záchranná brzda.
+    
+    return fixed;
+}
+// ------------------------------------------
+
 function setQueryParam(key, value) {
   const url = new URL(window.location.href);
   if (value && value !== '') url.searchParams.set(key, value);
@@ -711,6 +741,9 @@ const payload = {
   }
 
   // ------- vykreslení seznamu -------
+ // ... (uvnitř IIFE v poptavky.html)
+
+// ------- vykreslení seznamu -------
  function renderList(items) {
   const activeContainer = document.getElementById('poptavky-list');
   const doneContainer = document.getElementById('done-list');
@@ -753,6 +786,35 @@ const payload = {
 
     const isMine = !!(x.advertiser_email && window.__advertiserEmail &&
       String(x.advertiser_email).toLowerCase() === String(window.__advertiserEmail));
+
+    // --- Nová logika pro hotové poptávky ---
+    let satisfactionHtml = '';
+    if (isDone) {
+
+      // ⭐ NOVÁ LOGIKA OPRAVY NA FRONTENDU
+      let rawNote = x.satisfaction_note;
+      
+      if (rawNote) {
+          // Aplikujeme manuální opravu na text, který má rozsypaný čaj
+          rawNote = manualDiacriticsFix(rawNote);
+      }
+
+      
+      const ratingNum = Number(x.satisfaction);
+      const rating = (ratingNum >= 1 && ratingNum <= 5) ? '⭐'.repeat(ratingNum) : 'Nezadáno';
+      
+      const note = rawNote ? escapeHtml(rawNote) : 'Klient nezanechal komentář.';
+
+      // Zde je HTML kód pro zobrazení hodnocení (identický s Vaším vzorem)
+      satisfactionHtml = `
+        <div class="mt-3 p-3 border-top border-success rounded-bottom" style="background-color: #e9f7e8;">
+          <h6 class="text-success mb-1"><i class="bi bi-star-fill me-1"></i> Spokojenost klienta</h6>
+          <p class="mb-1"><strong>Hodnocení:</strong> ${rating}</p>
+          <p class="mb-0"><strong>Komentář:</strong> ${note}</p>
+        </div>
+      `;
+    }
+    // ------------------------------------
 
     const card = document.createElement('div');
     card.className = 'card shadow-sm ' + (isDone ? 'border-success-subtle bg-success-subtle' : '');
@@ -807,6 +869,7 @@ const payload = {
             : ''
         }
       </div>
+      ${satisfactionHtml}
     `;
     return card;
   }

@@ -923,7 +923,8 @@ app.post("/update", async (req, res) => {
     available,
     visible,
     visible_payment,
-    visible_valid
+    visible_valid,
+    newsletter_consent // ✨ PŘIDANÉ POLE
   } = req.body;
 
 // 🧹 Očisti poznámku (schovej kontaktní údaje)
@@ -1093,8 +1094,9 @@ if (lat && lon) {
         available = $16,
         visible = $17,
         visible_payment = $18,
-        visible_valid = $19
-      WHERE email = $20
+        visible_valid = $19,
+        newsletter_consent = $20  -- ✨ NOVÝ SLOUPEC
+      WHERE email = $21
       RETURNING id`,
       [
         name || null,
@@ -1116,6 +1118,7 @@ if (lat && lon) {
         visible,
         visible_payment || null,
         visible_valid || null,
+        !!newsletter_consent, // ✨ ZAJISTÍME BOOL HODNOTU (TRUE/FALSE)
         email
       ]
     );
@@ -4623,6 +4626,167 @@ function serviceRequestEmailContent(p, serviceName) {
   `;
 }
 
+// Pomocná funkce: Získání nových blogových příspěvků za poslední týden
+// POZNÁMKA: Využívá předpoklad, že slug začíná YYYYMMDD (např. 20251127-nazev)
+async function getNewBlogPosts(sinceDate) {
+    const files = fs.readdirSync(BLOG_DIR).filter(f => f.endsWith(".html"));
+    const newPosts = [];
+
+    files.forEach(filename => {
+        const slug = filename.replace(".html", "");
+        const dateStr = slug.substring(0, 8); 
+        const year = dateStr.substring(0, 4);
+        const month = dateStr.substring(4, 6);
+        const day = dateStr.substring(6, 8);
+        
+        const postDate = new Date(`${year}-${month}-${day}`);
+
+        if (postDate > sinceDate) {
+            const fullPath = path.join(BLOG_DIR, filename);
+            const html = fs.readFileSync(fullPath, "utf8");
+            
+            // Extrahujeme Title a Description z HTML souboru (jako v blog-list)
+            const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
+            const descMatch = html.match(/<meta name="description" content="(.*?)"/);
+
+            newPosts.push({
+                title: titleMatch ? titleMatch[1] : "Bez názvu",
+                description: descMatch ? descMatch[1] : "",
+                slug: slug,
+                image: `/blogposts_img/${slug}-hero.webp`,
+                date: postDate.toLocaleDateString('cs-CZ')
+            });
+        }
+    });
+
+    // Nejnovější články nahoru
+    newPosts.sort((a, b) => b.slug.localeCompare(a.slug));
+    return newPosts;
+}
+
+// Pomocná funkce: Získání Instagram feedu (využívá existující logiku)
+async function fetchInstagramFeed() {
+    const token = process.env.INSTAGRAM_ACCESS_TOKEN;
+    if (!token) return { data: [] };
+
+    try {
+        // Použijeme limit 3, protože v newsletteru stejně chceme jen ukázku
+        const url = `https://graph.instagram.com/me/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink&access_token=${token}&limit=3`; 
+        const response = await fetch(url);
+        const data = await response.json();
+        return data.error ? { data: [] } : data;
+    } catch (err) {
+        console.error("❌ Chyba Instagram API (v CRONu):", err);
+        return { data: [] };
+    }
+}
+
+
+// Týdenní newsletter (Blog + Instagram) – Vizuální styl dle Onboarding E-mailu
+function buildWeeklyNewsletterEmail(blogPosts, instagramPosts) {
+  const HAS_NEW_CONTENT = blogPosts.length > 0 || instagramPosts.length > 0;
+  
+  let blogHtml = '';
+  if (blogPosts.length > 0) {
+    blogHtml = `
+      <h2 style="color:#0077B6;font-size:18px;margin-top:30px;margin-bottom:15px;font-weight:600;">
+        📝 Nové články na blogu
+      </h2>
+    `;
+    blogPosts.forEach(post => {
+      blogHtml += `
+        <div style="margin-bottom:25px;padding:15px;border:1px solid #f0f0f0;border-radius:8px;background-color:#fff;">
+          <a href="https://www.najdipilota.cz/blogposts/${escapeHtml(post.slug)}.html" 
+             style="text-decoration:none;display:block;">
+            
+            <img src="https://www.najdipilota.cz${escapeHtml(post.image)}" 
+                 alt="${escapeHtml(post.title)}" 
+                 style="width:100%;height:160px;object-fit:cover;border-radius:6px;margin-bottom:12px;display:block;">
+            
+            <h3 style="color:#212529;font-size:16px;margin:0 0 5px;font-weight:600;">${escapeHtml(post.title)}</h3>
+            <p style="color:#495057;font-size:14px;margin:0;">
+                ${escapeHtml(post.description.slice(0, 150))}...
+            </p>
+            <p style="color:#0077B6;font-size:14px;margin-top:8px;font-weight:500;">
+                Přečíst celý článek &rarr;
+            </p>
+          </a>
+        </div>
+      `;
+    });
+  }
+
+  let instagramHtml = '';
+  if (instagramPosts.length > 0) {
+    instagramHtml = `
+      <h2 style="color:#0077B6;font-size:18px;margin-top:30px;margin-bottom:15px;font-weight:600;">
+        📸 Nejnovější na Instagramu
+      </h2>
+      <table width="100%" cellpadding="0" cellspacing="0" border="0" style="table-layout:fixed;">
+        <tr>
+    `;
+
+    instagramPosts.forEach(post => {
+      const imgUrl = post.media_type === 'VIDEO' ? post.thumbnail_url : post.media_url;
+      const caption = post.caption ? escapeHtml(post.caption.split('\n')[0].slice(0, 50)) + '...' : 'Příspěvek z IG';
+      
+      instagramHtml += `
+        <td width="33.33%" style="padding:0 5px;">
+          <a href="${escapeHtml(post.permalink)}" target="_blank" style="text-decoration:none;display:block;">
+            <img src="${escapeHtml(imgUrl)}" 
+                 alt="${caption}" 
+                 style="width:100%;height:120px;object-fit:cover;border-radius:4px;display:block;">
+            <p style="color:#495057;font-size:12px;margin-top:5px;text-align:center;line-height:1.3;">
+                <i style="color:#888;" class="bi bi-instagram"></i> Zobrazit
+            </p>
+          </a>
+        </td>
+      `;
+    });
+    instagramHtml += `
+        </tr>
+      </table>
+      <div style="text-align:center; margin-top:20px;">
+        <a href="https://www.instagram.com/najdipilota/" 
+           style="font-size:14px; color:#0077B6; text-decoration:none; font-weight:600;">
+           Sledujte nás a nenechte si nic uniknout &rarr;
+        </a>
+      </div>
+    `;
+  }
+  
+  const content = `
+    <p style="font-size:15px;">
+        Dobrý den,
+    </p>
+    <p style="font-size:15px;">
+        přinášíme Vám pravidelný týdenní souhrn novinek, tipů a zajímavostí ze světa dronů a komunity NajdiPilota.cz.
+    </p>
+
+    ${blogHtml}
+    ${instagramHtml}
+    
+    ${HAS_NEW_CONTENT ? 
+        `<div style="margin-top:40px; text-align:center;">
+          <a href="https://www.najdipilota.cz/blog.html"
+             style="background:#0077B6;color:#fff;text-decoration:none;
+                    padding:12px 25px;border-radius:6px;font-size:16px;font-weight:700;
+                    display:inline-block;border:2px solid #0077B6;">
+            Přejít na blog NajdiPilota.cz
+          </a>
+        </div>` 
+    : ''}
+
+    <p style="margin-top:40px;font-size:15px;">
+        Děkujeme, že jste s námi.
+    </p>
+    <p style="font-size:15px;">
+        S pozdravem,<br><strong>Tým NajdiPilota.cz</strong>
+    </p>
+  `;
+
+  return wrapEmailContent(content, "Týdenní novinky – NajdiPilota.cz");
+}
 
 // ---------------------------------------------------------------------
 // E-mail po smazání účtu – zachován jednotný styl a barvy
@@ -5091,6 +5255,75 @@ cron.schedule(
   { timezone: 'Europe/Prague' }
 );
 
+// ──────────────────────────────────────────────────────────────
+// ENDPOINT: Manuální spuštění týdenního newsletteru (Pouze Admin)
+// ──────────────────────────────────────────────────────────────
+app.get('/admin/manual-newsletter-send', allowLocalhostOnly, requireAdminLogin, async (req, res) => {
+    console.log('⚡ Spouštím manuální odeslání PRODUKČNÍHO newsletteru...');
+
+    try {
+        const TODAY = new Date();
+        const LAST_WEEK = new Date(TODAY.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+        // 1) Získat nový obsah
+        const newBlogPosts = await getNewBlogPosts(LAST_WEEK);
+        const instagramPosts = await fetchInstagramFeed(); 
+        const limitedIgPosts = instagramPosts.data.slice(0, 3);
+
+        if (newBlogPosts.length === 0 && limitedIgPosts.length === 0) {
+            return res.send("✅ Úspěšně zkontrolováno, ale žádné nové novinky za poslední týden. E-mail neodeslán.");
+        }
+
+        // 2) Získat všechny e-maily S AKTIVNÍM NEWSLETTER SOUHLASEM
+        const pilotEmailsRes = await pool.query(`
+            SELECT DISTINCT email 
+            FROM pilots 
+            WHERE email IS NOT NULL 
+              AND email <> ''
+              AND newsletter_consent = TRUE -- NOVÁ PODMÍNKA
+        `);
+        const advertiserEmailsRes = await pool.query(`
+            SELECT DISTINCT email 
+            FROM advertisers 
+            WHERE email IS NOT NULL AND email <> ''
+        `);
+        
+        const allEmails = [
+            ...pilotEmailsRes.rows.map(r => r.email),
+            ...advertiserEmailsRes.rows.map(r => r.email)
+        ].filter((value, index, self) => self.indexOf(value) === index);
+
+        if (allEmails.length === 0) {
+            return res.send('⚠️ Žádné e-maily s newsletter souhlasem k rozeslání.');
+        }
+
+        // 3) Sestavit e-mail
+        const html = buildWeeklyNewsletterEmail(newBlogPosts, limitedIgPosts);
+
+        // 4) Odeslat e-mail
+        let sentCount = 0;
+        for (const email of allEmails) {
+            await transporter.sendMail({
+                from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+                to: email,
+                bcc: 'drboom@seznam.cz', 
+                subject: '🚁 Novinky na NajdiPilota.cz: Tipy a zajímavosti',
+                html
+            });
+            sentCount++;
+            await new Promise(r => setTimeout(r, 100)); // Lehké zpoždění
+        }
+        
+        const summary = `✅ PRODUKČNÍ Newsletter manuálně odeslán. Celkem: ${sentCount} e-mailů.`;
+        console.log(summary);
+        res.send(summary);
+
+    } catch (err) {
+        console.error('❌ Chyba při manuálním spuštění newsletteru:', err);
+        res.status(500).send(`❌ Chyba při manuálním spuštění: ${err.message}`);
+    }
+});
+
 
 // ---------------------------------------------------------------------
 // GPS fix e-mail
@@ -5291,6 +5524,91 @@ await transporter.sendMail({
   }
 });
 
+// ──────────────────────────────────────────────────────────────
+// CRON: Každé úterý v 09:00 (Praha) – Týdenní Newsletter (PRODUKČNÍ REŽIM)
+// ──────────────────────────────────────────────────────────────
+cron.schedule(
+  '0 9 * * 2', // Každé úterý v 9:00
+  async () => {
+    console.log('⏰ CRON: týdenní newsletter s novinkami (PROD)…');
+
+    try {
+      const TODAY = new Date();
+      // Odejít 7 dní pro určení 'nového' obsahu
+      const LAST_WEEK = new Date(TODAY.getTime() - 7 * 24 * 60 * 60 * 1000); 
+
+      // 1) Získat nový obsah (Blog + IG)
+      const newBlogPosts = await getNewBlogPosts(LAST_WEEK);
+      const instagramPosts = await fetchInstagramFeed(); 
+      const limitedIgPosts = instagramPosts.data.slice(0, 3);
+
+      if (newBlogPosts.length === 0 && limitedIgPosts.length === 0) {
+        console.log('✅ Žádné nové novinky – newsletter se neodesílá.');
+        return;
+      }
+
+      // 2) Získat všechny e-maily S AKTIVNÍM NEWSLETTER SOUHLASEM
+      const pilotEmailsRes = await pool.query(`
+        SELECT DISTINCT email 
+        FROM pilots 
+        WHERE email IS NOT NULL 
+          AND email <> ''
+          AND newsletter_consent = TRUE -- ✨ FILTR NA NOVÝ SLOUPEC
+      `);
+      
+      // Inzerenti (předpoklad: inzerentům posíláme bez explicitního souhlasu)
+      const advertiserEmailsRes = await pool.query(`
+        SELECT DISTINCT email 
+        FROM advertisers 
+        WHERE email IS NOT NULL AND email <> ''
+      `);
+      
+      const allEmails = [
+        ...pilotEmailsRes.rows.map(r => r.email),
+        ...advertiserEmailsRes.rows.map(r => r.email)
+      ].filter((value, index, self) => self.indexOf(value) === index); // Odstranit duplicity
+
+      if (allEmails.length === 0) {
+        console.log('⚠️ Žádné e-maily s newsletter souhlasem k rozeslání.');
+        return;
+      }
+
+      // 3) Sestavit e-mail
+      const html = buildWeeklyNewsletterEmail(newBlogPosts, limitedIgPosts);
+
+      // 4) Odeslat e-mail
+      let sentCount = 0;
+      for (const email of allEmails) {
+        try {
+          await transporter.sendMail({
+            from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
+            to: email,
+            bcc: 'drboom@seznam.cz', // BCC vždy pro kontrolu
+            subject: '🚁 Novinky na NajdiPilota.cz: Tipy a zajímavosti',
+            html
+          });
+          sentCount++;
+          await new Promise(r => setTimeout(r, 500)); // Pomalá rozesílka
+        } catch (err) {
+          console.error(`❌ Chyba při odesílání newsletteru na ${email}:`, err.message);
+        }
+      }
+
+      console.log(`✅ PRODUKČNÍ Newsletter odeslán ${sentCount} uživatelům.`);
+
+    } catch (err) {
+      console.error('❌ Chyba CRONu (PROD newsletter):', err);
+      // Odeslání zprávy o selhání adminovi
+      await transporter.sendMail({
+        from: '"NajdiPilota.cz - CRON ERROR" <dronadmin@seznam.cz>',
+        to: 'drboom@seznam.cz',
+        subject: '❌ CRON Newsletter SELHAL',
+        text: `Nastala chyba při generování týdenního newsletteru: ${err.message}`
+      });
+    }
+  },
+  { timezone: 'Europe/Prague' }
+);
 
 // === bezpečnost: omez na localhost/IP/heslo podle tvého middleware ===
 // app.use('/send-outreach', allowLocalhostOnly); // příklad

@@ -310,13 +310,56 @@
   </button>
 </div>
   
-<div class="col-12 mt-4" id="gdpr-consent-section">
-  <h5>Souhlas se zveřejněním kontaktů</h5>
-  <p class="text-muted">
-    Pokud souhlasíte, váš e-mail a telefon budou viditelné pro ostatní uživatele.
-  </p>
-  <span id="consent-status" class="ms-2 text-muted"></span>
-  <button type="button" class="btn btn-outline-primary mt-2" id="toggleConsentBtn">Načítám…</button>
+<div class="col-12 mt-4">
+    <div class="card bg-light">
+        <div class="card-header" id="headingConsents">
+            <h5 class="mb-0 d-flex justify-content-between align-items-center">
+                <span>
+                    <i class="bi bi-shield-check me-2"></i> Správa souhlasů (GDPR, Newsletter)
+                </span>
+                <button class="btn btn-link" 
+                        type="button" 
+                        data-bs-toggle="collapse" 
+                        data-bs-target="#collapseConsents" 
+                        aria-expanded="false" 
+                        aria-controls="collapseConsents">
+                    <i class="bi bi-chevron-down"></i>
+                </button>
+            </h5>
+        </div>
+
+        <div id="collapseConsents" class="collapse" aria-labelledby="headingConsents">
+            <div class="card-body">
+
+                <div class="mb-4" id="gdpr-consent-section">
+                    <h6>1. Souhlas se zveřejněním kontaktů (GDPR)</h6>
+                    <p class="text-muted small">
+                        Pokud souhlasíte (doporučeno pro Basic/Premium), váš e-mail a telefon 
+                        budou viditelné pro přihlášené inzerenty.
+                    </p>
+                    <span id="consent-status" class="ms-2 text-muted"></span>
+                    <button type="button" class="btn btn-outline-primary btn-sm mt-2" id="toggleConsentBtn">Načítám…</button>
+                </div>
+                
+                <hr>
+
+                <div id="newsletter-consent-section">
+                    <h6>2. Newsletter</h6>
+                    <p class="text-muted small">
+                        Chci dostávat týdenní přehled klíčových novinek, tipů a legislativních změn 
+                        pro rozvoj mé dronové praxe.
+                    </p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="newsletterConsent" name="newsletter_consent">
+                        <label class="form-check-label" for="newsletterConsent">
+                            Souhlasím se zasíláním newsletteru
+                        </label>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 </div>
 
 
@@ -388,6 +431,10 @@ function addDroneField(value = "") {
   currentPilot = pilot;
   renderMapPreview(); // <-- TADY POPRVÉ KRESLÍME NÁHLED
   console.log("Data pilota:", pilot);
+
+// ✨ PŘIDANÁ LOGIKA PRO NAČTENÍ NEWSLETTER SOUHLASU ✨
+    // Nastaví stav checkboxu. Používáme ?? true, protože default v DB je TRUE.
+    document.getElementById("newsletterConsent").checked = pilot.newsletter_consent ?? true;
 
 // Načti kategorie až teď (už známe currentPilot)
 fetch('/categories?ts=' + Date.now(), { cache: 'no-store' })
@@ -787,7 +834,8 @@ const specialization = [...specSelect.selectedOptions].map(o => o.textContent).j
         available: document.getElementById("available").value,
       visible: currentPilot?.visible,
       visible_valid: currentPilot?.visible_valid,
-      visible_payment: currentPilot?.visible_payment
+      visible_payment: currentPilot?.visible_payment,
+      newsletter_consent: document.getElementById("newsletterConsent").checked // ✨ PŘIDÁNÍ STAVU
       };
 
 console.log("Odesílaná data:", data);

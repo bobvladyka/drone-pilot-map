@@ -303,6 +303,22 @@ app.get('/admin-blog-create.html', requireAdminLogin, (req, res) => {
   res.sendFile(path.join(__dirname, 'private', 'admin-blog-create.html'));
 });
 
+// Route pro přístup k adminmaileru (chráněno)
+app.get('/admin-mailer.html', requireAdminLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'admin-mailer.html'));
+});
+
+// Route pro přístup k Invoices (chráněno)
+app.get('/invoices.html', requireAdminLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'invoices.html'));
+});
+
+// Route pro přístup k statistics (chráněno)
+app.get('/statistics.html', requireAdminLogin, (req, res) => {
+  res.sendFile(path.join(__dirname, 'private', 'statistics.html'));
+});
+
+
 // TESTOVACÍ struktura MAILU //
 app.get('/test-unified-email', async (req, res) => {
   try {

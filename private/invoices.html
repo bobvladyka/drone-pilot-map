@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+  <meta charset="UTF-8" />
+  <title>Faktury – Admin</title>
+  <link rel="stylesheet" href="style.css">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Poppins', sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
+    table th, table td {
+      border: 1px solid #ccc;
+      padding: 8px 10px;
+      text-align: left;
+    }
+    table thead {
+      background-color: #f0f0f0;
+    }
+    table tr:nth-child(even) {
+      background-color: #fafafa;
+    }
+    form {
+      background: white;
+      padding: 15px;
+      border-radius: 5px;
+      margin-top: 30px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 15px;
+    }
+    h1 { margin-bottom: 10px; }
+    button {
+      background: #0077B6;
+      color: white;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #005f8e;
+    }
+  </style>
+</head>
+<body>
+
+<script>
+// Kontrola admin session
+fetch('/check-admin-session')
+  .then(res => {
+    if (!res.ok) window.location.href = '/adminland.html';
+  })
+  .catch(() => window.location.href = '/adminland.html');
+</script>
+
+<h1>📄 Správa faktur</h1>
+
+<div id="earnings" style="position: absolute; top: 20px; right: 20px; font-size: 20px; font-weight: bold;">Výdělek: 0 CZK</div>
+
+
+<p id="status"></p>
+
+
+<table id="invoice-table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Pilot</th>
+      <th>Částka</th>
+      <th>Měna</th>
+      <th>Období</th>
+      <th>Typ účtu</th>
+      <th>Odkaz</th>
+      <th>Datum vytvoření</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2>Přidat novou fakturu</h2>
+<form id="invoice-form" onsubmit="addInvoice(event)">
+  <label>ID pilota:<br><input id="invoice_pilot_id" type="number" required></label>
+  <label>Odkaz na fakturu (Vyfakturuj.cz):<br><input id="invoice_url" type="url" required></label>
+  <label>Částka:<br><input id="invoice_amount" type="number" step="0.01" required></label>
+  <label>Měna:<br><input id="invoice_currency" value="CZK"></label>
+  <label>Období:<br>
+    <select id="invoice_period">
+      <option value="1 měsíc">1 měsíc</option>
+      <option value="6 měsíců">6 měsíců</option>
+      <option value="12 měsíců">12 měsíců</option>
+    </select>
+  </label>
+  <label>Typ účtu:<br>
+    <select id="invoice_type_account">
+      <option value="Basic">Basic</option>
+      <option value="Premium">Premium</option>
+    </select>
+  </label>
+  <button type="submit" class="admin-btn">💾 Uložit fakturu</button>
+
+</form>
+
+<div style="text-align: center; margin-top: 20px;">
+  <button class="admin-btn" onclick="window.location.href='admin.html'">⬅️ Zpět na admin</button>
+
+</div>
+
+
+<script>
+function loadInvoices() {
+  fetch('/api/invoices')
+    .then(res => res.json())
+    .then(data => {
+      const tbody = document.querySelector('#invoice-table tbody');
+      let totalEarnings = 0; 
+      tbody.innerHTML = '';
+      data.forEach(inv => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${inv.id}</td>
+            <td>${inv.email}</td>
+            <td>${inv.amount}</td>
+            <td>${inv.currency}</td>
+            <td>${inv.period}</td>
+            <td>${inv.type_account}</td>
+            <td><a href="${inv.invoice_url}" target="_blank">Otevřít</a></td>
+            <td>${new Date(inv.created_at).toLocaleDateString('cs-CZ')}</td>
+          </tr>`;
+      totalEarnings += parseFloat(inv.amount);  // Přičítání částky do celkového výdělku
+      });
+
+      // Aktualizace zobrazení výdělku
+      document.getElementById('earnings').textContent = `Výdělek: ${totalEarnings.toFixed(2)} CZK`;
+    })
+    .catch(err => {
+      document.getElementById('status').textContent = 'Chyba při načítání faktur: ' + err;
+    });
+}
+
+function addInvoice(e) {
+  e.preventDefault();
+  const data = {
+    pilot_id: document.getElementById('invoice_pilot_id').value,
+    invoice_url: document.getElementById('invoice_url').value,
+    amount: document.getElementById('invoice_amount').value,
+    currency: document.getElementById('invoice_currency').value,
+    period: document.getElementById('invoice_period').value,
+    type_account: document.getElementById('invoice_type_account').value
+  };
+  fetch('/api/invoices', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(res => res.text())
+  .then(msg => {
+    document.getElementById('status').textContent = msg;
+    loadInvoices();
+  })
+  .catch(err => {
+    document.getElementById('status').textContent = 'Chyba při ukládání faktury: ' + err;
+  });
+}
+
+// Načíst při otevření
+loadInvoices();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,572 @@
+<!doctype html>
+<html lang="cs">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>NajdiPilota.cz – Admin rozesílka</title>
+<style>
+  :root { --brand:#0077B6; --bg:#F8F9FA; --card:#fff; --muted:#6c757d; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto; background:var(--bg); color:#222; }
+  header { background:var(--brand); color:#fff; padding:16px 20px; }
+  h1 { margin:0; font-size:20px; font-weight:600; }
+  .wrap { max-width:1200px; margin:20px auto; padding:0 16px; }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  .card { background:var(--card); border-radius:12px; box-shadow:0 1px 4px rgba(0,0,0,.06); padding:16px; }
+  .card h2 { margin:.2rem 0 1rem; font-size:18px; }
+  label { display:block; font-size:13px; color:#333; margin:.5rem 0 .25rem; }
+  input[type="text"], input[type="email"], textarea, select {
+    width:100%; padding:10px; border:1px solid #e1e5ea; border-radius:8px; font-size:14px; background:#fff;
+  }
+  textarea { min-height:96px; resize:vertical; }
+  button, .btn {
+    background:var(--brand); color:#fff; border:none; padding:10px 14px; border-radius:8px; cursor:pointer; font-weight:600;
+  }
+  button.secondary { background:#e9ecef; color:#222; }
+  .muted { color:var(--muted); font-size:12px; }
+  table { width:100%; border-collapse:collapse; font-size:14px; }
+  th, td { padding:8px 10px; border-bottom:1px solid #f0f2f4; vertical-align:top; }
+  th { text-align:left; background:#fafbfc; position:sticky; top:0; }
+  .flex { display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row > * { flex:1; }
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; background:#eef6ff; color:#1158c7; font-size:12px; }
+  .status { font-size:12px; }
+  .ok { color:#198754; }
+  .err { color:#d63384; }
+  .warn { color:#856404; }
+  .badge { font-size:11px; padding:2px 6px; border-radius:6px; background:#f1f3f5; }
+  .right { text-align:right; }
+  .danger { background:#d6336c; }
+  .ghost { background:transparent; color:#222; border:1px solid #e1e5ea; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace; font-size:12px; }
+  .mass-mail-section {
+  background: #E8F4FF; /* světle modrá */
+  border: 2px solid #B3DEFF;
+}
+
+.single-mail-section {
+  background: #E9F9EE; /* světle zelená */
+  border: 2px solid #B8EABF;
+}
+
+
+</style>
+</head>
+<body>
+<header><h1>NajdiPilota.cz – Admin rozesílka</h1></header>
+
+<div class="wrap">
+
+   <div class="grid mass-mail-section" style="padding:16px; border-radius:12px; margin-bottom:24px;">
+    <!-- KONTAKTY -->
+    <section class="card">
+      <h2>📋 Kontakty pro hromadný e-mail</h2>
+      <div class="flex">
+        <input id="newName" type="text" placeholder="Název firmy">
+        <input id="newEmail" type="email" placeholder="E-mail">
+        <input id="newCategory" type="text" placeholder="Kategorie (obecný / reality / logistika)">
+        <button id="btnAdd">Přidat</button>
+      </div>
+      <div class="flex" style="margin-top:8px;">
+        <input id="csvFile" type="file" accept=".csv" />
+        <button id="btnImport" class="ghost">Import CSV</button>
+        <span class="muted">CSV formát: <span class="mono">Název;Email;Kategorie;Poznámka</span></span>
+        <div style="flex:1"></div>
+        <button id="btnClear" class="danger">Vyčistit seznam</button>
+      </div>
+
+      <div style="margin-top:12px; max-height:320px; overflow:auto; border:1px solid #edf0f2; border-radius:8px;">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th style="width:28px;"><input type="checkbox" id="checkAll"></th>
+              <th>Firma</th>
+              <th>Email</th>
+              <th>Kategorie</th>
+              <th>Poznámka</th>
+              <th class="right">Akce</th>
+            </tr>
+          </thead>
+          <tbody id="tbody"></tbody>
+        </table>
+      </div>
+      <div class="muted" style="margin-top:6px;"><span id="count">0</span> kontaktů</div>
+    </section>
+
+    <!-- ŠABLONA + NÁHLED + ODESLÁNÍ -->
+    <section class="card">
+      <h2>💌 Šablona a odeslání hromadných e-mailů</h2>
+      <label for="template">Vyber šablonu</label>
+      <select id="template">
+  <option value="general">Obecný — NajdiPilota.cz</option>
+  <option value="realty">Reality — RK / developeři</option>
+  <option value="logistics">Logistika — kurýři / depa / sklady</option>
+  <option value="followup1">Follow-up #1 (připomenutí po 3 dnech)</option>
+  <option value="followup2">Follow-up #2 (poslední pozvánka po 7 dnech)</option>
+</select>
+
+
+      <label for="subject">Předmět</label>
+      <input id="subject" type="text" placeholder="Předmět e-mailu" />
+
+      <label for="customNote">Vlastní poznámka (nepovinné, vloží se do těla)</label>
+      <textarea id="customNote" placeholder="Doplň osobní vzkaz, call-to-action, konkrétní termín apod."></textarea>
+
+      <div class="flex" style="margin-top:8px;">
+        <button id="btnPreview" class="secondary">Náhled</button>
+        <button id="btnSend">Odeslat vybrané</button>
+        <span class="muted">Rate limit: 1 e-mail / 3 s</span>
+      </div>
+
+      <div id="preview" class="card" style="margin-top:14px; background:#fafafa;">
+        <div class="muted">Náhled se zobrazí zde…</div>
+      </div>
+
+      <div id="log" class="mono" style="margin-top:12px; white-space:pre-wrap;"></div>
+    </section>
+</div>
+ <!-- 📬 JEDNOTLIVÝ E-MAIL -->
+  <section class="card single-mail-section">
+    <h2>📬 Napsat e-mail jednotlivci</h2>
+    <label for="customTo">Příjemce</label>
+    <input id="customTo" type="email" placeholder="např. info@firma.cz" />
+
+    <label for="customSubject">Předmět</label>
+    <input id="customSubject" type="text" placeholder="Předmět e-mailu" />
+
+    <label for="customBody">Zpráva</label>
+    <textarea id="customBody" placeholder="Napište text zprávy…" rows="8"></textarea>
+
+    <div class="flex" style="margin-top:10px;">
+      <button id="btnPreviewCustom" class="secondary">👁️ Náhled</button>
+      <button id="btnSendCustom">📤 Odeslat e-mail</button>
+    </div>
+
+    <div id="customPreview" class="card" style="margin-top:14px; background:#fafafa;">
+      <div class="muted">Zde se zobrazí náhled zprávy…</div>
+    </div>
+
+    <div id="customLog" class="mono" style="margin-top:12px; white-space:pre-wrap;"></div>
+  </section>
+
+</div>
+
+</div>
+
+<script>
+/* ======= Pomocné funkce ======= */
+const $ = (sel) => document.querySelector(sel);
+const $$ = (sel) => Array.from(document.querySelectorAll(sel));
+
+const state = {
+  rows: [],   // {id, name, email, category, note, selected}
+  seq: 1,
+  sending: false,
+  rateMs: 3000,
+};
+
+function rid() { return state.seq++; }
+
+function renderTable(){
+  const tb = $('#tbody');
+  tb.innerHTML = '';
+  state.rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td><input type="checkbox" data-id="${r.id}" ${r.selected?'checked':''}></td>
+      <td>${escapeHtml(r.name||'')}</td>
+      <td>${escapeHtml(r.email||'')}</td>
+      <td><span class="badge">${escapeHtml(r.category||'')}</span></td>
+      <td>${escapeHtml(r.note||'')}</td>
+      <td class="right">
+        <button class="ghost" data-edit="${r.id}">Upravit</button>
+        <button class="danger" data-del="${r.id}">Smazat</button>
+      </td>`;
+    tb.appendChild(tr);
+  });
+  $('#count').textContent = String(state.rows.length);
+}
+
+function escapeHtml(s){
+  return String(s ?? '')
+    .replaceAll('&','&amp;')
+    .replaceAll('<','&lt;')
+    .replaceAll('>','&gt;')
+    .replaceAll('"','&quot;');
+}
+
+/* ======= CSV Import ======= */
+function parseCsv(text){
+  // očekáváno: Název;Email;Kategorie;Poznámka
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const out = [];
+  for (const line of lines){
+    const parts = line.split(';');
+    if (parts.length < 2) continue;
+    out.push({
+      id: rid(),
+      name: parts[0]?.trim() || '',
+      email: parts[1]?.trim() || '',
+      category: parts[2]?.trim() || '',
+      note: parts[3]?.trim() || '',
+      selected: true
+    });
+  }
+  return out;
+}
+
+/* ======= Šablony (HTML jako v onboarding stylu) ======= */
+function wrapEmailContent(innerHtml, title = "NajdiPilota.cz"){
+  return `
+  <div style="font-family:'Poppins','Segoe UI',sans-serif;background:#F8F9FA;padding:0;margin:0;">
+    <div style="background:#0077B6;color:#fff;padding:16px 20px;text-align:center;">
+      <h1 style="margin:0;font-size:20px;font-weight:600;">${title}</h1>
+    </div>
+    <div style="background:#fff;padding:20px;color:#495057;font-size:15px;line-height:1.6;">
+      ${innerHtml}
+    </div>
+    <div style="background:#F1F1F1;color:#6c757d;font-size:12px;padding:12px;text-align:center;">
+      © ${new Date().getFullYear()} NajdiPilota.cz – Automatická notifikace
+    </div>
+  </div>`;
+}
+
+/* ======= Šablony ======= */
+function tplGeneral(company){
+  const note = ($('#customNote').value||'').trim();
+  return wrapEmailContent(`
+    <h2>🚀 NajdiPilota.cz – ověření piloti dronů pro firmy a projekty</h2>
+
+    <p>Dobrý den${company?.name?`, ${escapeHtml(company.name)}`:''},</p>
+
+    <p>rád bych vám představil platformu <strong>NajdiPilota.cz</strong> – český portál, který propojuje firmy a organizace 
+    s <strong>ověřenými droními piloty po celé České republice</strong>.</p>
+
+    <p>Pokud potřebujete:</p>
+    <ul>
+      <li>📦 nafotit nebo natočit <strong>areál, sklad, provoz či stavbu</strong>,</li>
+      <li>🏡 vytvořit <strong>prezentační záběry nemovitosti</strong>,</li>
+      <li>🔍 provést <strong>technickou inspekci střech, solárů nebo konstrukcí</strong>,</li>
+      <li>🎬 nebo připravit <strong>promo video</strong> vaší firmy či projektu,</li>
+    </ul>
+
+    <p>Na platformě <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a> 
+    najdete vhodného pilota během několika minut.</p>
+
+    <p><strong>Registrace inzerenta je zdarma</strong> a bez jakýchkoli závazků.  
+    <br><strong>Cena za provedení práce</strong> se vždy domlouvá přímo mezi vámi a pilotem – férově a individuálně.</p>
+
+    <p>👉 Můžete si rovnou <a href="https://www.najdipilota.cz/poptavky.html" target="_blank" style="color:#0077B6;font-weight:600;">vložit poptávku</a> 
+    nebo si vybrat pilota podle lokality na mapě.</p>
+
+    ${note ? `<p style="background:#E8F4FF; border-left:4px solid #0077B6; padding:10px;"><em>${escapeHtml(note)}</em></p>` : ``}
+
+    <p style="margin:24px 0;">
+      <a href="https://www.najdipilota.cz/" 
+         style="background:#0077B6;color:#fff;text-decoration:none;
+         padding:12px 22px;border-radius:8px;font-weight:600;">
+         Vyzkoušet NajdiPilota.cz zdarma
+      </a>
+    </p>
+
+    <p>Pokud byste se chtěli o službě dozvědět více, <strong>mohu s vámi domluvit krátký online meeting</strong> 
+    (cca 15 minut), kde vám platformu ukážu v praxi.</p>
+
+    <p style="color:#555;">📍 NajdiPilota.cz pomáhá firmám šetřit čas i náklady – získejte profesionální záběry z ptačí perspektivy už dnes.</p>
+
+    <p>S pozdravem,<br>
+    <strong>Bohuslav z NajdiPilota.cz</strong><br>
+    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span><br>
+    <a href="mailto:dronadmin@seznam.cz" style="color:#0077B6;">dronadmin@seznam.cz</a></p>
+  `, 'NajdiPilota.cz – Droní záběry a inspekce pro firmy');
+}
+
+
+function tplFollowup1(company){
+  return wrapEmailContent(`
+    <h2>📸 Jen krátce navazuji – už jste se podívali na NajdiPilota.cz?</h2>
+    <p><strong>Zdravím z NajdiPilota.cz!</strong></p>
+    <p>Před pár dny jsme vám psali o naší nové platformě, která spojuje firmy s ověřenými droními piloty po celé ČR.</p>
+    <p>Pokud potřebujete <strong>záběry z výšky, video nebo kontrolu stavby či areálu</strong>, 
+    na <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a> 
+    si můžete <strong>zdarma zadat poptávku</strong> nebo si přímo <strong>vybrat pilota na mapě</strong>.</p>
+    <p>Členství pro inzerenty je stále zcela zdarma a první nabídky obvykle dorazí do několika hodin.</p>
+    <p><a href="https://www.najdipilota.cz/" target="_blank"
+      style="background:#0077B6;color:#fff;text-decoration:none;
+      padding:10px 18px;border-radius:6px;font-size:15px;font-weight:600;">
+      Vyzkoušet NajdiPilota.cz zdarma
+    </a></p>
+    <p style="color:#555;">Pomozte nám rozlétat český droní trh 🚀 – a získejte přístup k pilotům, kteří jsou připraveni vyrazit ještě dnes.</p>
+    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong><br>
+    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span></p>
+  `, 'Připomenutí – NajdiPilota.cz je zdarma pro inzerenty');
+}
+
+function tplFollowup2(company){
+  return wrapEmailContent(`
+    <h2>🚀 Ještě jste to nestihli? NajdiPilota.cz je stále otevřené inzerentům zdarma</h2>
+    <p><strong>Zdravím z NajdiPilota.cz!</strong></p>
+    <p>Chtěl bych vám naposledy připomenout naši platformu, která pomáhá firmám a tvůrcům 
+    najít <strong>ověřené droní pilot y po celé ČR</strong> – rychle, bez závazků a zcela zdarma.</p>
+    <p>Na <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">NajdiPilota.cz</a> 
+    můžete během minuty zadat poptávku nebo si přímo na mapě vybrat pilota, který je nejblíž vašemu projektu.</p>
+    <ul>
+      <li>✅ Zadání poptávky zdarma – bez registrace a poplatků</li>
+      <li>🗺️ Výběr pilota přímo na mapě</li>
+      <li>📷 Ideální pro reality, marketing, stavebnictví a logistiku</li>
+    </ul>
+    <p><a href="https://www.najdipilota.cz/" target="_blank"
+      style="background:#0077B6;color:#fff;text-decoration:none;
+      padding:10px 18px;border-radius:6px;font-size:15px;font-weight:600;">
+      Otevřít NajdiPilota.cz
+    </a></p>
+    <p style="color:#555;">Budeme rádi, když budete u toho – pomozte nám rozlétat český droní trh a získejte výhodu prvních inzerentů.</p>
+    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong><br>
+    <span style="font-size:13px;color:#888;">Tým NajdiPilota.cz</span></p>
+  `, 'Poslední připomenutí – NajdiPilota.cz zdarma pro inzerenty');
+}
+
+
+
+
+
+
+function tplRealty(company){
+  const note = ($('#customNote').value||'').trim();
+  return wrapEmailContent(`
+    <h2>🏡 Chcete prodávat nemovitosti rychleji?</h2>
+    <p>Dobrý den${company?.name?`, ${escapeHtml(company.name)}`:''},</p>
+    
+    <p>Pro realitní kanceláře a developery jako jste vy provozujeme portál <strong>NajdiPilota.cz</strong>. 
+       Naše síť <strong>ověřených pilotů po celé ČR</strong> vám pomůže získat záběry, které prodávají.</p>
+       
+    <p>Naši piloti pokrývají široké spektrum služeb pro reality – od atraktivních leteckých fotografií až po technické inspekce. Můžete poptat například:</p>
+    <ul>
+      <li>Atraktivní <strong>letecké fotografie</strong> pro Váš inzerát</li>
+      <li>Profesionální <strong>propagační video</strong> nemovitosti (včetně střihu)</li>
+      <li>Krátké záběry pro sociální sítě (Reels, Stories)</li>
+      <li>Technické <strong>inspekce střech</strong>, fasád nebo pozemků</li>
+    </ul>
+    
+    <p>Finální podoba zakázky, rozsah prací i cena je ale vždy <strong>na přímé a férové domluvě</strong> mezi vámi a pilotem.</p>
+
+    ${note ? `<p style="background:#E8F4FF; border-left:4px solid #0077B6; padding:10px;"><em>${escapeHtml(note)}</em></p>` : ``}
+    
+    <p><strong>Registrace pro inzerenty je zdarma, bez provizí a nezávazná.</strong></p>
+    
+    <p style="margin-top:20px;"><a href="https://www.najdipilota.cz/"
+      style="background:#0077B6;color:#fff;text-decoration:none;
+      padding:12px 20px;border-radius:8px;font-size:15px;font-weight:600;">
+      Začněte zdarma na NajdiPilota.cz
+    </a></p>
+
+    <p style="font-size:13px;color:#555;margin-top:10px;">
+      Můžete se <a href="https://www.najdipilota.cz/" target="_blank" style="color:#0077B6;font-weight:600;">přihlásit jako inzerent</a> a zadat hromadnou poptávku,
+      nebo si jen prohlédnout piloty přímo na mapě.
+    </p>
+
+    <p style="margin-top:24px;">S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong></p>
+  `, 'NajdiPilota.cz – Ověření piloti dronů pro Vaše nemovitosti');
+}
+
+
+function tplLogistics(company){
+  const note = ($('#customNote').value||'').trim();
+  return wrapEmailContent(`
+    <h2>🚚 Záběry a inspekce vašich dep a skladů z ptačí perspektivy</h2>
+    <p>Dobrý den${company?.name?`, ${escapeHtml(company.name)}`:''},</p>
+    <p>máte depo, sklad nebo flotilu, kterou chcete <strong>prezentovat nebo zkontrolovat z výšky</strong>?</p>
+    <ul>
+      <li>📸 PR/brandové video areálu (Wolt, Rohlík, PPL, Zásilkovna typově)</li>
+      <li>🔍 inspekce střech, solárů, logistických tras</li>
+      <li>🎬 dokumentace provozu a BOZP</li>
+    </ul>
+    ${note ? `<p><em>${escapeHtml(note)}</em></p>` : ``}
+    <p><a href="https://www.najdipilota.cz/poptavky.html"
+      style="background:#0077B6;color:#fff;text-decoration:none;
+      padding:10px 18px;border-radius:6px;font-size:14px;font-weight:500;">
+      Vložit poptávku pro vaši firmu
+    </a></p>
+    <p>S pozdravem,<br><strong>Bohuslav z NajdiPilota.cz</strong></p>
+  `, 'NajdiPilota.cz – Pro logistiku a kurýry');
+}
+
+
+/* ======= Přepínač šablon ======= */
+function buildHtml(company){
+  const t = $('#template').value;
+  // Důležité je zajistit správný výběr šablon pro follow-upy
+  if (t === 'realty') return tplRealty(company);
+  if (t === 'logistics') return tplLogistics(company);
+  if (t === 'followup1') return tplFollowup1(company);  // Opravený follow-up #1
+  if (t === 'followup2') return tplFollowup2(company);  // Opravený follow-up #2
+  return tplGeneral(company); // Výchozí šablona
+}
+
+/* ======= UI Handlery ======= */
+$('#btnAdd').addEventListener('click', () => {
+  const name = $('#newName').value.trim();
+  const email = $('#newEmail').value.trim();
+  const cat = $('#newCategory').value.trim();
+  if(!email){ alert('Zadej e-mail'); return; }
+  state.rows.unshift({ id:rid(), name, email, category:cat, note:'', selected:true });
+  $('#newName').value = ''; $('#newEmail').value=''; $('#newCategory').value='';
+  renderTable();
+});
+
+$('#btnClear').addEventListener('click', () => {
+  if(confirm('Opravdu vyčistit seznam?')) { state.rows = []; renderTable(); }
+});
+
+$('#csvFile').addEventListener('change', async (e) => {
+  const f = e.target.files?.[0]; if(!f) return;
+  const txt = await f.text();
+  const parsed = parseCsv(txt);
+  state.rows.push(...parsed);
+  renderTable();
+});
+
+$('#btnImport').addEventListener('click', () => $('#csvFile').click());
+
+$('#tbody').addEventListener('change', (e) => {
+  const id = e.target.dataset.id;
+  if(e.target.type === 'checkbox' && id){
+    const row = state.rows.find(r => String(r.id) === String(id));
+    if(row) row.selected = e.target.checked;
+  }
+});
+
+$('#tbody').addEventListener('click', (e) => {
+  const del = e.target.dataset.del;
+  const edit = e.target.dataset.edit;
+  if (del){
+    state.rows = state.rows.filter(r => String(r.id)!==String(del));
+    renderTable(); return;
+  }
+  if (edit){
+    const row = state.rows.find(r => String(r.id)===String(edit));
+    if(!row) return;
+    const name = prompt('Název firmy:', row.name||'') ?? row.name;
+    const email = prompt('E-mail:', row.email||'') ?? row.email;
+    const cat = prompt('Kategorie:', row.category||'') ?? row.category;
+    const note = prompt('Poznámka:', row.note||'') ?? row.note;
+    Object.assign(row, {name, email, category:cat, note});
+    renderTable(); return;
+  }
+});
+
+$('#checkAll').addEventListener('change', (e) => {
+  const v = e.target.checked;
+  state.rows.forEach(r => r.selected = v);
+  renderTable();
+});
+
+$('#btnPreview').addEventListener('click', () => {
+  const sample = state.rows.find(r => r.selected) || {name:'Vaše společnost'};
+  const html = buildHtml(sample);
+  $('#preview').innerHTML = html;
+  if(!$('#subject').value.trim()){
+  const subj = ({
+    general:   'NajdiPilota.cz – rychle najděte pilota pro vaši zakázku',
+    realty:    'NajdiPilota.cz – letecké záběry, které prodávají',
+    logistics: 'NajdiPilota.cz – drony pro logistiku a kurýry',
+    followup1: 'Připomenutí – NajdiPilota.cz zdarma pro inzerenty',
+    followup2: 'Poslední připomenutí – NajdiPilota.cz zdarma pro inzerenty'
+  })[$('#template').value] || 'NajdiPilota.cz – droní služby';
+  $('#subject').value = subj;
+}
+
+});
+
+/* ======= Odesílání ======= */
+/* Implementuj na backendu BUĎ /send-outreach (batch)
+   NEBO fallback /send-direct (single). Níže je klientská logika, která nejprve zkusí batch. */
+
+async function sendBatch(payload){
+  // očekávaný backend: POST /send-outreach  { emails:[], template:"general|realty|logistics", subject:"", customNote:"" }
+  const res = await fetch('/send-outreach', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if(!res.ok) throw new Error('send-outreach HTTP '+res.status);
+  return res.json();
+}
+
+async function sendDirect(one){
+  // fallback: POST /send-direct  { to:"a@b.cz", html:"<html...>", subject:"..." }
+  const res = await fetch('/send-direct', {
+    method:'POST',
+    headers:{ 'Content-Type':'application/json' },
+    body: JSON.stringify(one)
+  });
+  if(!res.ok) throw new Error('send-direct HTTP '+res.status);
+  return res.json();
+}
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+$('#btnSend').addEventListener('click', async () => {
+  if(state.sending) return;
+  const selected = state.rows.filter(r => r.selected && r.email);
+  if(selected.length===0){ alert('Vyber aspoň jeden kontakt'); return; }
+
+  const template = $('#template').value;
+  const subject  = $('#subject').value.trim() || 'NajdiPilota.cz – droní služby';
+  const customNote = $('#customNote').value || '';
+
+  state.sending = true;
+  $('#log').textContent = `Odesílám ${selected.length} e-mailů…\n`;
+
+  // 1) zkuste batch endpoint
+  try{
+    const emails = selected.map(r => ({ email:r.email, name:r.name||'', category:r.category||'' }));
+    const result = await sendBatch({ emails, template, subject, customNote });
+    $('#log').textContent += `✓ Batch odeslán (${selected.length}) – server odpověděl OK\n`;
+    state.sending = false;
+    return;
+  }catch(e){
+    $('#log').textContent += `⚠️ Batch endpoint nedostupný – přecházím na postupné odesílání.\n`;
+  }
+
+  // 2) fallback – posílej po jednom s rate-limitem
+  for (let i=0;i<selected.length;i++){
+    const r = selected[i];
+    const html = buildHtml(r);
+    try{
+      await sendDirect({ to:r.email, subject, html });
+      $('#log').textContent += `✓ ${r.email}\n`;
+    }catch(err){
+      $('#log').textContent += `✗ ${r.email} – CHYBA: ${err.message}\n`;
+    }
+    await sleep(state.rateMs);
+  }
+  state.sending = false;
+});
+
+// ======= Vlastní e-mail =======
+$('#btnPreviewCustom').addEventListener('click', ()=>{
+  const html = wrapEmailContent(escapeHtml($('#customBody').value).replaceAll('\n','<br>'));
+  $('#customPreview').innerHTML = html;
+});
+
+$('#btnSendCustom').addEventListener('click', async ()=>{
+  const to = $('#customTo').value.trim();
+  const subject = $('#customSubject').value.trim();
+  const body = $('#customBody').value.trim();
+  if(!to || !subject || !body){
+    alert('Vyplňte všechny údaje.');
+    return;
+  }
+  const res = await fetch('/admin-send-custom-email', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({ to, subject, body })
+  });
+  const text = await res.text();
+  $('#customLog').textContent = text;
+});
+
+</script>
+</body>
+</html>

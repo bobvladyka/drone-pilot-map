@@ -284,6 +284,45 @@ body.modal-open {
     overflow-y: auto;  /* Povolení vertikálního scrollování, pokud je obsah větší než max-height */
     padding: 10px;     /* Padding pro lepší vzhled */
   }
+/* === MOBILE SCROLL FIX PRO DLUHÉ KARTY === */
+@media (max-width: 768px) {
+  .leaflet-popup-content .pilot-card {
+    max-height: 70vh; /* Maximální výška před scrollováním */
+    overflow-y: auto; /* Přidá vertikální scrollbar když je třeba */
+    -webkit-overflow-scrolling: touch; /* Plynulý scroll na iOS */
+    padding-right: 8px; /* Prostor pro scrollbar */
+  }
+  
+  /* Vlastní scrollbar pro lepší vzhled */
+  .leaflet-popup-content .pilot-card::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .leaflet-popup-content .pilot-card::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+    margin: 4px 0;
+  }
+  
+  .leaflet-popup-content .pilot-card::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  .leaflet-popup-content .pilot-card::-webkit-scrollbar-thumb:hover {
+    background: #a1a1a1;
+  }
+  
+  /* Zajistíme, že se karta správně zobrazí */
+  .leaflet-popup-content-wrapper {
+    max-width: 90vw !important;
+  }
+  
+  .leaflet-popup-content {
+    margin: 0 !important;
+    max-height: none !important; /* Zrušíme Leafletovo omezení */
+  }
+}
 
 
 }

@@ -613,6 +613,13 @@ if (!hasPublicConsent) {
 
   html += `</div>`;
   return html;
+}, {
+  maxWidth: 320,
+  minWidth: 280,
+  maxHeight: window.innerWidth <= 768 ? 600 : 400,
+  autoPan: true,
+  closeOnClick: true,
+  className: 'scrollable-popup'
 })
 
             markers.addLayer(circle);

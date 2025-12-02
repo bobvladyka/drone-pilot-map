@@ -1294,6 +1294,16 @@ document.querySelectorAll(".service-request").forEach(btn => {
     e.preventDefault();
 
     const type = btn.dataset.type;
+    const serviceName = btn.textContent.trim();
+    
+    // 1. Zobrazit potvrzovací dialog
+    const confirmed = confirm(`Přejete si závazně objednat tuto službu?\n\n${serviceName}\n\nPokud stisknete "OK", bude odeslána poptávka.`);
+    
+    if (!confirmed) {
+      return; // Uživatel zrušil objednávku
+    }
+    
+    // 2. Pokračovat s odesláním požadavku
     const modal = new bootstrap.Modal(document.getElementById('serviceRequestModal'));
 
     // reset modal states

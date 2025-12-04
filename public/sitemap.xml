@@ -1,79 +1,107 @@
-﻿<?xml version="1.0" encoding="UTF-8"?>
-		<!--	created with www.mysitemapgenerator.com	-->
-		<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset
+      xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
+            http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
+<!-- created with Free Online Sitemap Generator www.xml-sitemaps.com -->
+
+
 <url>
-	<loc>https://www.najdipilota.cz/</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>1.0</priority>
+  <loc>https://www.najdipilota.cz/</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>1.00</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/moje-zpravy.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.3</priority>
+  <loc>https://www.najdipilota.cz/index.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/poptavky.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.4</priority>
+  <loc>https://www.najdipilota.cz/moje-zpravy.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/o-projektu.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.8</priority>
+  <loc>https://www.najdipilota.cz/o-projektu.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/kontakt.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.5</priority>
+  <loc>https://www.najdipilota.cz/kontakt.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/index_en.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.7</priority>
+  <loc>https://www.najdipilota.cz/poptavky.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/inzerent.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.1</priority>
+  <loc>https://www.najdipilota.cz/index_en.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/register.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.1</priority>
+  <loc>https://www.najdipilota.cz/inzerent.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/forgot.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.1</priority>
+  <loc>https://www.najdipilota.cz/register.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/v-procesu.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.1</priority>
+  <loc>https://www.najdipilota.cz/forgot.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/gdpr.html</loc>
-	<lastmod>2025-09-25T23:01:10+01:00</lastmod>
-	<priority>0.2</priority>
+  <loc>https://www.najdipilota.cz/inzerent-register.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/faq.html</loc>
-	<lastmod>2025-09-25T23:01:13+01:00</lastmod>
-	<priority>0.5</priority>
+  <loc>https://www.najdipilota.cz/blog.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/inzerent-register.html</loc>
-	<lastmod>2025-09-25T23:01:13+01:00</lastmod>
-	<priority>0.1</priority>
+  <loc>https://www.najdipilota.cz/gdpr.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/inzerent-forgot-password.html</loc>
-	<lastmod>2025-09-25T23:01:13+01:00</lastmod>
-	<priority>0.1</priority>
+  <loc>https://www.najdipilota.cz/obchodni-podminky.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.80</priority>
 </url>
 <url>
-	<loc>https://www.najdipilota.cz/subscription.html</loc>
-	<lastmod>2025-09-25T23:01:16+01:00</lastmod>
-	<priority>0.4</priority>
+  <loc>https://www.najdipilota.cz/faq.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.64</priority>
 </url>
+<url>
+  <loc>https://www.najdipilota.cz/v-procesu.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/inzerent-forgot-password.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/login.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.64</priority>
+</url>
+<url>
+  <loc>https://www.najdipilota.cz/subscription.html</loc>
+  <lastmod>2025-12-04T11:25:02+00:00</lastmod>
+  <priority>0.51</priority>
+</url>
+
+
 </urlset>

@@ -1446,6 +1446,72 @@ html {
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
+/* Stylování tlačítek sdílení */
+.social-btn {
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+}
+
+.social-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.facebook-btn {
+    background-color: #1877F2 !important;
+    border: 1px solid #1877F2 !important;
+}
+
+.facebook-btn:hover {
+    background-color: #166FE5 !important;
+    border-color: #166FE5 !important;
+}
+
+.linkedin-btn {
+    background-color: #0A66C2 !important;
+    border: 1px solid #0A66C2 !important;
+}
+
+.linkedin-btn:hover {
+    background-color: #004182 !important;
+    border-color: #004182 !important;
+}
+
+.copy-btn {
+    border: 1px solid #dee2e6 !important;
+    color: #495057;
+}
+
+.copy-btn:hover {
+    background-color: #e9ecef !important;
+    border-color: #adb5bd !important;
+}
+
+/* Styly pro editor */
+.ql-editor .social-sharing-section {
+    background-color: #f8f9fa;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary);
+}
+
+.ql-editor .social-btn svg {
+    flex-shrink: 0;
+}
+
+/* Responzivní úpravy */
+@media (max-width: 768px) {
+    .ql-editor .social-sharing-section .d-flex {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .ql-editor .social-btn {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
 
 
 

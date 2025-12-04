@@ -162,6 +162,67 @@
         </select>
       </div>
     </div>
+
+<!-- NOVÝ FILTR: VZDÁLENOST S SLIDEREM -->
+<div class="col-md-6">
+    <div class="filter-card h-100 p-3 bg-white rounded-3">
+        <h6 class="filter-title fw-bold mb-3 text-primary">
+            <i class="bi bi-signpost-split-fill me-2"></i>Vzdálenost
+        </h6>
+        
+        <!-- Slider pro vzdálenost -->
+        <div class="distance-slider-container mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-2">
+                <span class="small text-muted">Okruh:</span>
+                <span id="filter-distance-value" class="distance-value">50 km</span>
+            </div>
+            <input type="range" id="filter-distance-slider" class="distance-slider" 
+                   min="0" max="200" value="50" step="10">
+            <div class="d-flex justify-content-between small text-muted mt-1">
+                <span>0 km</span>
+                <span>100 km</span>
+                <span>200 km</span>
+            </div>
+        </div>
+        
+        <!-- Tlačítka pro polohu -->
+        <div class="d-flex flex-wrap gap-2 mb-3">
+            <button id="btn-use-location" class="btn-sm btn-outline-secondary mb-2">
+                <i class="bi bi-geo-alt me-1"></i>Má poloha
+            </button>
+            <button id="btn-pick-on-map" class="btn-sm btn-outline-secondary mb-2">
+                <i class="bi bi-map me-1"></i>Vybrat na mapě
+            </button>
+            <button id="btn-clear-distance" class="btn-sm btn-outline-secondary mb-2" style="display: none;">
+                <i class="bi bi-x-circle me-1"></i>Zrušit
+            </button>
+        </div>
+        
+        <!-- Rychlá tlačítka pro města -->
+        <div class="city-buttons">
+            <p class="small text-muted mb-2">Rychlý výběr:</p>
+            <div class="d-flex flex-wrap gap-2">
+                <button id="btn-prague" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-geo-alt-fill me-1"></i>Praha
+                </button>
+                <button id="btn-brno" class="btn btn-sm btn-outline-warning">
+                    <i class="bi bi-geo-alt-fill me-1"></i>Brno
+                </button>
+                <button id="btn-ostrava" class="btn btn-sm btn-outline-info">
+                    <i class="bi bi-geo-alt-fill me-1"></i>Ostrava
+                </button>
+            </div>
+        </div>
+        
+        <!-- Informace o nastavené poloze -->
+        <div id="distance-info" class="small text-muted mt-2" style="display: none;">
+            <i class="bi bi-info-circle"></i> 
+            <span id="distance-details">Poloha nenastavena</span>
+        </div>
+    </div>
+</div>
+
+
     <div class="col-md-6 d-flex flex-column justify-content-end">
       <button id="reset-filters-btn" class="btn-sm btn-outline-secondary mb-2">
         <i class="bi bi-x-circle me-1"></i> Vymazat filtry
@@ -171,6 +232,78 @@
       </button>
     </div>
   </div>
+</div>
+
+<!-- Po filtrech přidej tuto sekci -->
+<div class="row mt-3">
+    <!-- LEVÁ ČÁST: Řazení a statistiky -->
+    <div class="col-md-8">
+        <div class="row g-2">
+            <!-- Řazení -->
+            <div class="col-md-4">
+                <div class="filter-card p-3 bg-white rounded-3">
+                    <h6 class="filter-title fw-bold mb-2 text-primary">
+                        <i class="bi bi-sort-down me-2"></i>Řazení
+                    </h6>
+                    <select id="sort-pilots" class="form-select form-select-sm">
+                        <option value="distance">Nejbližší</option>
+                        <option value="premium">Premium první</option>
+                        <option value="available">Dostupní první</option>
+                        <option value="verified">Ověření první</option>
+                        <option value="default">Výchozí</option>
+               
+                    </select>
+                </div>
+            </div>
+            
+            <!-- Statistiky -->
+            <div class="col-md-8">
+                <div class="filter-card p-3 bg-white rounded-3">
+                    <h6 class="filter-title fw-bold mb-2 text-primary">
+                        <i class="bi bi-graph-up me-2"></i>Statistiky
+                    </h6>
+                    <div class="row text-center g-2" id="stats-container">
+                        <div class="col-3">
+                            <div class="stat-value text-primary" id="stat-total">0</div>
+                            <div class="stat-label small">Celkem</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="stat-value text-success" id="stat-available">0</div>
+                            <div class="stat-label small">Dostupných</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="stat-value text-warning" id="stat-premium">0</div>
+                            <div class="stat-label small">Premium</div>
+                        </div>
+                        <div class="col-3">
+                            <div class="stat-value text-info" id="stat-in-radius">0</div>
+                            <div class="stat-label small">V okruhu</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+           
+    <!-- PRAVÁ ČÁST: Nástroje -->
+    <div class="col-md-4">
+        <div class="filter-card p-3 bg-white rounded-3 h-100">
+            <h6 class="filter-title fw-bold mb-3 text-primary">
+                <i class="bi bi-tools me-2"></i>Nástroje
+            </h6>
+            
+            <!-- Heatmapa toggle -->
+            <div class="mb-3">
+                <div class="form-check form-switch">
+                    <input class="form-check-input" type="checkbox" id="toggle-heatmap">
+                    <label class="form-check-label" for="toggle-heatmap">
+                        <i class="bi bi-fire text-warning me-1"></i> Heatmapa popularity
+                    </label>
+                </div>
+                <p class="small text-muted mb-0 mt-1">Zobrazuje kde jsou piloti nejaktivnější</p>
+            </div>
+            
+                </div>
 </div>
 
 <p id="user-status" class="text-center fw-bold mb-3"></p>
@@ -183,6 +316,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet.heat@0.2.0/dist/leaflet-heat.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', async function () {
     const map = L.map('map').setView([49.8, 15.5], 7);
@@ -205,6 +339,16 @@ document.addEventListener('DOMContentLoaded', async function () {
     const markers = L.markerClusterGroup();
     let pilotCircles = [];
     let loggedInzerentId = null;
+    
+    // NOVÉ PROMĚNNÉ PRO FILTR VZDÁLENOSTI
+    let advertiserLocation = null;
+    let distanceCircle = null;
+    let advertiserMarker = null;
+    let isSelectingLocation = false;
+
+    // PŘIDEJ TYTO PROMĚNNÉ NA ZAČÁTEK:
+let heatmapLayer = null;
+
 
     const filterSpecialization = document.getElementById('filter-specialization');
     const filterRegion = document.getElementById('filter-region');
@@ -213,6 +357,625 @@ document.addEventListener('DOMContentLoaded', async function () {
     const filterVerified = document.getElementById('filter-verified');
     const resetFiltersBtn = document.getElementById('reset-filters-btn');
     const centerMapBtn = document.getElementById('center-map-btn');
+    
+    // NOVÉ ELEMENTY PRO FILTR VZDÁLENOSTI S SLIDEREM
+    const filterDistanceSlider = document.getElementById('filter-distance-slider');
+    const filterDistanceValue = document.getElementById('filter-distance-value');
+    const btnUseLocation = document.getElementById('btn-use-location');
+    const btnPickOnMap = document.getElementById('btn-pick-on-map');
+    const btnClearDistance = document.getElementById('btn-clear-distance');
+    const distanceInfo = document.getElementById('distance-info');
+    const distanceDetails = document.getElementById('distance-details');
+    
+    // RYCHLÁ TLAČÍTKA PRO MĚSTA
+    const btnPrague = document.getElementById('btn-prague');
+    const btnBrno = document.getElementById('btn-brno');
+    const btnOstrava = document.getElementById('btn-ostrava');
+
+    // DEFINICE SOUŘADNIC MĚST
+    const cityCoordinates = {
+        'prague': { lat: 50.0755, lng: 14.4378, name: 'Praha' },
+        'brno': { lat: 49.1951, lng: 16.6068, name: 'Brno' },
+        'ostrava': { lat: 49.8209, lng: 18.2625, name: 'Ostrava' }
+    };
+
+// Přidej do DOMContentLoaded pro debug:
+function debugCheck() {
+    console.log("=== DEBUG INFO ===");
+    console.log("Celkem pilotů načteno:", allPilots?.length || 0);
+    console.log("Viditelných pilotů:", allPilots?.filter(p => p.visible === "ANO").length || 0);
+    console.log("Piloti s polohou:", allPilots?.filter(p => p.latitude && p.longitude).length || 0);
+    console.log("Dostupných pilotů:", allPilots?.filter(p => p.available === "ANO").length || 0);
+    console.log("Premium pilotů:", allPilots?.filter(p => p.type_account === "Premium").length || 0);
+    console.log("Aktivní filtry:", {
+        spec: filterSpecialization?.value,
+        region: filterRegion?.value,
+        availability: filterAvailability?.value,
+        volunteer: filterVolunteer?.value,
+        verified: filterVerified?.value,
+        distance: advertiserLocation
+    });
+    console.log("=== KONEC DEBUG ===");
+}
+
+// Volání debug po načtení
+setTimeout(debugCheck, 2000);
+
+// Přidejte za deklaraci filtrů (řádek ~150)
+const sortPilotsSelect = document.getElementById('sort-pilots');
+
+// Přidejte event listener pro změnu řazení
+if (sortPilotsSelect) {
+    sortPilotsSelect.addEventListener('change', applyFilters);
+}
+
+    // FUNKCE PRO ŘAZENÍ
+function sortPilots(pilots) {
+    const sortBy = document.getElementById('sort-pilots')?.value || 'distance';
+    
+    const sortedPilots = [...pilots]; // Kopie pole
+    
+    switch(sortBy) {
+        case 'distance':
+            if (advertiserLocation) {
+                return sortedPilots.sort((a, b) => {
+                    const distA = calculateDistance(advertiserLocation.lat, advertiserLocation.lng, a.latitude, a.longitude);
+                    const distB = calculateDistance(advertiserLocation.lat, advertiserLocation.lng, b.latitude, b.longitude);
+                    return distA - distB;
+                });
+            }
+            return sortedPilots;
+            
+        case 'premium':
+            return sortedPilots.sort((a, b) => {
+                const priority = { 'Premium': 3, 'Basic': 2, 'Free': 1 };
+                return (priority[b.type_account] || 0) - (priority[a.type_account] || 0);
+            });
+            
+        case 'available':
+            return sortedPilots.sort((a, b) => {
+                if (a.available === "ANO" && b.available !== "ANO") return -1;
+                if (a.available !== "ANO" && b.available === "ANO") return 1;
+                return 0;
+            });
+            
+        case 'verified':
+            return sortedPilots.sort((a, b) => {
+                const isVerifiedA = a.registrationnumber && a.registrationnumber.startsWith("CZE");
+                const isVerifiedB = b.registrationnumber && b.registrationnumber.startsWith("CZE");
+                if (isVerifiedA && !isVerifiedB) return -1;
+                if (!isVerifiedA && isVerifiedB) return 1;
+                return 0;
+            });
+            
+        case 'default':
+        default:
+            return sortedPilots; // Výchozí řazení
+    }
+}
+
+// FUNKCE PRO STATISTIKY
+function updateStatistics(filteredPilots = []) {
+    // Pouze piloti s platnou GPS
+    const pilotsWithCoords = filteredPilots.filter(p => p.latitude && p.longitude);
+
+    const total = pilotsWithCoords.length;
+    const available = pilotsWithCoords.filter(p => p.available === "ANO").length;
+    const premium = pilotsWithCoords.filter(p => p.type_account === "Premium").length;
+
+    document.getElementById('stat-total').textContent = total;
+    document.getElementById('stat-available').textContent = available;
+    document.getElementById('stat-premium').textContent = premium;
+    document.getElementById('stat-in-radius').textContent = total;
+
+    // Dynamika popisku
+    const radiusLabel = document.querySelectorAll('.stat-label')[3];
+    const radiusValue = document.getElementById('stat-in-radius');
+    
+    if (advertiserLocation && advertiserLocation.radius > 0) {
+        radiusLabel.textContent = `V okruhu ${advertiserLocation.radius} km`;
+        radiusValue.classList.add('active');
+    } else {
+        radiusLabel.textContent = 'Zobrazeno';
+        radiusValue.classList.remove('active');
+    }
+}
+
+
+// FUNKCE PRO HEATMAPU
+function initHeatmap() {
+    // Odstraň existující heatmapu
+    if (heatmapLayer) {
+        map.removeLayer(heatmapLayer);
+        heatmapLayer = null;
+    }
+
+// Vytvoř heatmap data na základě "popularity" (počet zobrazení, hodnocení, atd.)
+    const heatData = allPilots
+        .filter(p => p.latitude && p.longitude && p.visible === "ANO")
+        .map(p => {
+            // Výpočet "váhy" pro heatmapu
+            let weight = 1;
+            
+            if (p.type_account === "Premium") weight += 2;
+            if (p.available === "ANO") weight += 1;
+            if (p.volunteer === "ANO") weight += 0.5;
+            
+            // Pokud máme data o popularitě, použij je
+            if (p.popularity_score) {
+                weight += parseFloat(p.popularity_score);
+            }
+            
+            return [p.latitude, p.longitude, Math.min(weight, 5)]; // Limit 5
+        });
+    
+    if (window.L && window.L.heatLayer && heatData.length > 0) {
+        heatmapLayer = L.heatLayer(heatData, {
+            radius: 25,
+            blur: 15,
+            maxZoom: 17,
+            max: 5.0,
+            gradient: {
+                0.0: 'rgba(0, 0, 255, 0)',
+                0.1: 'rgba(0, 0, 255, 0.3)',
+                0.3: 'rgba(0, 255, 255, 0.5)',
+                0.5: 'rgba(0, 255, 0, 0.7)',
+                0.7: 'rgba(255, 255, 0, 0.8)',
+                1.0: 'rgba(255, 0, 0, 1)'
+            }
+        });
+        
+        // Přidej heatmapu pouze pokud je zapnutá
+        if (document.getElementById('toggle-heatmap')?.checked) {
+            heatmapLayer.addTo(map);
+        }
+    }
+}
+
+// TOGGLE HEATMAPY
+document.getElementById('toggle-heatmap')?.addEventListener('change', function(e) {
+    if (e.target.checked) {
+        if (!heatmapLayer) {
+            initHeatmap();
+        } else {
+            heatmapLayer.addTo(map);
+        }
+    } else {
+        if (heatmapLayer) {
+            map.removeLayer(heatmapLayer);
+        }
+    }
+});
+
+
+// POMOCNÉ FUNKCE
+function flyToPilot(lat, lng, pilotId) {
+    map.setView([lat, lng], 13);
+    
+    // Označ pilota
+    markers.getLayers().forEach(layer => {
+        if (layer.options.pilotData?.id === pilotId) {
+            layer.openPopup();
+            layer.setStyle({ color: '#ff0000', weight: 3 });
+            setTimeout(() => layer.setStyle({ color: '', weight: 1 }), 3000);
+        }
+    });
+}
+
+ 
+
+// UPRAV FUNKCI loadPilots() PRO INICIALIZACI
+async function loadPilots() {
+    try {
+        const res = await fetch('/pilots');
+        allPilots = await res.json();
+        populateSpecializations();
+        
+        // NEJDŘÍV aplikuj filtry (načte piloty)
+        applyFilters();
+        
+        
+        
+    } catch (error) {
+        console.error("Chyba při načítání pilotů:", error);
+        alert('Nepodařilo se načíst data pilotů.');
+    }
+}
+
+    // FUNKCE PRO VÝPOČET VZDÁLENOSTI
+    function calculateDistance(lat1, lon1, lat2, lon2) {
+        if (!lat1 || !lon1 || !lat2 || !lon2) return Infinity;
+        
+        const R = 6371; // Země poloměr v km
+        const dLat = (lat2 - lat1) * Math.PI / 180;
+        const dLon = (lon2 - lon1) * Math.PI / 180;
+        const a = 
+            Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+            Math.sin(dLon/2) * Math.sin(dLon/2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+        return R * c;
+    }
+
+    // NAČTENÍ ULOŽENÉ POLOHY
+    function loadSavedLocation() {
+        const saved = localStorage.getItem('advertiserLocation');
+        if (saved) {
+            try {
+                advertiserLocation = JSON.parse(saved);
+                updateDistanceUI();
+                drawDistanceCircle();
+            } catch (e) {
+                console.error("Chyba při načítání polohy:", e);
+                localStorage.removeItem('advertiserLocation');
+            }
+        }
+    }
+
+    // ULOŽENÍ POLOHY
+    function saveLocationToStorage() {
+        if (advertiserLocation) {
+            localStorage.setItem('advertiserLocation', JSON.stringify(advertiserLocation));
+        } else {
+            localStorage.removeItem('advertiserLocation');
+        }
+    }
+
+    // AKTUALIZACE UI VZDÁLENOSTI
+    function updateDistanceUI() {
+        if (!advertiserLocation) {
+            if (distanceInfo) distanceInfo.style.display = 'none';
+            if (btnClearDistance) btnClearDistance.style.display = 'none';
+            if (filterDistanceSlider) filterDistanceSlider.value = '50';
+            if (filterDistanceValue) filterDistanceValue.textContent = '50 km';
+            return;
+        }
+        
+        if (distanceInfo) distanceInfo.style.display = 'block';
+        if (btnClearDistance) btnClearDistance.style.display = 'block';
+        
+        if (filterDistanceSlider) {
+            filterDistanceSlider.value = advertiserLocation.radius;
+        }
+        
+        if (filterDistanceValue) {
+            filterDistanceValue.textContent = advertiserLocation.radius === 0 ? 'Celá ČR' : `${advertiserLocation.radius} km`;
+        }
+        
+        if (distanceDetails) {
+            let sourceText = '';
+            
+            if (advertiserLocation.source === 'geolocation') {
+                sourceText = 'od vaší polohy';
+            } else if (advertiserLocation.source === 'map_click') {
+                sourceText = 'od vybraného místa';
+            } else if (advertiserLocation.source === 'city') {
+                sourceText = `od ${advertiserLocation.cityName}`;
+            } else {
+                sourceText = 'od nastavené polohy';
+            }
+            
+            const radiusText = advertiserLocation.radius === 0 ? 'Celá ČR' : `Do ${advertiserLocation.radius} km`;
+            distanceDetails.textContent = `${radiusText} ${sourceText}`;
+            distanceDetails.title = `Souřadnice: ${advertiserLocation.lat.toFixed(4)}, ${advertiserLocation.lng.toFixed(4)}`;
+        }
+    }
+
+    // VYKRESLENÍ KRUHU VZDÁLENOSTI NA MAPĚ
+    // Upravte funkci drawDistanceCircle():
+function drawDistanceCircle() {
+    // Odstraň předchozí kruh a marker
+    if (distanceCircle) {
+        map.removeLayer(distanceCircle);
+        distanceCircle = null;
+    }
+    if (advertiserMarker) {
+        map.removeLayer(advertiserMarker);
+        advertiserMarker = null;
+    }
+    
+    if (!advertiserLocation || advertiserLocation.radius === 0) return;
+    
+    // Vytvoř kruh s NÍZKOU prioritou (bude POD piloty)
+    distanceCircle = L.circle([advertiserLocation.lat, advertiserLocation.lng], {
+        radius: advertiserLocation.radius * 1000,
+        color: '#007bff',
+        fillColor: '#007bff',
+        fillOpacity: 0.1,
+        weight: 2,
+        dashArray: '5, 5',
+        interactive: false, // DŮLEŽITÉ: vypni interaktivitu
+        bubblingMouseEvents: false // DŮLEŽITÉ: nepropaguj události
+    });
+    
+    // Přidej kruh na mapu, ale S POD PILOTY
+    // Nejprve odeberme vrstvy
+    if (markers) {
+        map.removeLayer(markers);
+    }
+    
+    // Přidej kruh
+    distanceCircle.addTo(map);
+    
+    // Přidej marker
+    let iconHtml = '<div class="distance-dot"></div>';
+    let iconClass = 'distance-marker';
+    
+    if (advertiserLocation.source === 'city') {
+        iconHtml = '<div class="city-dot"><i class="bi bi-geo-alt-fill"></i></div>';
+        iconClass = 'city-marker';
+    }
+    
+    advertiserMarker = L.marker([advertiserLocation.lat, advertiserLocation.lng], {
+        icon: L.divIcon({
+            className: iconClass,
+            html: iconHtml,
+            iconSize: [20, 20]
+        }),
+        interactive: false // Marker také neinteraktivní
+    }).addTo(map);
+    
+    // Bind popup
+    let popupText = `Okruh: ${advertiserLocation.radius} km`;
+    if (advertiserLocation.source === 'city') {
+        popupText = `${advertiserLocation.cityName} - okruh: ${advertiserLocation.radius} km`;
+    } else if (advertiserLocation.source === 'geolocation') {
+        popupText = `Vaše poloha - okruh: ${advertiserLocation.radius} km`;
+    }
+    
+    advertiserMarker.bindPopup(popupText);
+    
+    // A TEĎ přidej piloty NAD kruh
+    if (markers) {
+        map.addLayer(markers);
+    }
+    
+    // Centruj mapu na polohu
+    map.setView([advertiserLocation.lat, advertiserLocation.lng], 10);
+}
+
+// Upravte také funkci drawPilots():
+function drawPilots(pilots) {
+    markers.clearLayers();
+    pilotCircles = [];
+
+    pilots.forEach(p => {
+        if (p.visible !== "ANO" || !p.latitude || !p.longitude) return;
+
+        let circleOptions = {
+            radius: 2000,
+            fillOpacity: 0.2,
+            color: p.available === "ANO" ? 'green' : 'gray',
+            fillColor: p.available === "ANO" ? '#4CAF50' : '#CCCCCC',
+            weight: 1,
+            interactive: true, // Ujistěte se, že piloti jsou interaktivní
+            pilotData: p 
+        };
+
+        if (p.type_account === "Free") {
+            circleOptions.color = 'lightgreen';
+            circleOptions.fillOpacity = 0.2;
+        } else if (p.type_account === "Basic") {
+            circleOptions.color = 'darkgreen';
+            circleOptions.fillOpacity = 0.5;
+        } else if (p.type_account === "Premium") {
+            circleOptions.color = 'purple';
+            circleOptions.fillColor = 'purple';
+            circleOptions.fillOpacity = 0.8;
+            circleOptions.radius = 10000;
+            circleOptions.weight = 3;
+        }
+
+        const circle = L.circle([p.latitude, p.longitude], circleOptions);
+        const popupContent = createPopupContent(p);
+        
+        circle.bindPopup(popupContent);
+        markers.addLayer(circle);
+        pilotCircles.push(circle);
+    });
+
+    // DŮLEŽITÉ: Přidej piloty AŽ PO kruhu
+    // Nejprve odeber, pokud už je na mapě
+    if (map.hasLayer(markers)) {
+        map.removeLayer(markers);
+    }
+    
+    // Přidej zpět (bude nad kruhem)
+    map.addLayer(markers);
+    
+    if (markers.getBounds().isValid()) {
+        map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+    } else {
+        map.setView([49.8, 15.5], 7);
+    }
+}
+
+    // NASTAVENÍ POLOHY
+    function setLocation(lat, lng, radius, source, cityName = null) {
+        advertiserLocation = {
+            lat: lat,
+            lng: lng,
+            radius: radius,
+            source: source,
+            cityName: cityName,
+            timestamp: Date.now()
+        };
+        
+        saveLocationToStorage();
+        updateDistanceUI();
+        applyFilters();
+        drawDistanceCircle();
+    }
+
+    // POUŽITÍ AKTUÁLNÍ POLOHY
+    if (btnUseLocation) {
+        btnUseLocation.addEventListener('click', function() {
+            if (!navigator.geolocation) {
+                alert("Geolokace není podporována vaším prohlížečem");
+                return;
+            }
+            
+            const originalHtml = this.innerHTML;
+            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+            this.disabled = true;
+            
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const radius = parseInt(filterDistanceSlider?.value || '50');
+                    setLocation(
+                        position.coords.latitude,
+                        position.coords.longitude,
+                        radius,
+                        'geolocation'
+                    );
+                    
+                    this.innerHTML = originalHtml;
+                    this.disabled = false;
+                },
+                (error) => {
+                    let errorMsg = "Nelze získat polohu: ";
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg += "Přístup k poloze byl odepřen. Povolte polohové služby v prohlížeči.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg += "Informace o poloze není dostupná.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg += "Časový limit vypršel.";
+                            break;
+                        default:
+                            errorMsg += "Neznámá chyba.";
+                    }
+                    alert(errorMsg);
+                    
+                    this.innerHTML = originalHtml;
+                    this.disabled = false;
+                },
+                { timeout: 10000, maximumAge: 600000 }
+            );
+        });
+    }
+
+    // VÝBĚR POLOHY NA MAPĚ
+    if (btnPickOnMap) {
+        btnPickOnMap.addEventListener('click', function() {
+            isSelectingLocation = !isSelectingLocation;
+            
+            if (isSelectingLocation) {
+                this.classList.add('btn-primary');
+                this.classList.remove('btn-outline-primary');
+                this.innerHTML = '<i class="bi bi-geo-fill"></i>';
+                
+                map.getContainer().style.cursor = 'crosshair';
+                
+                // Jednorázový posluchač kliknutí na mapu
+                const clickHandler = (e) => {
+                    const radius = parseInt(filterDistanceSlider?.value || '50');
+                    setLocation(
+                        e.latlng.lat,
+                        e.latlng.lng,
+                        radius,
+                        'map_click'
+                    );
+                    
+                    // Ukonči režim výběru
+                    btnPickOnMap.classList.remove('btn-primary');
+                    btnPickOnMap.classList.add('btn-outline-primary');
+                    btnPickOnMap.innerHTML = '<i class="bi bi-map"></i>';
+                    map.getContainer().style.cursor = '';
+                    map.off('click', clickHandler);
+                    isSelectingLocation = false;
+                };
+                
+                map.on('click', clickHandler);
+                alert("Klikněte na mapě pro výběr polohy");
+            } else {
+                this.classList.remove('btn-primary');
+                this.classList.add('btn-outline-primary');
+                this.innerHTML = '<i class="bi bi-map"></i>';
+                map.getContainer().style.cursor = '';
+            }
+        });
+    }
+
+    // RYCHLÁ TLAČÍTKA PRO MĚSTA
+    if (btnPrague) {
+        btnPrague.addEventListener('click', function() {
+            const radius = parseInt(filterDistanceSlider?.value || '50');
+            setLocation(
+                cityCoordinates.prague.lat,
+                cityCoordinates.prague.lng,
+                radius,
+                'city',
+                'Praha'
+            );
+        });
+    }
+    
+    if (btnBrno) {
+        btnBrno.addEventListener('click', function() {
+            const radius = parseInt(filterDistanceSlider?.value || '50');
+            setLocation(
+                cityCoordinates.brno.lat,
+                cityCoordinates.brno.lng,
+                radius,
+                'city',
+                'Brno'
+            );
+        });
+    }
+    
+    if (btnOstrava) {
+        btnOstrava.addEventListener('click', function() {
+            const radius = parseInt(filterDistanceSlider?.value || '50');
+            setLocation(
+                cityCoordinates.ostrava.lat,
+                cityCoordinates.ostrava.lng,
+                radius,
+                'city',
+                'Ostrava'
+            );
+        });
+    }
+
+    // ZRUŠENÍ FILTRU VZDÁLENOSTI
+    if (btnClearDistance) {
+        btnClearDistance.addEventListener('click', function() {
+            advertiserLocation = null;
+            saveLocationToStorage();
+            updateDistanceUI();
+            applyFilters();
+            drawDistanceCircle();
+        });
+    }
+
+    // SLIDER PRO VZDÁLENOST
+    if (filterDistanceSlider) {
+        // Aktualizace hodnoty při změně slideru
+        filterDistanceSlider.addEventListener('input', function() {
+            if (filterDistanceValue) {
+                filterDistanceValue.textContent = this.value === '0' ? 'Celá ČR' : `${this.value} km`;
+            }
+            
+            if (advertiserLocation) {
+                advertiserLocation.radius = parseInt(this.value);
+                saveLocationToStorage();
+                updateDistanceUI();
+                applyFilters();
+                drawDistanceCircle();
+            }
+        });
+        
+        // Aktualizace při puštění slideru
+        filterDistanceSlider.addEventListener('change', function() {
+            if (advertiserLocation) {
+                advertiserLocation.radius = parseInt(this.value);
+                saveLocationToStorage();
+                applyFilters();
+            }
+        });
+    }
 
     async function getAdvertiserIdAndLoadMap() {
         const advertiserEmail = localStorage.getItem("inzerentEmail");
@@ -255,61 +1018,128 @@ document.addEventListener('DOMContentLoaded', async function () {
     }
 
     function populateSpecializations() {
-  const select = document.getElementById('filter-specialization');
-  if (!select) return;
+        const select = document.getElementById('filter-specialization');
+        if (!select) return;
 
-  const specsSet = new Set();
-  allPilots.forEach(p => {
-    if (Array.isArray(p.specializations)) {
-      p.specializations.forEach(s => s && specsSet.add(s.trim()));
-    } else if (typeof p.specialization === 'string' && p.specialization.trim() !== '') {
-      p.specialization.split(',').forEach(s => specsSet.add(s.trim()));
-    }
-  });
+        const specsSet = new Set();
+        allPilots.forEach(p => {
+            if (Array.isArray(p.specializations)) {
+                p.specializations.forEach(s => s && specsSet.add(s.trim()));
+            } else if (typeof p.specialization === 'string' && p.specialization.trim() !== '') {
+                p.specialization.split(',').forEach(s => specsSet.add(s.trim()));
+            }
+        });
 
-  const specs = Array.from(specsSet).sort((a, b) => a.localeCompare(b, 'cs'));
-  select.innerHTML = '<option value="">Všechny specializace</option>';
-  specs.forEach(spec => {
-    const opt = document.createElement('option');
-    opt.value = spec;
-    opt.textContent = spec;
-    select.appendChild(opt);
-  });
-}
-
-
-    function applyFilters() {
-  const selectedSpec = filterSpecialization.value;
-  const selectedRegion = filterRegion.value;
-  const selectedAvailability = filterAvailability.value;
-  const selectedVolunteer = filterVolunteer.value;
-  const selectedVerified = filterVerified.value;
-
-  const filteredPilots = allPilots.filter(p => {
-    // ✅ logika specializací
-    let pilotSpecs = [];
-    if (Array.isArray(p.specializations)) {
-      pilotSpecs = p.specializations.map(s => s.trim());
-    } else if (typeof p.specialization === 'string') {
-      pilotSpecs = p.specialization.split(',').map(s => s.trim());
+        const specs = Array.from(specsSet).sort((a, b) => a.localeCompare(b, 'cs'));
+        select.innerHTML = '<option value="">Všechny specializace</option>';
+        specs.forEach(spec => {
+            const opt = document.createElement('option');
+            opt.value = spec;
+            opt.textContent = spec;
+            select.appendChild(opt);
+        });
     }
 
-    const matchesSpec = !selectedSpec || pilotSpecs.includes(selectedSpec);
+    // UPRAVENÁ FUNKCE applyFilters S FILTREM VZDÁLENOSTI
+function applyFilters() {
+    const selectedSpec = filterSpecialization.value;
+    const selectedRegion = filterRegion.value;
+    const selectedAvailability = filterAvailability.value;
+    const selectedVolunteer = filterVolunteer.value;
+    const selectedVerified = filterVerified.value;
 
-    const matchesRegion = !selectedRegion || p.region === selectedRegion;
-    const matchesAvailability = !selectedAvailability || p.available === selectedAvailability;
-    const matchesVolunteer = !selectedVolunteer || p.volunteer === selectedVolunteer;
-    const isVerified = p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16;
-    const matchesVerified = !selectedVerified ||
-      (selectedVerified === 'YES' && isVerified) ||
-      (selectedVerified === 'NO' && !isVerified);
+    const filteredPilots = allPilots.filter(p => {
+        // ✅ LOGIKA SPECIALIZACÍ (zůstává stejná)
+        let pilotSpecs = [];
+        if (Array.isArray(p.specializations)) {
+            pilotSpecs = p.specializations.map(s => s.trim());
+        } else if (typeof p.specialization === 'string') {
+            pilotSpecs = p.specialization.split(',').map(s => s.trim());
+        }
 
-    return matchesSpec && matchesRegion && matchesAvailability && matchesVolunteer && matchesVerified;
-  });
+        const matchesSpec = !selectedSpec || pilotSpecs.includes(selectedSpec);
+        const matchesRegion = !selectedRegion || p.region === selectedRegion;
+        const matchesAvailability = !selectedAvailability || p.available === selectedAvailability;
+        const matchesVolunteer = !selectedVolunteer || p.volunteer === selectedVolunteer;
+        const isVerified = p.registrationnumber && p.registrationnumber.startsWith("CZE") && p.registrationnumber.length === 16;
+        const matchesVerified = !selectedVerified ||
+            (selectedVerified === 'YES' && isVerified) ||
+            (selectedVerified === 'NO' && !isVerified);
 
-  drawPilots(filteredPilots);
+        // ✅ NOVÁ LOGIKA: FILTR PODLE VZDÁLENOSTI
+        let matchesDistance = true;
+        if (advertiserLocation && advertiserLocation.radius > 0) {
+            if (!p.latitude || !p.longitude) {
+                matchesDistance = false;
+            } else {
+                const distance = calculateDistance(
+                    advertiserLocation.lat,
+                    advertiserLocation.lng,
+                    p.latitude,
+                    p.longitude
+                );
+                matchesDistance = distance <= advertiserLocation.radius;
+            }
+        }
+
+        // ✅ VŠECHNY PODMÍNKY MUSÍ PLATIT
+        return matchesSpec && matchesRegion && matchesAvailability && 
+               matchesVolunteer && matchesVerified && matchesDistance;
+    });
+
+    // Aplikuj řazení
+    const sortedPilots = sortPilots(filteredPilots);
+    
+    drawPilots(sortedPilots);
+    
+    // Aktualizuj statistiky s aktuálními daty
+    updateStatistics(filteredPilots);
+    
+    // Aktualizuj doporučení
+    setTimeout(() => updateRecommendations(), 100);
 }
 
+    // FUNKCE PRO AKTUALIZACI STATISTIKY
+    function updateDistanceStats(pilots) {
+        const statsEl = document.getElementById('distance-stats');
+        if (!statsEl) return;
+        
+        const totalVisible = allPilots.filter(p => p.visible === "ANO").length;
+        let statsText = '';
+        
+        if (advertiserLocation && advertiserLocation.radius > 0) {
+            const inRadius = pilots.length;
+            let locationName = 'nastavené polohy';
+            
+            if (advertiserLocation.source === 'city') {
+                locationName = advertiserLocation.cityName;
+            } else if (advertiserLocation.source === 'geolocation') {
+                locationName = 'vaší polohy';
+            } else if (advertiserLocation.source === 'map_click') {
+                locationName = 'vybraného místa';
+            }
+            
+            statsText = `Pilotů do ${advertiserLocation.radius} km od ${locationName}: ${inRadius} z ${totalVisible}`;
+            
+            // Přidej průměrnou vzdálenost
+            if (inRadius > 0) {
+                const totalDistance = pilots.reduce((sum, p) => {
+                    return sum + calculateDistance(
+                        advertiserLocation.lat, 
+                        advertiserLocation.lng, 
+                        p.latitude, 
+                        p.longitude
+                    );
+                }, 0);
+                const avgDistance = (totalDistance / inRadius).toFixed(1);
+                statsText += ` (průměrně ${avgDistance} km)`;
+            }
+        } else {
+            statsText = `Celkem pilotů: ${totalVisible}`;
+        }
+        
+        statsEl.textContent = statsText;
+    }
 
     function drawPilots(pilots) {
         markers.clearLayers();
@@ -352,193 +1182,197 @@ document.addEventListener('DOMContentLoaded', async function () {
         if (markers.getBounds().isValid()) {
             map.fitBounds(markers.getBounds(), { padding: [30, 30] });
         } else {
-            map.setView([49.8, 15.5], 7); // Default view if no pilots are found
+            map.setView([49.8, 15.5], 7);
         }
     }
 
-   function createPopupContent(p) {
-  const popupContent = document.createElement('div');
-  popupContent.className = 'pilot-card';
+    function createPopupContent(p) {
+        const popupContent = document.createElement('div');
+        popupContent.className = 'pilot-card';
 
-  const loggedIn = localStorage.getItem("inzerentEmail");
-  const isAvailable = p.available === "ANO";
-  const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
-  const hasBuildBadge = p.id && Number(p.id) <= 80;
-  const buildBadge = hasBuildBadge
-    ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
-    : "";
-  const pilotNameWithBadge = `${p.name || 'Pilot bez jména'}${buildBadge}`;
-  const fakeNameWithBadge = `${fakeName}${buildBadge}`;
-  const hasPublicConsent = normalizeConsent(p.hasPublicConsent ?? p.granted ?? false);
-  const isVerified =
-    p.registrationnumber &&
-    p.registrationnumber.startsWith("CZE") &&
-    p.registrationnumber.length === 16;
+        const loggedIn = localStorage.getItem("inzerentEmail");
+        const isAvailable = p.available === "ANO";
+        const fakeName = fakeNames[Math.floor(Math.random() * fakeNames.length)];
+        const hasBuildBadge = p.id && Number(p.id) <= 80;
+        const buildBadge = hasBuildBadge
+            ? `<img src="/icons/build50_v1.png" alt="Build 50" width="64" height="64" class="ms-2 align-middle" title="Build 50">`
+            : "";
+        const pilotNameWithBadge = `${p.name || 'Pilot bez jména'}${buildBadge}`;
+        const fakeNameWithBadge = `${fakeName}${buildBadge}`;
+        const hasPublicConsent = normalizeConsent(p.hasPublicConsent ?? p.granted ?? false);
+        const isVerified =
+            p.registrationnumber &&
+            p.registrationnumber.startsWith("CZE") &&
+            p.registrationnumber.length === 16;
 
-  let html = '';
+        let html = '';
 
-  // --- GDPR nesouhlas ---
-  if (!hasPublicConsent) {
-    html = `
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
-      </div>
-      <div class="d-flex flex-wrap gap-2 mb-2">
-        ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Dobrovolník</span>` : ''}
-        <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
-      </div>
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-    `;
-  }
+        // --- GDPR nesouhlas ---
+        if (!hasPublicConsent) {
+            html = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${fakeNameWithBadge}</h3>
+                </div>
+                <div class="d-flex flex-wrap gap-2 mb-2">
+                    ${p.volunteer === 'ANO' ? `<span class="badge-volunteer">Dobrovolník</span>` : ''}
+                    <span class="badge-gdpr">Bez GDPR souhlasu – kontakt přes administrátora</span>
+                </div>
+                ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+            `;
+        }
 
-  // --- Nedostupný pilot ---
-  else if (!isAvailable) {
-    html = `
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
-        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
-      </div>
-      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-      <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-    `;
-  }
+        // --- Nedostupný pilot ---
+        else if (!isAvailable) {
+            html = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+                    ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+                </div>
+                ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+                <p class="text-danger"><i class="bi bi-exclamation-triangle-fill me-1"></i>Tento pilot momentálně není k dispozici</p>
+                ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+            `;
+        }
 
-  // --- Přihlášený inzerent (hlavní logika) ---
-  else if (loggedIn) {
-    html = `
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
-        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
-      </div>
-      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-    `;
+        // --- Přihlášený inzerent (hlavní logika) ---
+        else if (loggedIn) {
+            html = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+                    ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+                </div>
+                ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+            `;
 
-    // === BASIC účet ===
-    if (p.type_account === "Basic") {
-      if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
-      if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
-      if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
-      if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
-      if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
+            // === BASIC účet ===
+            if (p.type_account === "Basic") {
+                if (p.drones) html += `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>`;
+                if (p.note) html += `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>`;
+                if (p.travel) html += `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>`;
+                if (p.licenses) html += `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>`;
+                if (p.specialization) html += `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>`;
 
-      html += `
-        <div class="mt-3">
-          <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.id}')">
-            ✉️ Napsat pilotovi
-          </button>
-        </div>
-      `;
+                html += `
+                    <div class="mt-3">
+                        <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100" onclick="contactPilot('${p.id}')">
+                            ✉️ Napsat pilotovi
+                        </button>
+                    </div>
+                `;
+            }
+
+            // === PREMIUM účet ===
+            else if (p.type_account === "Premium") {
+                html += `
+                    ${p.email ? `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>` : ''}
+                    ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
+                    ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+                    ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+                    ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
+                    ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+                    ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
+                `;
+            }
+
+            // === FREE účet ===
+            else {
+                html += `
+                    ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+                    ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
+                    
+                    <p class="text-muted small mt-3 mb-2">
+                        Pilot má Free účet, komunikace je nedostupná. 
+                        <br>
+                        Odpověď není garantována.
+                    </p>
+                    <button class="btn btn-sm btn-outline-success w-100" 
+                            style="font-size: 13px;
+                                   padding: 4px 8px;
+                                   border-color: #28a745; 
+                                   color: #28a745;" 
+                            onmouseover="this.style.backgroundColor='#e6ffe9'" 
+                            onmouseout="this.style.backgroundColor='transparent'"
+                            onclick="sponsorPilotUpgrade('${p.id}', '${p.name.replace(/'/g, "\\'")}', 3, 40.00)">
+                        🎁 Darovat 3 dny Basic účtu pro kontakt
+                    </button>
+                `;
+            }
+        }
+
+        // --- Nepřihlášený inzerent ---
+        else {
+            html = `
+                <div class="d-flex justify-content-between align-items-center mb-1">
+                    <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
+                    ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
+                </div>
+                ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
+                <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
+                ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
+                ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
+                ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
+                <p class="text-muted"><em>Přihlaste se jako inzerent pro více informací o pilotovi.</em></p>
+            `;
+        }
+
+        popupContent.innerHTML = html;
+        return popupContent;
     }
 
-    // === PREMIUM účet ===
-    else if (p.type_account === "Premium") {
-      html += `
-        ${p.email ? `<p><i class="bi bi-envelope-at me-1"></i><a href="mailto:${p.email}">${p.email}</a></p>` : ''}
-        ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><a href="tel:${p.phone}">${p.phone}</a></p>` : ''}
-        ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-        ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-        ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
-        ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-        ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-      `;
-    }
-
-// === FREE účet – jen stručné info + DECENTNÍ TLAČÍTKO SPONZORSTVÍ ===
-else {
-  html += `
-    ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-    ${p.drones ? `<p><i class="bi bi-drone me-1"></i><strong>Drony:</strong> ${p.drones}</p>` : ''}
-    
-    <p class="text-muted small mt-3 mb-2">
-    Pilot má Free účet, komunikace je nedostupná. 
-    <br>
-    Odpověď není garantována.
-</p>
-<button class="btn btn-sm btn-outline-success w-100" 
-        style="font-size: 13px;
-               padding: 4px 8px;
-               border-color: #28a745; 
-               color: #28a745;" 
-        onmouseover="this.style.backgroundColor='#e6ffe9'" 
-        onmouseout="this.style.backgroundColor='transparent'"
-        onclick="sponsorPilotUpgrade('${p.id}', '${p.name.replace(/'/g, "\\'")}', 3, 40.00)">
-    🎁 Darovat 3 dny Basic účtu pro kontakt
-</button>
-  `;
-}
-  }
-
-  // --- Nepřihlášený inzerent ---
-  else {
-    html = `
-      <div class="d-flex justify-content-between align-items-center mb-1">
-        <h3 class="mb-0"><i class="bi bi-person-circle me-1"></i>${pilotNameWithBadge}</h3>
-        ${isVerified ? `<img src="/icons/approved_4.png" alt="Ověřený provozovatel" width="60" class="me-2">` : ''}
-      </div>
-      ${p.volunteer === 'ANO' ? `<div class="mb-2"><span class="badge-volunteer">Dobrovolník</span></div>` : ''}
-      <p><i class="bi bi-envelope-at me-1"></i><span class="text-muted">[e-mail po přihlášení]</span></p>
-      ${p.phone ? `<p><i class="bi bi-telephone-fill me-1"></i><span class="text-muted">[telefon skryt]</span></p>` : ''}
-      ${p.specialization ? `<p><i class="bi bi-puzzle-fill me-1"></i><strong>Specializace:</strong> ${p.specialization}</p>` : ''}
-      ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
-      <p class="text-muted"><em>Přihlaste se jako inzerent pro více informací o pilotovi.</em></p>
-    `;
-  }
-
-  popupContent.innerHTML = html;
-  return popupContent;
-}
-
-
-    // Event Listeners for all filters
+    // EVENT LISTENERS PRO FILTRY
     document.querySelectorAll('.filter-section select').forEach(select => {
         select.addEventListener('change', applyFilters);
     });
 
+    // UPRAVENÝ RESET FILTRŮ
     resetFiltersBtn.addEventListener('click', () => {
         document.querySelectorAll('.filter-section select').forEach(select => select.value = '');
+        
+        // Resetuj také polohu a slider
+        advertiserLocation = null;
+        if (filterDistanceSlider) filterDistanceSlider.value = '50';
+        if (filterDistanceValue) filterDistanceValue.textContent = '50 km';
+        saveLocationToStorage();
+        updateDistanceUI();
+        drawDistanceCircle();
+        
         applyFilters();
     });
 
     centerMapBtn.addEventListener('click', () => {
-  // ✅ Nejprve vycentruj mapu podle pilotů
-  if (markers.getBounds().isValid()) {
-    map.fitBounds(markers.getBounds(), { padding: [30, 30] });
-  } else {
-    map.setView([49.8, 15.5], 7);
-  }
+        if (markers.getBounds().isValid()) {
+            map.fitBounds(markers.getBounds(), { padding: [30, 30] });
+        } else {
+            map.setView([49.8, 15.5], 7);
+        }
 
+        const mapSection = document.getElementById('sekce-mapa');
+        if (mapSection) {
+            mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    });
 
-  // ✅ Potom plynule "nascrolluj" dolů na mapu
-  const mapSection = document.getElementById('sekce-mapa');
-  if (mapSection) {
-    mapSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-  }
-});
+    // ŠIPKA NAHORU
+    const scrollUpBtn = document.getElementById('scroll-up-btn');
+    if (scrollUpBtn) {
+        window.addEventListener('scroll', () => {
+            const mapSection = document.getElementById('sekce-mapa');
+            if (!mapSection) return;
 
-// === ŠIPKA NAHORU ===
-const scrollUpBtn = document.getElementById('scroll-up-btn');
+            const rect = mapSection.getBoundingClientRect();
+            const isMapVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 100;
 
-window.addEventListener('scroll', () => {
-  const mapSection = document.getElementById('sekce-mapa');
-  if (!mapSection) return;
+            if (isMapVisible) {
+                scrollUpBtn.classList.add('show');
+            } else {
+                scrollUpBtn.classList.remove('show');
+            }
+        });
 
-  const rect = mapSection.getBoundingClientRect();
-  const isMapVisible = rect.top < window.innerHeight * 0.8 && rect.bottom > 100;
-
-  if (isMapVisible) {
-    scrollUpBtn.classList.add('show');
-  } else {
-    scrollUpBtn.classList.remove('show');
-  }
-});
-
-scrollUpBtn.addEventListener('click', () => {
-  // Plynulý návrat nahoru (nad mapu)
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-});
-
-
+        scrollUpBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    }
 
     map.on('zoomend', () => {
         const zoom = map.getZoom();
@@ -564,11 +1398,113 @@ scrollUpBtn.addEventListener('click', () => {
         });
     });
 
+    // INICIALIZACE
     getAdvertiserIdAndLoadMap();
+    
+    // Načti uloženou polohu
+    loadSavedLocation();
+    
+    // Přidej CSS styly
+    const style = document.createElement('style');
+    style.textContent = `
+        .distance-marker .distance-dot {
+            width: 12px;
+            height: 12px;
+            background: #007bff;
+            border: 2px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 4px rgba(0,0,0,0.5);
+        }
+        
+        .city-marker .city-dot {
+            width: 16px;
+            height: 16px;
+            background: #dc3545;
+            border: 2px solid white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 6px rgba(0,0,0,0.5);
+        }
+        
+        .city-marker .city-dot i {
+            font-size: 8px;
+            color: white;
+        }
+        
+        #distance-info {
+            font-size: 0.85em;
+        }
+        
+        #btn-clear-distance {
+            font-size: 0.8em;
+            padding: 2px 8px;
+        }
+        
+        .filter-card {
+            transition: all 0.2s ease;
+        }
+        
+        .filter-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        /* Styly pro rychlá tlačítka měst */
+        .city-buttons .btn {
+            font-size: 0.85rem;
+            padding: 4px 8px;
+        }
+        
+        /* Styly pro slider */
+        .distance-slider-container {
+            padding: 10px 0;
+        }
+        
+        .distance-slider {
+            width: 100%;
+            height: 6px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #dee2e6;
+            border-radius: 3px;
+            outline: none;
+        }
+        
+        .distance-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .distance-slider::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #007bff;
+            cursor: pointer;
+            border: 2px solid white;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        
+        .distance-value {
+            font-weight: bold;
+            color: #007bff;
+            min-width: 60px;
+            text-align: center;
+        }
+    `;
+    document.head.appendChild(style);
 
     // Inzerent login a banner
     const advertiserEmail = localStorage.getItem("inzerentEmail");
-    const advertiserId = localStorage.getItem("advertiserId"); // Corrected to use 'advertiserId'
+    const advertiserId = localStorage.getItem("advertiserId");
     const banner = document.getElementById("advertiser-banner");
 
     if (advertiserEmail && advertiserId && banner) {
@@ -578,7 +1514,7 @@ scrollUpBtn.addEventListener('click', () => {
         logoutBtn.addEventListener("click", () => {
             localStorage.removeItem("inzerentId");
             localStorage.removeItem("inzerentEmail");
-            localStorage.removeItem("advertiserId"); // Clear advertiserId too
+            localStorage.removeItem("advertiserId");
             window.location.href = "/index.html";
         });
     } else {
@@ -587,96 +1523,90 @@ scrollUpBtn.addEventListener('click', () => {
     }
 });
 
+// ZBYTEK FUNKCÍ ZŮSTÁVÁ STEJNÝ
 async function contactPilot(pilotId) {
-  const advertiserId = localStorage.getItem('advertiserId');
-  const advertiserEmail = localStorage.getItem('inzerentEmail');
+    const advertiserId = localStorage.getItem('advertiserId');
+    const advertiserEmail = localStorage.getItem('inzerentEmail');
 
-  if (!advertiserEmail || !advertiserId) {
-    alert("Musíte být přihlášen jako inzerent.");
-    return;
-  }
-
-  try {
-    const createConvRes = await fetch('/api/v2/create-conversation', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pilotId: pilotId,
-        advertiserId: advertiserId,
-        advertiserTable: 'advertisers'
-      }),
-      credentials: 'include'
-    });
-
-    const createConvData = await createConvRes.json();
-
-    if (createConvData.success && (createConvData.conversationId || createConvData.conversationUid)) {
-  const chatUrl = `chat.html?conversationId=${createConvData.conversationId}&uid=${createConvData.conversationUid}&pilotId=${pilotId}&advertiserId=${advertiserId}`;
-  window.location.href = chatUrl;
-} else {
-  alert('Nepodařilo se vytvořit nebo načíst konverzaci: ' + (createConvData.message || 'Neznámá chyba.'));
-}
-
-  } catch (error) {
-    console.error("Chyba při vytváření konverzace:", error);
-    alert('Došlo k chybě při vytváření konverzace.');
-  }
-}
-
-
-/**
- * Spustí proces sponzorství. Přijímá dynamické dny a částku.
- */
-async function sponsorPilotUpgrade(pilotId, pilotName, days, amount) {
-  const advertiserId = localStorage.getItem('advertiserId');
-  const advertiserEmail = localStorage.getItem('inzerentEmail');
-
-  if (!advertiserEmail || !advertiserId) {
-    alert("Musíte být přihlášen jako inzerent.");
-    return;
-  }
-
-  const confirmation = confirm(`
-    Opravdu chcete darovat pilotovi "${pilotName}" ${days} dní Basic účtu?
-    
-    Cena: ${amount.toFixed(2)} Kč bude odečtena z Vašeho kreditu.
-    POZOR: Odpověď pilota není garantována.
-  `);
-  if (!confirmation) return;
-  
-  try {
-    const upgradeRes = await fetch('/api/sponsor-upgrade', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        pilotId: pilotId,
-        sponsorEmail: advertiserEmail,
-        days: days, // PŘEDÁVÁME DYNAMICKY (nyní 3)
-        type: 'Basic', 
-        amount: amount // PŘEDÁVÁME DYNAMICKY (nyní 40.00)
-      }),
-      credentials: 'include'
-    });
-
-    const upgradeData = await upgradeRes.json();
-
-    if (!upgradeData.success) {
-      alert('❌ Transakce selhala: ' + (upgradeData.message || 'Nedostatečný kredit nebo neznámá chyba.'));
-      return;
+    if (!advertiserEmail || !advertiserId) {
+        alert("Musíte být přihlášen jako inzerent.");
+        return;
     }
 
-    alert(`✅ Transakce úspěšná. Pilot ${pilotName} má nyní ${days} dní Basic účtu. Budete přesměrován do chatu.`);
+    try {
+        const createConvRes = await fetch('/api/v2/create-conversation', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pilotId: pilotId,
+                advertiserId: advertiserId,
+                advertiserTable: 'advertisers'
+            }),
+            credentials: 'include'
+        });
 
-    // Znovu načíst a zobrazit nový kredit
-    loadCredit(advertiserEmail);
+        const createConvData = await createConvRes.json();
+
+        if (createConvData.success && (createConvData.conversationId || createConvData.conversationUid)) {
+            const chatUrl = `chat.html?conversationId=${createConvData.conversationId}&uid=${createConvData.conversationUid}&pilotId=${pilotId}&advertiserId=${advertiserId}`;
+            window.location.href = chatUrl;
+        } else {
+            alert('Nepodařilo se vytvořit nebo načíst konverzaci: ' + (createConvData.message || 'Neznámá chyba.'));
+        }
+
+    } catch (error) {
+        console.error("Chyba při vytváření konverzace:", error);
+        alert('Došlo k chybě při vytváření konverzace.');
+    }
+}
+
+async function sponsorPilotUpgrade(pilotId, pilotName, days, amount) {
+    const advertiserId = localStorage.getItem('advertiserId');
+    const advertiserEmail = localStorage.getItem('inzerentEmail');
+
+    if (!advertiserEmail || !advertiserId) {
+        alert("Musíte být přihlášen jako inzerent.");
+        return;
+    }
+
+    const confirmation = confirm(`
+        Opravdu chcete darovat pilotovi "${pilotName}" ${days} dní Basic účtu?
+        
+        Cena: ${amount.toFixed(2)} Kč bude odečtena z Vašeho kreditu.
+        POZOR: Odpověď pilota není garantována.
+    `);
+    if (!confirmation) return;
     
-    // Vytvořit konverzaci
-    contactPilot(pilotId); 
-    
-  } catch (error) {
-    console.error("Chyba při sponzorování pilota:", error);
-    alert('Došlo k chybě při komunikaci se serverem.');
-  }
+    try {
+        const upgradeRes = await fetch('/api/sponsor-upgrade', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                pilotId: pilotId,
+                sponsorEmail: advertiserEmail,
+                days: days,
+                type: 'Basic', 
+                amount: amount
+            }),
+            credentials: 'include'
+        });
+
+        const upgradeData = await upgradeRes.json();
+
+        if (!upgradeData.success) {
+            alert('❌ Transakce selhala: ' + (upgradeData.message || 'Nedostatečný kredit nebo neznámá chyba.'));
+            return;
+        }
+
+        alert(`✅ Transakce úspěšná. Pilot ${pilotName} má nyní ${days} dní Basic účtu. Budete přesměrován do chatu.`);
+
+        loadCredit(advertiserEmail);
+        contactPilot(pilotId); 
+        
+    } catch (error) {
+        console.error("Chyba při sponzorování pilota:", error);
+        alert('Došlo k chybě při komunikaci se serverem.');
+    }
 }
 
 async function loadCredit(advertiserEmail) {
@@ -694,9 +1624,7 @@ async function loadCredit(advertiserEmail) {
         console.error('Nelze načíst kredit:', e);
     }
 }
-
-</script>
-<footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+</script><footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
   <div class="container">
     <div class="row gy-3 justify-content-between">
       <div class="col-md-4">
@@ -712,7 +1640,7 @@ async function loadCredit(advertiserEmail) {
           <li><a href="/index.html?inzerent=1" class="text-decoration-none text-muted">Mapa pilotů</a></li>
           <li><a href="/o-projektu.html?inzerent=1" class="text-decoration-none text-muted">O projektu</a></li>
           <li><a href="/kontakt.html?inzerent=1" class="text-decoration-none text-muted">Kontakt</a></li>
-          <li><a href="/v-procesu.html" class="text-decoration-none text-muted">Blog</a></li>
+          <li><a href="/blog.html?inzerent=1" class="text-decoration-none text-muted">Blog</a></li>
         </ul>
       </div>
       <div class="col-md-3">
@@ -732,7 +1660,7 @@ async function loadCredit(advertiserEmail) {
     <div class="d-flex justify-content-between align-items-center small text-muted">
       <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
       <div>
-        <a href="/v-procesu.html" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+        <a href="https://www.facebook.com/profile.php?id=61583356353382" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
         <a href="https://www.instagram.com/najdipilota/" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
         <a href="/v-procesu.html" class="text-muted"><i class="bi bi-linkedin"></i></a>
       </div>

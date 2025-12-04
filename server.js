@@ -419,6 +419,58 @@ app.post('/admin-send-custom-email', requireAdminLogin, async (req,res)=>{
   }
 });
 
+// Přidat do server.js
+
+// 1. Endpoint pro získání pilotů v okruhu
+app.get('/api/pilots-in-radius', async (req, res) => {
+    try {
+        const { lat, lng, radius } = req.query;
+        
+        if (!lat || !lng || !radius) {
+            return res.status(400).json({ error: 'Chybí parametry: lat, lng, radius' });
+        }
+        
+        const latitude = parseFloat(lat);
+        const longitude = parseFloat(lng);
+        const radiusKm = parseInt(radius);
+        
+        // Načti všechny piloty z DB
+        const [allPilots] = await db.query('SELECT * FROM pilots WHERE visible = "ANO"');
+        
+        // Filtruj piloty v okruhu
+        const pilotsInRadius = allPilots.filter(pilot => {
+            if (!pilot.latitude || !pilot.longitude) return false;
+            
+            const distance = calculateDistance(
+                latitude, 
+                longitude, 
+                pilot.latitude, 
+                pilot.longitude
+            );
+            
+            return distance <= radiusKm;
+        });
+        
+        res.json(pilotsInRadius);
+        
+    } catch (error) {
+        console.error('Chyba při získávání pilotů v okruhu:', error);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+// 2. Helper funkce pro výpočet vzdálenosti (stejná jako v client-side)
+function calculateDistance(lat1, lon1, lat2, lon2) {
+    const R = 6371; // Země poloměr v km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a = 
+        Math.sin(dLat/2) * Math.sin(dLat/2) +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * 
+        Math.sin(dLon/2) * Math.sin(dLon/2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return R * c;
+}
 
 
 

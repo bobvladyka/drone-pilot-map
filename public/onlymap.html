@@ -456,12 +456,16 @@ function sortPilots(pilots) {
 
 // FUNKCE PRO STATISTIKY
 function updateStatistics(filteredPilots = []) {
-    // Pouze piloti s platnou GPS
-    const pilotsWithCoords = filteredPilots.filter(p => p.latitude && p.longitude);
+    // Pouze piloti, kteří se zobrazují na mapě
+    const pilotsWithCoords = filteredPilots.filter(
+        p => p.latitude && p.longitude && p.visible === "ANO"
+    );
 
     const total = pilotsWithCoords.length;
     const available = pilotsWithCoords.filter(p => p.available === "ANO").length;
-    const premium = pilotsWithCoords.filter(p => p.type_account === "Premium").length;
+    const premium = pilotsWithCoords.filter(
+        p => p.type_account?.toLowerCase() === "premium"
+    ).length;
 
     document.getElementById('stat-total').textContent = total;
     document.getElementById('stat-available').textContent = available;
@@ -480,6 +484,7 @@ function updateStatistics(filteredPilots = []) {
         radiusValue.classList.remove('active');
     }
 }
+
 
 
 // FUNKCE PRO HEATMAPU

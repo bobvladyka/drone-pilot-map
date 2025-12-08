@@ -239,6 +239,11 @@ function manualDiacriticsFix(text) {
     fixed = fixed.replace(/hlavnŘ/g, 'hlavně'); // Oprava
     fixed = fixed.replace(/vÜe/g, 'vše'); // Oprava
     fixed = fixed.replace(/problÝm¨/g, 'problémů'); // Oprava
+    fixed = fixed.replace(/probühlo/g, 'proběhlo');
+    fixed = fixed.replace(/hlavnü/g, 'hlavně');
+    fixed = fixed.replace(/problímů/g, 'problémů');
+    fixed = fixed.replace(/jií/g, 'již');
+    
 
     // Dodatečné opravy z Vašeho posledního výpisu (pokud selhaly jinde)
     fixed = fixed.replace(/probŘhl/g, 'proběhl');

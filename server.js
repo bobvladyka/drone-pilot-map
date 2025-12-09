@@ -5661,8 +5661,7 @@ app.get('/admin/manual-newsletter-send', allowLocalhostOnly, requireAdminLogin, 
         for (const email of allEmails) {
             await transporter.sendMail({
                 from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
-                to: email,
-                bcc: 'drboom@seznam.cz', 
+                to: email, 
                 subject: '🚁 Novinky na NajdiPilota.cz: Tipy a zajímavosti',
                 html
             });
@@ -5679,6 +5678,53 @@ app.get('/admin/manual-newsletter-send', allowLocalhostOnly, requireAdminLogin, 
         res.status(500).send(`❌ Chyba při manuálním spuštění: ${err.message}`);
     }
 });
+
+
+// =======================================================
+// 🌍 GLOBÁLNÍ ERROR HANDLER – NajdiPilota.cz
+// =======================================================
+app.use((err, req, res, next) => {
+  console.error("🔥 GLOBÁLNÍ SERVER ERROR:", {
+    message: err.message,
+    stack: err.stack,
+    path: req.originalUrl,
+    method: req.method,
+    time: new Date().toISOString()
+  });
+
+  // Pokud už server něco poslal, pouze ukonči
+  if (res.headersSent) {
+    return next(err);
+  }
+
+  // ✅ API požadavky → vrať JSON
+  if (
+    req.originalUrl.startsWith("/api") ||
+    req.headers.accept?.includes("application/json") ||
+    req.xhr
+  ) {
+    return res.status(500).json({
+      success: false,
+      error: "Nastala neočekávaná chyba na serveru",
+      code: 500
+    });
+  }
+
+  // ✅ Web → vrať krásnou NajdiPilota error stránku
+  return res
+    .status(500)
+    .sendFile(__dirname + "/public/error.html");
+});
+
+
+// =======================================================
+// 🧭 404 – STRÁNKA NENALEZENA
+// =======================================================
+app.use((req, res) => {
+  res.status(404).sendFile(__dirname + "/public/404.html");
+});
+
+
 
 
 // ---------------------------------------------------------------------
@@ -5878,6 +5924,10 @@ await transporter.sendMail({
     console.error('❌ /test-send-all-emails error:', err);
     res.status(500).send(`Chyba při odesílání: ${err.message}`);
   }
+});
+
+app.get("/test-500", (req, res) => {
+  throw new Error("Testovací pád serveru");
 });
 
 // ──────────────────────────────────────────────────────────────

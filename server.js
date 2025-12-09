@@ -6,20 +6,10 @@ const fetch = require('node-fetch');
 const { Pool } = require('pg');
 const path = require('path');
 const fs = require("fs");
-const BLOG_DIR = path.join(__dirname, "public", "blogposts");
 
-const multer = require('multer');
-const sharp = require('sharp');
 
-// Konfigurace pro nahrávání souborů (použijeme paměť RAM pro rychlé zpracování)
-// Konfigurace pro nahrávání - navýšení limitů pro velké texty (HTML)
-const upload = multer({ 
-    storage: multer.memoryStorage(),
-    limits: {
-        fieldSize: 25 * 1024 * 1024 // Povolit až 25 MB pro textová pole (HTML obsah)
-    }
-});
-const IMG_DIR = path.join(__dirname, "public", "blogposts_img");
+// --- BLOG NASTAVENÍ CESTY
+const { router: blogRoutes, initBlogRoutes } = require("./routes/blog");
 
 
 const prerender = require('prerender-node');
@@ -32,6 +22,7 @@ const cron = require('node-cron');
 const { parsePhoneNumberFromString } = require('libphonenumber-js');
 
 const app = express();
+
 
 // --- Referral code utils ---
 const crypto = require('crypto');
@@ -178,6 +169,9 @@ pool.on('connect', (client) => {
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
+app.use(express.static("public"));
+
+
 const changePassLimiter = rateLimit({
   windowMs: 10 * 60 * 1000, // 10 minut
   max: 20
@@ -232,76 +226,15 @@ function requireAdminLogin(req, res, next) {
     return res.redirect('/adminland.html');
 }
 
-// POST /api/admin/create-blog-post - Vytvoří článek + zpracuje obrázek
-app.post('/api/admin/create-blog-post', requireAdminLogin, upload.single('heroImage'), async (req, res) => {
-  try {
-    const { title, description, bodyHtml, category, author } = req.body;
-    let { slug } = req.body;
-
-    // 1. Validace
-    if (!title || !bodyHtml || !slug) {
-      return res.status(400).json({ error: "Chybí titulek, slug nebo obsah." });
-    }
-    
-    // Pojistka: Odstraníme diakritiku a mezery ze slugu, kdyby to frontend neudělal
-    // (backend musí být vždy "poslední instance pravdy")
-    // slug = slug.trim().toLowerCase()... (zjednodušeno, spoléháme na frontend)
-
-    // 2. ZPRACOVÁNÍ OBRÁZKU (Pokud byl nahrán)
-    if (req.file) {
-      const imageFilename = `${slug}-hero.webp`;
-      const imagePath = path.join(IMG_DIR, imageFilename);
-
-      // Sharp: změní velikost na max šířku 1200px, převede na WebP, kvalita 80%
-      await sharp(req.file.buffer)
-        .resize({ width: 1200, withoutEnlargement: true }) 
-        .webp({ quality: 80 })
-        .toFile(imagePath);
-      
-      console.log(`📸 Obrázek uložen: ${imageFilename}`);
-    } else {
-        // Pokud chcete vynutit obrázek, odkomentujte řádek níže:
-        // return res.status(400).json({ error: "Musíte nahrát hlavní obrázek!" });
-        console.warn("⚠️ Článek uložen bez nového obrázku (možná chyba?)");
-    }
-
-    // 3. GENEROVÁNÍ HTML
-    const articleData = {
-      title,
-      description: description || '',
-      bodyHtml,
-      category: category || 'Nezařazeno',
-      author: author || 'Tým NajdiPilota'
-    };
-
-    const finalHtmlContent = generateArticleHtml(slug, articleData); // Použije vaši existující funkci
-    const filename = `${slug}.html`;
-    const filePath = path.join(BLOG_DIR, filename);
-
-    // Uložení HTML článku
-fs.writeFileSync(filePath, finalHtmlContent, 'utf8');
-
-// Git automatizace
-runGitCommands(slug);
-
-
-    res.json({ 
-        success: true, 
-        message: `Článek i obrázek uloženy.`,
-        filename: filename,
-        url: `/blogposts/${filename}`
-    });
-
-  } catch (err) {
-    console.error("❌ Chyba:", err);
-    res.status(500).json({ error: err.message });
-  }
+// 4️⃣ NAPOJENÍ BLOGU ✅ TADY !!!
+initBlogRoutes({
+  requireAdminLogin,
 });
 
-// Route pro přístup k administraci blogu (chráněno)
-app.get('/admin-blog-create.html', requireAdminLogin, (req, res) => {
-  res.sendFile(path.join(__dirname, 'private', 'admin-blog-create.html'));
-});
+app.use(blogRoutes);
+
+
+
 
 // Route pro přístup k adminmaileru (chráněno)
 app.get('/admin-mailer.html', requireAdminLogin, (req, res) => {
@@ -2315,22 +2248,6 @@ app.post("/send-contact", async (req, res) => {
 
 
 
-app.get('/blog/article/:id', async (req, res) => {
-  const articleId = req.params.id;
-  try {
-    // Načteme konkrétní článek podle ID
-    const result = await pool.query('SELECT * FROM articles WHERE id = $1', [articleId]);
-    const article = result.rows[0];
-    if (article) {
-      res.render('article', { article });
-    } else {
-      res.status(404).send('Článek nebyl nalezen');
-    }
-  } catch (err) {
-    console.error('Chyba při načítání článku:', err);
-    res.status(500).send('Chyba na serveru');
-  }
-});
 
 
 
@@ -3448,247 +3365,6 @@ app.post('/api/v2/create-conversation', async (req, res) => {
   }
 });
 
-/**
- * Vytvoří kompletní HTML kód blogového článku podle šablony.
- * @param {string} slug - Unikátní název souboru (např. 20251127-nazev-clanku)
- * @param {object} data - Obsahuje title, description, bodyHtml, category, author
- * @returns {string} Kompletní HTML kód článku.
- */
-function generateArticleHtml(slug, data) {
-    const pubDate = new Date().toLocaleDateString('cs-CZ', { day: 'numeric', month: 'long', year: 'numeric' });
-    const url = `https://www.najdipilota.cz/blogposts/${slug}.html`;
-    const heroUrl = `/blogposts_img/${slug}-hero.webp`;
-    
-    // Připravíme HTML těla s připravenými odkazy pro sdílení
-    const processedBodyHtml = prepareSocialButtonsInContent(data.bodyHtml, slug, data.title, url);
-    
-    return `
-<!DOCTYPE html>
-<html lang="cs">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  
-  <title>${data.title} | NajdiPilota.cz</title>
-
-  <meta name="description" content="${data.description}" />
-  <meta name="robots" content="index, follow" />
-  <link rel="canonical" href="${url}" />
-  
-  <!-- Open Graph pro Facebook -->
-  <meta property="og:title" content="${data.title} | NajdiPilota.cz" />
-  <meta property="og:description" content="${data.description}" />
-  <meta property="og:url" content="${url}" />
-  <meta property="og:type" content="article" />
-  <meta property="og:image" content="https://www.najdipilota.cz${heroUrl}" />
-  
-  <!-- Twitter Cards -->
-  <meta name="twitter:card" content="summary_large_image" />
-  <meta name="twitter:title" content="${data.title}" />
-  <meta name="twitter:description" content="${data.description}" />
-  <meta name="twitter:image" content="https://www.najdipilota.cz${heroUrl}" />
-  
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=77" />
-  <style>
-    /* ... style pro články ... */
-    .article-meta { font-size: 0.9rem; color: #6c757d; margin-bottom: 1.5rem; }
-    .main-image { width: 100%; max-height: 420px; object-fit: cover; border-radius: 10px; margin-bottom: 2rem; }
-    .blog-content h2 { margin-top: 2rem; padding-bottom: 6px; border-bottom: 2px solid #e9ecef; }
-    
-    /* Styly pro tlačítka sdílení */
-    .social-sharing-section {
-        margin-top: 3rem;
-        padding-top: 2rem;
-        border-top: 2px solid #e9ecef;
-        background: #f8f9fa;
-        border-radius: 10px;
-        padding: 1.5rem;
-    }
-    .social-sharing-section h4 {
-        color: #0077B6;
-        margin-bottom: 1.5rem;
-        font-weight: 600;
-    }
-    .social-buttons-container {
-        display: flex;
-        gap: 1rem;
-        flex-wrap: wrap;
-        margin-bottom: 1rem;
-    }
-    .social-btn {
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
-        padding: 0.75rem 1.5rem;
-        border-radius: 8px;
-        font-weight: 500;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        border: none;
-        cursor: pointer;
-        font-family: 'Poppins', sans-serif;
-    }
-    .social-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-    .social-btn.facebook {
-        background: #1877F2;
-        color: white;
-        border: 1px solid #1877F2;
-    }
-    .social-btn.linkedin {
-        background: #0A66C2;
-        color: white;
-        border: 1px solid #0A66C2;
-    }
-    /* Kopírovat tlačítko - BÍLÝ TEXT na šedém pozadí */
-.social-btn.copy {
-    background: #6c757d;
-    color: white !important;
-    border: 1px solid #6c757d;
-}
-    /* IKONY - bílé pro kontrast */
-.social-btn svg {
-    width: 18px;
-    height: 18px;
-    fill: white; /* Bílé ikony */
-}
-
-
-    /* Zvýraznění po úspěšném kopírování */
-.social-btn.copy.success {
-    background: #28a745 !important;
-    border-color: #28a745 !important;
-    color: white !important;
-}
-    .share-note {
-        font-size: 0.85rem;
-        color: #6c757d;
-        margin-top: 1rem;
-        font-style: italic;
-    }
-    @media (max-width: 768px) {
-        .social-buttons-container {
-            flex-direction: column;
-        }
-        .social-btn {
-            width: 100%;
-            justify-content: center;
-        }
-    }
-  </style>
-</head>
-<body>
-
-  <div class="container py-5">
-    <div class="row justify-content-center">
-      <div class="col-lg-8">
-        <a href="/blog.html" class="text-primary fw-bold small text-decoration-none">
-          <i class="bi bi-arrow-left"></i> Zpět na blog
-        </a>
-
-        <h1 class="mt-3 fw-bold">${data.title}</h1>
-
-        <p class="article-meta">
-          Publikováno: ${pubDate} |
-          Kategorie: ${data.category} |
-          Autor: ${data.author}
-        </p>
-
-        <img src="${heroUrl}" class="main-image" alt="Hlavní obrázek článku">
-
-        <div class="blog-content fs-5">
-          ${processedBodyHtml}
-          
-          <!-- Automaticky přidáme blok sdílení, pokud není v textu -->
-          ${addSocialSharingBlockIfMissing(processedBodyHtml, slug, data.title, url)}
-        </div>
-
-      </div>
-    </div>
-  </div>
-
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-  
-  <script>
-  // Funkce pro kopírování URL článku
-  function copyArticleUrl(url) {
-      navigator.clipboard.writeText(url).then(() => {
-          // Zobrazit notifikaci
-          showNotification('✅ Odkaz zkopírován do schránky!');
-      }).catch(err => {
-          console.error('Chyba při kopírování: ', err);
-          showNotification('❌ Nepodařilo se zkopírovat odkaz', 'error');
-      });
-  }
-
-  // Funkce pro zobrazení notifikace
-  function showNotification(message, type = 'success') {
-      const notification = document.createElement('div');
-      notification.className = \`notification \${type}\`;
-      notification.innerHTML = \`
-          <div style="
-              position: fixed;
-              top: 20px;
-              right: 20px;
-              background: \${type === 'error' ? '#dc3545' : '#28a745'};
-              color: white;
-              padding: 15px 20px;
-              border-radius: 5px;
-              box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-              z-index: 9999;
-              animation: slideIn 0.3s ease;
-              font-family: 'Poppins', sans-serif;
-          ">
-              \${message}
-          </div>
-      \`;
-      
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-          notification.style.animation = 'slideOut 0.3s ease';
-          setTimeout(() => {
-              if (notification.parentNode) {
-                  notification.parentNode.removeChild(notification);
-              }
-          }, 300);
-      }, 3000);
-  }
-
-  // Přidat styly pro animaci
-  const style = document.createElement('style');
-  style.textContent = \`
-      @keyframes slideIn {
-          from {
-              transform: translateX(100%);
-              opacity: 0;
-          }
-          to {
-              transform: translateX(0);
-              opacity: 1;
-          }
-      }
-      @keyframes slideOut {
-          from {
-              transform: translateX(0);
-              opacity: 1;
-          }
-          to {
-              transform: translateX(100%);
-              opacity: 0;
-          }
-      }
-  \`;
-  document.head.appendChild(style);
-  </script>
-</body>
-</html>
-    `;
-}
 
 /**
  * Zpracuje HTML obsah a nahradí data- atributy pro sdílení skutečnými odkazy
@@ -3777,25 +3453,6 @@ function addSocialSharingBlockIfMissing(html, slug, title, url) {
 
 const { exec } = require("child_process");
 
-function runGitCommands(slug) {
-    console.log("🔄 Spouštím Git automatizaci...");
-
-    exec(`git add public/blogposts/* public/blogposts_img/*`, (err) => {
-        if (err) return console.error("Git add error:", err);
-
-        exec(`git commit -m "AUTO: nový blogpost ${slug}"`, (err) => {
-            if (err) {
-                console.log("ℹ️ Žádné nové změny k commitnutí.");
-                return;
-            }
-
-            exec(`git push origin main`, (err) => {
-                if (err) return console.error("Git push error:", err);
-                console.log("🚀 Blogpost automaticky commitnut a pushnut.");
-            });
-        });
-    });
-}
 
 
 app.listen(PORT, () => {
@@ -4711,55 +4368,6 @@ app.get('/test-digest', async (req, res) => {
   }
 });
 
-// ---------------------------------------------------------------------
-// BLOG
-// ---------------------------------------------------------------------
-app.get("/blog-list", (req, res) => {
-  try {
-    const files = fs.readdirSync(BLOG_DIR).filter(f => f.endsWith(".html"));
-
-    const posts = files.map(filename => {
-      const fullPath = path.join(BLOG_DIR, filename);
-      const html = fs.readFileSync(fullPath, "utf8");
-
-      const slug = filename.replace(".html", "");
-
-      // Title
-      const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
-      const title = titleMatch ? titleMatch[1] : "Bez názvu";
-
-      // Meta description
-      const descMatch = html.match(/<meta name="description" content="(.*?)"/);
-      const description = descMatch ? descMatch[1] : "";
-
-      // Date
-      const dateMatch = html.match(/Publikováno:\s*(.*?)\s*\|/);
-      const date = dateMatch ? dateMatch[1] : "";
-
-      // Category
-      const catMatch = html.match(/Kategorie:\s*(.*?)\s*\|/);
-      const category = catMatch ? catMatch[1] : "";
-
-      // Author
-      const authorMatch = html.match(/Autor:\s*(.*?)<\/p>/);
-      const author = authorMatch ? authorMatch[1] : "NajdiPilota";
-
-      // AUTO-GENERATED IMAGE (thumbnail = hero)
-      const image = `/blogposts_img/${slug}-hero.webp`;
-
-      return { title, description, image, date, category, author, slug };
-    });
-
-    // Sort newest first (because slugs begin with YYYYMMDD)
-    posts.sort((a, b) => b.slug.localeCompare(a.slug));
-
-    res.json(posts);
-
-  } catch (err) {
-    console.error("Blog error:", err);
-    res.status(500).json({ error: "Cannot load blog posts" });
-  }
-});
 
 
 
@@ -4982,43 +4590,6 @@ function serviceRequestEmailContent(p, serviceName) {
   `;
 }
 
-// Pomocná funkce: Získání nových blogových příspěvků za poslední týden
-// POZNÁMKA: Využívá předpoklad, že slug začíná YYYYMMDD (např. 20251127-nazev)
-async function getNewBlogPosts(sinceDate) {
-    const files = fs.readdirSync(BLOG_DIR).filter(f => f.endsWith(".html"));
-    const newPosts = [];
-
-    files.forEach(filename => {
-        const slug = filename.replace(".html", "");
-        const dateStr = slug.substring(0, 8); 
-        const year = dateStr.substring(0, 4);
-        const month = dateStr.substring(4, 6);
-        const day = dateStr.substring(6, 8);
-        
-        const postDate = new Date(`${year}-${month}-${day}`);
-
-        if (postDate > sinceDate) {
-            const fullPath = path.join(BLOG_DIR, filename);
-            const html = fs.readFileSync(fullPath, "utf8");
-            
-            // Extrahujeme Title a Description z HTML souboru (jako v blog-list)
-            const titleMatch = html.match(/<h1[^>]*>(.*?)<\/h1>/);
-            const descMatch = html.match(/<meta name="description" content="(.*?)"/);
-
-            newPosts.push({
-                title: titleMatch ? titleMatch[1] : "Bez názvu",
-                description: descMatch ? descMatch[1] : "",
-                slug: slug,
-                image: `/blogposts_img/${slug}-hero.webp`,
-                date: postDate.toLocaleDateString('cs-CZ')
-            });
-        }
-    });
-
-    // Nejnovější články nahoru
-    newPosts.sort((a, b) => b.slug.localeCompare(a.slug));
-    return newPosts;
-}
 
 // Pomocná funkce: Získání Instagram feedu (využívá existující logiku)
 async function fetchInstagramFeed() {
@@ -5926,9 +5497,6 @@ await transporter.sendMail({
   }
 });
 
-app.get("/test-500", (req, res) => {
-  throw new Error("Testovací pád serveru");
-});
 
 // ──────────────────────────────────────────────────────────────
 // CRON: Každé úterý v 09:00 (Praha) – Týdenní Newsletter (PRODUKČNÍ REŽIM)

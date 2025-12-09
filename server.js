@@ -1339,6 +1339,12 @@ app.delete("/delete-my-account", async (req, res) => {
       [pilotId]
     );
 
+    // ✅ 6.5) Smazat specializace pilota (OPRAVA TVÉ CHYBY)
+await client.query(
+  "DELETE FROM pilot_specializations WHERE pilot_id = $1",
+  [pilotId]
+);
+
     // 7) Nakonec smazat pilota
     await client.query(
       "DELETE FROM pilots WHERE id = $1",
@@ -1668,14 +1674,19 @@ app.post('/api/sponsor-upgrade', async (req, res) => {
 
     // 3) Aktualizace visible_valid pilota
     const updatePilot = await client.query(
-      `UPDATE pilots 
-       SET 
-         type_account = $1,
-         visible_valid = COALESCE(visible_valid, CURRENT_DATE) + INTERVAL '${daysNum} days'
-       WHERE id = $2
-       RETURNING id, email, name, type_account, visible_valid`,
-      [type, pilotId]
-    );
+  `
+  UPDATE pilots 
+  SET 
+    type_account = $1,
+    visible_valid = GREATEST(
+        COALESCE(visible_valid, NOW()),
+        NOW()
+    ) + ($2 || ' days')::INTERVAL
+  WHERE id = $3
+  RETURNING id, email, name, type_account, visible_valid
+  `,
+  [type, daysNum, pilotId]
+);
 
     if (updatePilot.rowCount === 0) {
       await client.query("ROLLBACK");
@@ -1698,7 +1709,7 @@ app.post('/api/sponsor-upgrade', async (req, res) => {
         from: '"NajdiPilota.cz" <dronadmin@seznam.cz>',
         to: pilot.email,
         bcc: 'drboom@seznam.cz',
-        subject: `🎁 Gratulujeme! Máte darovaných ${daysNum} dní Basic účtu!`, // days -> daysNum
+        subject: `🎁 Gratulujeme! Máte darovaných ${daysNum} dní Basic účtu!`,
         html: wrapEmailContent(`
             <p>Dobrý den ${escapeHtml(pilot.name || '')},</p>
             <p>Díky zájemci o Vaše služby (inzerent: <strong>${escapeHtml(sponsorEmail)}</strong>) Vám bylo <strong>darováno ${daysNum} dní</strong> Basic účtu!</p> // days -> daysNum

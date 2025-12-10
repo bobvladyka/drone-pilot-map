@@ -1276,8 +1276,17 @@ function applyFilters() {
                     ${p.note ? `<p><i class="bi bi-chat-left-text me-1"></i><strong>O mně:</strong> ${p.note}</p>` : ''}
                     ${p.travel ? `<p><i class="bi bi-signpost me-1"></i><strong>Dojíždění:</strong> ${p.travel}</p>` : ''}
                     ${p.licenses ? `<p><i class="bi bi-award me-1"></i><strong>Licence:</strong> ${p.licenses}</p>` : ''}
-                `;
-            }
+                
+<div class="mt-3">
+            <button class="pilot-login-btn btn-sm user-action d-flex align-items-center justify-content-center px-3 py-2 w-100"
+                onclick="contactPilot('${p.id}')">
+                ✉️ Napsat pilotovi
+            </button>
+        </div>
+    `;
+}
+
+
 
             // === FREE účet ===
             else {

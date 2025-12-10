@@ -556,9 +556,23 @@ if (pilot.type_account === "Basic") {
 
 if (pilot.type_account === "Premium") {
 
+ 
   // ➕ Zviditelni tlačítko pro přidání vlastní specializace
-  const addBtn = document.getElementById("addCategoryBtn");
-  if (addBtn) addBtn.classList.remove("d-none");
+  const addCategoryBtn = document.getElementById("addCategoryBtn");
+  if (addCategoryBtn) addCategoryBtn.classList.remove("d-none");
+
+  // ✅ MAX 5 DRONŮ PRO PREMIUM
+  const addDroneBtn = document.getElementById("add-drone-btn");
+  if (addDroneBtn) {
+    addDroneBtn.addEventListener("click", () => {
+      const dronesContainer = document.getElementById("drones");
+      if (dronesContainer.children.length >= 5) {
+        alert("V Premium účtu lze přidat maximálně 5 dronů.");
+        return;
+      }
+      addDroneField();
+    });
+  }
 
 
   // Max 10 specializací

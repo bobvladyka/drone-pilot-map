@@ -10,86 +10,449 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    html, body {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+    
     body {
       min-height: 100vh;
-      background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+      min-height: 100dvh;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      position: relative;
+      padding: 20px;
+    }
+    
+    /* Pozadí s logem v mřížce - jemné */
+    .background-pattern {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.03;
+      z-index: 0;
+      pointer-events: none;
+      background-image: url('/icons/logo.png');
+      background-size: 100px;
+      background-repeat: repeat;
+      background-position: center;
+    }
+    
+    .error-container {
+      width: 100%;
+      max-width: 800px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .error-box {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+      padding: 40px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(0, 0, 0, 0.05);
+    }
+    
+    .header-section {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .logo {
+      max-height: 60px;
+      margin-bottom: 15px;
+    }
+    
+    .tagline {
+      font-size: 1rem;
+      color: #6c757d;
+      font-weight: 400;
+      margin-bottom: 10px;
+    }
+    
+    .error-section {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 0 10px;
+    }
+    
+    .error-code {
+      font-size: 5rem;
+      font-weight: 900;
+      color: #dc3545;
+      margin-bottom: 5px;
+      line-height: 1;
+    }
+    
+    .error-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #495057;
+      margin-bottom: 25px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    
+    .drone-section {
+      text-align: center;
+      margin-bottom: 25px;
+    }
+    
+    .drone-icon {
+      font-size: 2.5rem;
+      margin-bottom: 15px;
+      display: inline-block;
+    }
+    
+    .drone-text {
+      font-size: 1.3rem;
+      font-weight: 600;
+      color: #212529;
+      margin-bottom: 15px;
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #d4edda;
+      color: #155724;
+      padding: 8px 20px;
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border: 2px solid #c3e6cb;
+      margin-top: 5px;
+    }
+    
+    .message-section {
+      text-align: center;
+      margin-bottom: 30px;
+      padding: 0 15px;
+    }
+    
+    .message-text {
+      font-size: 1rem;
+      color: #6c757d;
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    
+    .buttons-section {
+      max-width: 500px;
+      margin: 0 auto;
+    }
+    
+    .btn-wrapper {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 30px;
+    }
+    
+    .btn-error {
+      padding: 14px 24px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 1.05rem;
+      border: 2px solid transparent;
+      transition: all 0.2s ease;
+      text-decoration: none;
       display: flex;
       align-items: center;
       justify-content: center;
+      gap: 10px;
     }
-    .error-box {
-      max-width: 640px;
-      text-align: center;
-      background: white;
-      padding: 50px 40px;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.12);
-      border-top: 6px solid #ffc107;
+    
+    .btn-primary-custom {
+      background: #dc3545;
+      color: white;
+      border-color: #dc3545;
     }
-    .error-code {
-      font-size: 4.5rem;
-      font-weight: 900;
-      color: #dc3545;
-      letter-spacing: 2px;
+    
+    .btn-primary-custom:hover {
+      background: #c82333;
+      border-color: #c82333;
+      color: white;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
     }
-    .logo {
-      max-height: 90px;
-      margin-bottom: 20px;
-    }
-    .tagline {
-      font-size: 1.1rem;
+    
+    .btn-secondary-custom {
+      background: transparent;
       color: #6c757d;
-      margin-bottom: 25px;
+      border-color: #dee2e6;
     }
-    .fun-text {
-      font-size: 1.25rem;
-      margin-bottom: 15px;
+    
+    .btn-secondary-custom:hover {
+      background: #f8f9fa;
+      border-color: #adb5bd;
+      color: #495057;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+    
+    .footer-section {
+      text-align: center;
+      color: #6c757d;
+      font-size: 0.9rem;
+      padding-top: 20px;
+      border-top: 1px solid rgba(0, 0, 0, 0.08);
+    }
+    
+    .contact-email {
+      color: #dc3545;
       font-weight: 500;
+      text-decoration: none;
     }
-    .btn-main {
-      font-size: 1.05rem;
-      padding: 12px 22px;
+    
+    .contact-email:hover {
+      text-decoration: underline;
+    }
+    
+    /* Animace */
+    @keyframes shake {
+      0%, 100% { transform: translateX(0) rotate(0deg); }
+      25% { transform: translateX(-5px) rotate(-5deg); }
+      75% { transform: translateX(5px) rotate(5deg); }
+    }
+    
+    .drone-icon {
+      animation: shake 1.5s ease-in-out infinite;
+    }
+    
+    /* Responzivita */
+    @media (max-width: 768px) {
+      body {
+        padding: 15px;
+      }
+      
+      .error-box {
+        padding: 30px 20px;
+        border-radius: 12px;
+      }
+      
+      .error-code {
+        font-size: 4rem;
+      }
+      
+      .error-title {
+        font-size: 1.3rem;
+      }
+      
+      .drone-text {
+        font-size: 1.2rem;
+      }
+      
+      .btn-error {
+        padding: 12px 20px;
+        font-size: 1rem;
+      }
+      
+      .status-badge {
+        font-size: 0.9rem;
+        padding: 6px 16px;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .error-box {
+        padding: 25px 15px;
+      }
+      
+      .error-code {
+        font-size: 3.5rem;
+      }
+      
+      .error-title {
+        font-size: 1.1rem;
+      }
+      
+      .drone-text {
+        font-size: 1.1rem;
+      }
+      
+      .message-text {
+        font-size: 0.95rem;
+      }
+      
+      .btn-wrapper {
+        gap: 10px;
+      }
+      
+      .logo {
+        max-height: 50px;
+      }
+      
+      .tagline {
+        font-size: 0.9rem;
+      }
+      
+      .status-badge {
+        font-size: 0.85rem;
+        padding: 5px 14px;
+      }
+    }
+    
+    @media (max-height: 700px) {
+      .error-box {
+        padding: 25px 20px;
+        margin-bottom: 15px;
+      }
+      
+      .header-section {
+        margin-bottom: 20px;
+      }
+      
+      .error-section {
+        margin-bottom: 20px;
+      }
+      
+      .drone-section {
+        margin-bottom: 15px;
+      }
+      
+      .message-section {
+        margin-bottom: 20px;
+      }
+      
+      .btn-wrapper {
+        margin-bottom: 20px;
+      }
+    }
+    
+    /* Zajištění bez scrollování */
+    @media (max-height: 600px) {
+      .logo {
+        max-height: 40px;
+        margin-bottom: 10px;
+      }
+      
+      .tagline {
+        font-size: 0.85rem;
+        margin-bottom: 5px;
+      }
+      
+      .error-code {
+        font-size: 3rem;
+        margin-bottom: 0;
+      }
+      
+      .error-title {
+        font-size: 1rem;
+        margin-bottom: 15px;
+      }
+      
+      .drone-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+      }
+      
+      .drone-text {
+        font-size: 1rem;
+        margin-bottom: 8px;
+      }
+      
+      .status-badge {
+        font-size: 0.8rem;
+        padding: 4px 12px;
+        gap: 5px;
+      }
+      
+      .message-text {
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+      }
+      
+      .btn-error {
+        padding: 10px 16px;
+        font-size: 0.9rem;
+      }
+      
+      .footer-section {
+        font-size: 0.8rem;
+        padding-top: 15px;
+      }
     }
   </style>
 </head>
 <body>
 
-  <div class="error-box">
+  <div class="background-pattern"></div>
 
-    <!-- ✅ Branding NajdiPilota -->
-    <img src="/icons/logo.png" alt="NajdiPilota.cz" class="logo">
-
-    <div class="tagline">
-      Spojujeme zákazníky s ověřenými piloty dronů po celé ČR
+  <div class="error-container">
+    <div class="error-box">
+      
+      <!-- Header -->
+      <div class="header-section">
+        <img src="/icons/logo.png" alt="NajdiPilota.cz" class="logo">
+        <div class="tagline">
+          Spojujeme zákazníky s ověřenými piloty dronů po celé ČR
+        </div>
+      </div>
+      
+      <!-- Error code -->
+      <div class="error-section">
+        <div class="error-code">500</div>
+        <div class="error-title">ERROR - INTERNÍ CHYBA SERVERU</div>
+      </div>
+      
+      <!-- Drone section -->
+      <div class="drone-section">
+        <div class="drone-icon">🚁</div>
+        <div class="drone-text">
+          <strong>Dron právě nouzově přistál...</strong>
+        </div>
+        <div class="status-badge">
+          <i class="bi bi-check-circle-fill" style="color: #28a745;"></i> Pilot je v pořádku
+        </div>
+      </div>
+      
+      <!-- Message -->
+      <div class="message-section">
+        <p class="message-text">
+          Něco se pokazilo na trase mezi tebou a mapou pilotů.<br>
+          Server potřebuje krátký servis, ale již na tom pracujeme.
+        </p>
+      </div>
+      
+      <!-- Buttons -->
+      <div class="buttons-section">
+        <div class="btn-wrapper">
+          <a href="/" class="btn-error btn-primary-custom">
+            <i class="bi bi-map"></i> Zpět na mapu pilotů
+          </a>
+          
+          <a href="/kontakt.html" class="btn-error btn-secondary-custom">
+            <i class="bi bi-envelope"></i> Nahlásit chybu supportu
+          </a>
+        </div>
+      </div>
+      
+      <!-- Footer -->
+      <div class="footer-section">
+        NajdiPilota.cz • komunita pilotů dronů v Česku  
+        <br>
+        📧 <a href="mailto:dronadmin@seznam.cz" class="contact-email">dronadmin@seznam.cz</a>
+      </div>
+      
     </div>
-
-    <div class="error-code">500</div>
-
-    <p class="fun-text">
-      🚁 Dron právě nouzově přistál…
-    </p>
-
-    <p class="text-muted mb-4">
-      Něco se pokazilo na trase mezi tebou a mapou pilotů.  
-      Pilot je v pořádku ✅, ale server potřebuje krátký servis.
-    </p>
-
-    <div class="d-grid gap-3">
-      <a href="/" class="btn btn-warning btn-main">
-        <i class="bi bi-map me-1"></i> Zpět na mapu pilotů
-      </a>
-
-      <a href="/kontakt.html" class="btn btn-outline-secondary">
-        <i class="bi bi-envelope me-1"></i> Nahlásit chybu supportu
-      </a>
-    </div>
-
-    <div class="mt-4 small text-muted">
-      NajdiPilota.cz • komunita pilotů dronů v Česku  
-      <br>
-      📧 <a href="mailto:dronadmin@seznam.cz">dronadmin@seznam.cz</a>
-    </div>
-
   </div>
 
 </body>

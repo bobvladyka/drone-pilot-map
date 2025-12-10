@@ -12,6 +12,9 @@ const router = express.Router();
 // =======================================================
 const BLOG_DIR = path.join(__dirname, "..", "public", "blogposts");
 const IMG_DIR  = path.join(__dirname, "..", "public", "blogposts_img");
+const META_DIR = path.join(__dirname, "..", "blogposts_meta");
+if (!fs.existsSync(META_DIR)) fs.mkdirSync(META_DIR);
+
 
 // =======================================================
 // ✅ MULTER (UPLOAD OBRÁZKU)
@@ -193,13 +196,13 @@ function runGitCommands(slug) {
 // =======================================================
 // ✅ POST: CREATE BLOG POST (ADMIN)
 // =======================================================
-router.post(
-  "/api/admin/create-blog-post",
+router.post("/api/admin/create-blog-post",
   (req, res, next) => requireAdminLogin(req, res, next),
   upload.single("heroImage"),
   async (req, res) => {
     try {
-      const { title, description, bodyHtml, category, author, slug } = req.body;
+      const { title, description, bodyHtml, category, author, slug, status, publishAt } = req.body;
+
 
       // ✅ VALIDACE
       if (!title || !bodyHtml || !slug) {
@@ -239,15 +242,33 @@ router.post(
       fs.writeFileSync(filePath, finalHtmlContent, "utf8");
 
       // ===================================================
-      // ✅ 3. GIT PUSH
+      // ✅ 3. ULOŽENÍ META DAT
       // ===================================================
-      runGitCommands(slug);
+const metaData = {
+  title,
+  slug,
+  status: status || "published",
+  publishAt: publishAt || null,
+  createdAt: new Date().toISOString()
+};
 
-      res.json({ 
-        success: true,
-        filename,
-        url: `/blogposts/${filename}`
-      });
+fs.writeFileSync(
+  path.join(META_DIR, `${slug}.json`),
+  JSON.stringify(metaData, null, 2)
+);
+
+     // ===================================================
+     // ✅ 4. GIT PUSH – JEN POKUD JE PUBLIKOVÁNO
+     // ===================================================
+if (metaData.status === "published") {
+  runGitCommands(slug);
+}
+
+res.json({ 
+  success: true,
+  filename,
+  url: `/blogposts/${filename}`
+});
 
     } catch (err) {
       console.error("❌ BLOG ERROR:", err);
@@ -337,6 +358,90 @@ async function getNewBlogPosts(sinceDate) {
     return newPosts;
 }
 
+// =======================================================
+// ✅ ADMIN: PŘEHLED ČLÁNKŮ
+// =======================================================
+router.get(
+  "/api/admin/blog-list",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  (req, res) => {
+    const files = fs.readdirSync(META_DIR).filter(f => f.endsWith(".json"));
+    const posts = files.map(f =>
+      JSON.parse(fs.readFileSync(path.join(META_DIR, f)))
+    );
+    res.json(posts);
+  }
+);
+
+// =======================================================
+// ✅ ADMIN: SMAZÁNÍ ČLÁNKU
+// =======================================================
+router.delete(
+  "/api/admin/delete/:slug",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  (req, res) => {
+    const { slug } = req.params;
+
+    const htmlPath = path.join(BLOG_DIR, `${slug}.html`);
+    const imgPath  = path.join(IMG_DIR, `${slug}-hero.webp`);
+    const metaPath = path.join(META_DIR, `${slug}.json`);
+
+    if (fs.existsSync(htmlPath)) fs.unlinkSync(htmlPath);
+    if (fs.existsSync(imgPath)) fs.unlinkSync(imgPath);
+    if (fs.existsSync(metaPath)) fs.unlinkSync(metaPath);
+
+
+    runGitCommands(slug);
+    res.json({ success: true });
+  }
+);
+
+// =======================================================
+// ✅ ADMIN: OKAMŽITÉ PUBLIKOVÁNÍ
+// =======================================================
+router.post(
+  "/api/admin/publish/:slug",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  (req, res) => {
+    const { slug } = req.params;
+    const metaPath = path.join(META_DIR, `${slug}.json`);
+    const meta = JSON.parse(fs.readFileSync(metaPath));
+
+    meta.status = "published";
+    meta.publishAt = new Date().toISOString();
+
+    fs.writeFileSync(metaPath, JSON.stringify(meta, null, 2));
+    runGitCommands(slug);
+
+    res.json({ success: true });
+  }
+);
+
+// =======================================================
+// ✅ CRON: AUTOMATICKÉ VYDÁNÍ NAPLÁNOVANÝCH ČLÁNKŮ
+// =======================================================
+setInterval(() => {
+  const files = fs.readdirSync(META_DIR).filter(f => f.endsWith(".json"));
+
+  files.forEach(file => {
+    const data = JSON.parse(fs.readFileSync(path.join(META_DIR, file)));
+
+    if (
+  data.status === "scheduled" &&
+  data.publishAt &&
+  new Date(data.publishAt) <= new Date()
+) {
+      data.status = "published";
+      fs.writeFileSync(
+        path.join(META_DIR, file),
+        JSON.stringify(data, null, 2)
+      );
+      runGitCommands(data.slug);
+      console.log("✅ Automaticky publikováno:", data.slug);
+    }
+  });
+}, 60000);
+
 
 
 // =======================================================
@@ -350,7 +455,109 @@ router.get(
   }
 );
 
+// =======================================================
+// ✅ ADMIN: EDITACE ČLÁNKU – STRÁNKA
+// =======================================================
+router.get(
+  "/admin-blog-edit.html",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  (req, res) => {
+    res.sendFile(
+      path.join(__dirname, "..", "private", "admin-blog-edit.html")
+    );
+  }
+);
+
+
+// =======================================================
+// ✅ ADMIN: NAČTENÍ ČLÁNKU PRO EDITACI
+// =======================================================
+router.get(
+  "/api/admin/blog/:slug",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  (req, res) => {
+    const { slug } = req.params;
+
+    const htmlPath = path.join(BLOG_DIR, `${slug}.html`);
+    const metaPath = path.join(META_DIR, `${slug}.json`);
+
+    if (!fs.existsSync(htmlPath) || !fs.existsSync(metaPath)) {
+      return res.status(404).json({ error: "Článek nenalezen" });
+    }
+
+    const html = fs.readFileSync(htmlPath, "utf8");
+    const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
+
+    res.json({ html, meta });
+  }
+);
+
+// =======================================================
+// ✅ ADMIN: ULOŽENÍ UPRAVENÉHO ČLÁNKU
+// =======================================================
+router.post(
+  "/api/admin/update/:slug",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  upload.single("heroImage"),
+  async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const { title, description, bodyHtml, category, author, status, publishAt } = req.body;
+
+      const htmlPath = path.join(BLOG_DIR, `${slug}.html`);
+      const metaPath = path.join(META_DIR, `${slug}.json`);
+
+      if (req.file) {
+        await sharp(req.file.buffer)
+          .resize({ width: 1200, withoutEnlargement: true })
+          .webp({ quality: 80 })
+          .toFile(path.join(IMG_DIR, `${slug}-hero.webp`));
+      }
+
+      const articleData = {
+        title,
+        description: description || "",
+        bodyHtml,
+        category,
+        author
+      };
+
+      const finalHtmlContent = generateArticleHtml(slug, articleData);
+      fs.writeFileSync(htmlPath, finalHtmlContent, "utf8");
+
+      const metaData = {
+        title,
+        slug,
+        status,
+        publishAt: publishAt || null,
+        updatedAt: new Date().toISOString()
+      };
+
+      fs.writeFileSync(metaPath, JSON.stringify(metaData, null, 2));
+
+      if (status === "published") {
+        runGitCommands(slug);
+      }
+
+      res.json({ success: true });
+
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+
 module.exports = {
   router,
   initBlogRoutes
 };
+
+router.get(
+  "/admin-blog-list.html",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  (req, res) => {
+    res.sendFile(path.join(__dirname, "..", "private", "admin-blog-list.html"));
+  }
+);
+

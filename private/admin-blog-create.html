@@ -102,7 +102,7 @@
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h2 class="fw-bold text-dark">✨ Nový blogový článek</h2>
-        <a href="/admin.html" class="btn btn-outline-secondary">Zpět do menu</a>
+        <a href="/admin-blog-list.html" class="btn btn-outline-secondary">Zpět na přehled</a>
     </div>
     
     <div class="card p-4">
@@ -175,6 +175,23 @@
                 <div id="editor-container"></div>
                 <input type="hidden" name="bodyHtml" id="hiddenBodyHtml">
             </div>
+
+<!-- ✅ STAV PUBLIKACE -->
+<div class="mb-3">
+  <label class="form-label fw-bold">Stav článku</label>
+  <select name="status" class="form-select">
+    <option value="published">🚀 Publikovat hned</option>
+    <option value="scheduled">🕒 Naplánovat</option>
+    <option value="draft">📝 Uložit jako koncept</option>
+  </select>
+</div>
+
+<!-- ✅ DATUM PUBLIKACE -->
+<div class="mb-3">
+  <label class="form-label fw-bold">Datum publikace (pro plánování)</label>
+  <input type="datetime-local" name="publishAt" class="form-control">
+</div>
+
 
             <input type="hidden" name="author" value="Tým NajdiPilota">
 
@@ -397,6 +414,26 @@
         attachShareButtonListeners();
     });
 </script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const statusSelect = document.querySelector('select[name="status"]');
+  const dateInput = document.querySelector('input[name="publishAt"]');
+
+  function togglePublishDate() {
+    if (statusSelect.value === 'scheduled') {
+      dateInput.disabled = false;
+    } else {
+      dateInput.disabled = true;
+      dateInput.value = "";
+    }
+  }
+
+  statusSelect.addEventListener('change', togglePublishDate);
+  togglePublishDate(); // ✅ zavolá se hned při načtení
+});
+</script>
+
 
 </body>
 </html>

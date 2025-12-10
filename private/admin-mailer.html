@@ -162,10 +162,13 @@ const state = {
   rows: [],   // {id, name, email, category, note, selected}
   seq: 1,
   sending: false,
-  rateMs: 3000,
+  rateMs: 5000,
 };
 
 function rid() { return state.seq++; }
+
+// PŘIDEJTE TUTO FUNKCI:
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 
 function renderTable(){
   const tb = $('#tbody');
@@ -479,70 +482,111 @@ $('#btnPreview').addEventListener('click', () => {
 });
 
 /* ======= Odesílání ======= */
-/* Implementuj na backendu BUĎ /send-outreach (batch)
-   NEBO fallback /send-direct (single). Níže je klientská logika, která nejprve zkusí batch. */
+// Na začátku scriptu přidejte:
+const API_BASE = 'http://localhost:3000'; // nebo port kde běží váš server
 
+/* ======= Odesílání ======= */
 async function sendBatch(payload){
-  // očekávaný backend: POST /send-outreach  { emails:[], template:"general|realty|logistics", subject:"", customNote:"" }
-  const res = await fetch('/send-outreach', {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify(payload)
-  });
-  if(!res.ok) throw new Error('send-outreach HTTP '+res.status);
-  return res.json();
+  try {
+    const res = await fetch('/send-outreach', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
+    });
+    
+    // Pokud je 404, speciálně to necháme projít do fallbacku
+    if (res.status === 404) {
+      throw new Error('ENDPOINT_NOT_FOUND'); // Speciální error kód
+    }
+    
+    if(!res.ok) {
+      const errorText = await res.text();
+      throw new Error('send-outreach HTTP '+res.status + ': ' + errorText);
+    }
+    
+    return res.json();
+  } catch (e) {
+    // Pokud je to network error nebo 404, necháme to projít do fallbacku
+    console.log('Batch endpoint failed, will use fallback:', e.message);
+    throw e; // Propustíme dál
+  }
 }
 
-async function sendDirect(one){
-  // fallback: POST /send-direct  { to:"a@b.cz", html:"<html...>", subject:"..." }
-  const res = await fetch('/send-direct', {
-    method:'POST',
-    headers:{ 'Content-Type':'application/json' },
-    body: JSON.stringify(one)
-  });
-  if(!res.ok) throw new Error('send-direct HTTP '+res.status);
-  return res.json();
-}
-
-function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
-
+// admin-mailer.html: Najdi a nahraď celou funkci pro btnSend
 $('#btnSend').addEventListener('click', async () => {
-  if(state.sending) return;
+  if (state.sending) return;
   const selected = state.rows.filter(r => r.selected && r.email);
-  if(selected.length===0){ alert('Vyber aspoň jeden kontakt'); return; }
+  if (selected.length === 0) { alert('Vyber aspoň jeden kontakt'); return; }
 
   const template = $('#template').value;
-  const subject  = $('#subject').value.trim() || 'NajdiPilota.cz – droní služby';
+  const subject = $('#subject').value.trim() || 'NajdiPilota.cz – droní služby';
   const customNote = $('#customNote').value || '';
 
   state.sending = true;
-  $('#log').textContent = `Odesílám ${selected.length} e-mailů…\n`;
+  $('#log').textContent = `Odesílám ${selected.length} e-mailů (přes /send-direct)...\n`;
 
-  // 1) zkuste batch endpoint
-  try{
-    const emails = selected.map(r => ({ email:r.email, name:r.name||'', category:r.category||'' }));
-    const result = await sendBatch({ emails, template, subject, customNote });
-    $('#log').textContent += `✓ Batch odeslán (${selected.length}) – server odpověděl OK\n`;
-    state.sending = false;
-    return;
-  }catch(e){
-    $('#log').textContent += `⚠️ Batch endpoint nedostupný – přecházím na postupné odesílání.\n`;
-  }
+  let successCount = 0;
+  let errorCount = 0;
 
-  // 2) fallback – posílej po jednom s rate-limitem
-  for (let i=0;i<selected.length;i++){
+  for (let i = 0; i < selected.length; i++) {
     const r = selected[i];
-    const html = buildHtml(r);
-    try{
-      await sendDirect({ to:r.email, subject, html });
-      $('#log').textContent += `✓ ${r.email}\n`;
-    }catch(err){
-      $('#log').textContent += `✗ ${r.email} – CHYBA: ${err.message}\n`;
+    const progress = `${i + 1}/${selected.length}`;
+    const subjectFinal = subject.replace(/\[JMENO]/g, r.name).replace(/\[FIRMA]/g, r.name); // Personalizace, pokud ji šablony podporují
+
+    try {
+      // 1. Vytvořit HTML zprávu
+      const html = buildHtml(r);
+
+      // 2. SKUTEČNÉ ODESLÁNÍ E-MAILU
+      await sendDirect({ to: r.email, subject: subjectFinal, html: html });
+
+      // 3. Zobrazit ve UI
+      $('#log').textContent += `✓ [${progress}] Odesláno: ${r.email}\n`;
+      successCount++;
+
+      // 4. Pauza mezi emaily
+      if (i < selected.length - 1) {
+        await sleep(state.rateMs);
+      }
+
+    } catch (err) {
+      console.error(`[${progress}] Chyba odesílání:`, err);
+      $('#log').textContent += `✗ [${progress}] ${r.email} – Chyba: ${err.message}\n`;
+      errorCount++;
     }
-    await sleep(state.rateMs);
   }
+
+  // Shrnutí
+  $('#log').textContent += `\n✅ Hotovo!\n`;
+  $('#log').textContent += `   Úspěšně odesláno: ${successCount} emailů\n`;
+  if (errorCount > 0) {
+    $('#log').textContent += `   Chyb: ${errorCount}\n`;
+  }
+  
   state.sending = false;
 });
+
+// Ponecháme i funkci sendDirect, jen se ujistíme, že v catch propouští error
+async function sendDirect(one){
+  try {
+    const res = await fetch('/send-direct', {
+      method:'POST',
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify(one)
+    });
+    
+    if(!res.ok) {
+      const errorText = await res.text();
+      // Throw error with server message for better debugging
+      throw new Error('Server error (' + res.status + '): ' + errorText);
+    }
+    
+    return res.json();
+  } catch (e) {
+    console.log('Direct endpoint failed:', e.message);
+    throw e;
+  }
+}
 
 // ======= Vlastní e-mail =======
 $('#btnPreviewCustom').addEventListener('click', ()=>{

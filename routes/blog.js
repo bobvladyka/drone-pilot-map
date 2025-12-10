@@ -103,7 +103,12 @@ function generateArticleHtml(slug, data) {
         Autor: ${data.author}
       </p>
 
-      <img src="${heroUrl}" class="main-image" alt="Hlavní obrázek článku">
+      <img 
+  src="${heroUrl}" 
+  class="img-fluid rounded mb-4"
+  style="width:100%; max-height:520px; object-fit:cover;"
+  alt="Hlavní obrázek článku">
+
 
       <div class="blog-content fs-5">
         ${processedBodyHtml}

@@ -108,21 +108,24 @@ async function loadPosts() {
     ✏️ Upravit
   </a>
 
+  <td class="text-end">
+
+  <a href="/blogposts/${p.slug}.html" target="_blank"
+     class="btn btn-sm btn-outline-primary me-1">
+    👁 Náhled
+  </a>
+
   ${p.status !== "published" ? `
     <button class="btn btn-sm btn-success me-1" onclick="publishNow('${p.slug}')">
       🚀 Publikovat
     </button>
-  ` : `
-    <a href="/blogposts/${p.slug}.html" target="_blank"
-       class="btn btn-sm btn-outline-primary me-1">
-      👁 Náhled
-    </a>
-  `}
+  ` : ``}
 
   <button class="btn btn-sm btn-outline-danger"
           onclick="deletePost('${p.slug}')">
     🗑 Smazat
   </button>
+
 </td>
 
         </tr>

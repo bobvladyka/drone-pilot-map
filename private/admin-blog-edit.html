@@ -134,8 +134,13 @@ async function loadPost() {
   document.getElementById("status").value = data.meta.status;
   document.getElementById("publishAt").value = data.meta.publishAt?.slice(0,16) || "";
 
-  const bodyMatch = data.html.match(/<div class="blog-content fs-5">([\s\S]*?)<\/div>/);
-  quill.root.innerHTML = bodyMatch ? bodyMatch[1] : "";
+  const parser = new DOMParser();
+const doc = parser.parseFromString(data.html, "text/html");
+
+const contentDiv = doc.querySelector(".blog-content");
+
+quill.root.innerHTML = contentDiv ? contentDiv.innerHTML : "";
+
 }
 loadPost();
 

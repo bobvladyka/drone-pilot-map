@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="cs">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Pro piloty dronů | Získej zakázky bez provizí – NajdiPilota.cz</title>
+    <meta name="description" content="Jsi profesionální pilot dronu v ČR? Zviditelni se na mapě NajdiPilota.cz, získej zakázky BEZ PROVIZÍ a navíc 30 dní účtu Basic zdarma.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.najdipilota.cz/pro-piloty.html">
+
+    <meta property="og:title" content="Pro piloty dronů: NajdiPilota.cz – 30 dní Basic zdarma">
+    <meta property="og:description" content="Ukaž se na mapě pilotů, získej přímé kontakty a neplať žádné provize.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://www.najdipilota.cz/pro-piloty.html">
+    <meta property="og:image" content="https://www.najdipilota.cz/og-image-pilots.jpg">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary-color: #0f172a; /* Slate 900 */
+            --accent-color: #ffc107; /* Yellow */
+            --text-muted: #64748b; /* Slate 500 */
+            --bg-light: #f8fafc; /* Slate 50 */
+            --card-border: #e2e8f0; /* Slate 200 */
+        }
+
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            color: var(--primary-color);
+            line-height: 1.6;
+            scroll-padding-top: 60px; /* Pro fixní nav */
+        }
+
+        /* Navigace */
+        .navbar {
+            backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.95);
+            z-index: 1030;
+        }
+
+        /* Hero Section */
+.pilot-hero {
+    position: relative;
+    background-image: url("/icons/pro-piloty-background.png");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: cover; /* vyplní celou šířku – žádné pruhy */
+    color: #fff;
+    padding: 7rem 0 4rem 0;
+    overflow: hidden;
+}
+
+/* Ztmavující overlay */
+.pilot-hero::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35); /* uprav dle chuti (0.25–0.45) */
+    z-index: 1;
+}
+
+/* Obsah nad overlayem */
+.pilot-hero > * {
+    position: relative;
+    z-index: 2;
+}
+
+
+        .badge-promo {
+            background: rgba(255, 193, 7, 0.15);
+            color: #ffd54f;
+            border: 1px solid rgba(255, 193, 7, 0.3);
+            padding: 0.5em 1em;
+            border-radius: 50rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            margin-bottom: 1.5rem;
+            display: inline-block;
+        }
+        
+        /* Features/Steps */
+        .section-spaced { padding: 4rem 0; }
+        .step-card {
+            padding: 2rem;
+            border-radius: 1rem;
+            background: #fff;
+            border: 1px solid var(--card-border);
+            transition: all 0.3s ease;
+        }
+        .step-icon {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            display: block;
+        }
+        
+        /* Pricing */
+        .pricing-card {
+            border-radius: 1.25rem;
+            border: 1px solid var(--card-border);
+            background: #fff;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+        }
+        .pricing-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.05); }
+        .pricing-card.highlight {
+            border: 2px solid var(--accent-color);
+            box-shadow: 0 10px 30px rgba(255, 193, 7, 0.2);
+        }
+
+.cta-blue {
+    padding: 80px 0;
+    background-color: #0f172a;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+
+
+
+        .pricing-card .price { font-size: 2rem; font-weight: 700; }
+        .check-list i { margin-right: 0.75rem; flex-shrink: 0; margin-top: 2px; }
+
+        /* CTA button */
+        .btn-warning {
+            background-color: var(--accent-color);
+            border-color: var(--accent-color);
+            color: #000;
+            font-weight: 700;
+            padding: 0.8rem 1.8rem;
+            border-radius: 0.75rem;
+        }
+        .btn-warning:hover { filter: brightness(0.9); }
+
+        /* FAQ */
+        .accordion-button { font-weight: 600; }
+    </style>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "name": "NajdiPilota.cz",
+          "url": "https://www.najdipilota.cz",
+          "logo": "https://www.najdipilota.cz/icons/logo.png"
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            { "@type": "Question", "name": "Je registrace zdarma a bez závazků?", "acceptedAnswer": { "@type": "Answer", "text": "Ano. Každý nový pilot získá 30 dní členství Basic zdarma. Po uplynutí zkušební doby se účet automaticky přepne na Free (trvale zdarma)." } },
+            { "@type": "Question", "name": "Berete si provizi ze zakázek?", "acceptedAnswer": { "@type": "Answer", "text": "Ne. NajdiPilota.cz neúčtuje provize ze zakázek. Kontakt probíhá napřímo mezi zákazníkem a pilotem." } }
+          ]
+        }
+      ]
+    }
+    </script>
+</head>
+
+<body>
+<a class="skip-link" href="#main">Přeskočit na obsah</a>
+
+<nav class="navbar navbar-expand-lg fixed-top border-bottom">
+    <div class="container">
+        <a class="navbar-brand fw-bold d-flex align-items-center" href="/index.html">
+            <img src="/icons/logo.png" alt="NajdiPilota.cz" height="35" class="me-2">
+            <span>NajdiPilota.cz</span>
+        </a>
+
+        <div class="d-flex align-items-center gap-2">
+            <a class="btn btn-sm btn-outline-dark d-lg-none" href="/index.html">Mapa</a>
+            <button class="navbar-toggler border-0 p-0 ms-2" type="button" data-bs-toggle="collapse" data-bs-target="#navContent">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+
+        <div class="collapse navbar-collapse" id="navContent">
+            <ul class="navbar-nav ms-auto mb-2 mb-lg-0 align-items-center pt-3 pt-lg-0">
+                <li class="nav-item"><a class="nav-link" href="/index.html">Mapa pilotů</a></li>
+                <li class="nav-item"><a class="nav-link" href="/subscription.html">Členství</a></li>
+                <li class="nav-item ms-lg-2">
+                    <a class="btn btn-warning btn-sm w-100 mt-2 mt-lg-0 px-3" href="/register.html">
+                        <i class="bi bi-person-plus me-1"></i>Registrace
+                    </a>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>
+
+<main id="main">
+
+    <header class="pilot-hero text-center d-flex align-items-center">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-xl-8">
+                    <div class="badge-promo">
+                        <i class="bi bi-gift-fill me-2"></i> 30 dní tarifu Basic zdarma pro nové piloty
+                    </div>
+                    
+                    <h1 class="display-4 fw-bold mb-4 text-balance">
+                        Profesionální pilot dronu? <br>
+                        Získej zakázky, které tě opravdu baví.
+                    </h1>
+                    
+                    <p class="lead mb-5 text-white-50 text-balance">
+                        Přidej se na mapu nejdohledatelnějších pilotů v ČR.
+                        <strong>Garance:</strong> Žádné provize, jen přímý kontakt mezi tebou a zákazníkem.
+                    </p>
+
+                    <div class="d-flex flex-column flex-sm-row gap-3 justify-content-center">
+                        <a href="/register.html" class="btn btn-warning btn-lg px-5">
+                            <i class="bi bi-rocket-takeoff me-2"></i> Vytvořit profil a začít zdarma
+                        </a>
+                        <a href="#pro-koho" class="btn btn-outline-light btn-lg px-4">
+                            Pro jaké obory?
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section id="jak-to-funguje" class="section-spaced bg-light">
+        <div class="container text-center">
+            <h2 class="fw-bold mb-5">Jak se dostat k nové zakázce ve 3 krocích</h2>
+            
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <i class="bi bi-person-plus step-icon"></i>
+                        <h3 class="h5 fw-bold">1. Registrace (3 minuty)</h3>
+                        <p class="text-muted mb-0">
+                            Vyplníš lokalitu, výbavu a specializaci. Automaticky startuješ s 30 dny Basic.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <i class="bi bi-geo-alt-fill step-icon"></i>
+                        <h3 class="h5 fw-bold">2. Viditelnost na mapě</h3>
+                        <p class="text-muted mb-0">
+                            Zákazníci tě najdou podle regionu a klíčových slov (např. "inspekce fotovoltaiky Liberec").
+                        </p>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="step-card">
+                        <i class="bi bi-chat-dots-fill step-icon"></i>
+                        <h3 class="h5 fw-bold">3. Přímý kontakt</h3>
+                        <p class="text-muted mb-0">
+                            Zákazník tě kontaktuje (email/telefon) a vyjednáváte přímo. Žádné provize z ceny.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="pro-koho" class="section-spaced">
+        <div class="container">
+            <h2 class="fw-bold text-center mb-5">Obory, kde získáš největší náskok</h2>
+            
+            <div class="row g-4 justify-content-center">
+                <div class="col-lg-4 col-md-6">
+                    <div class="p-4 rounded-3 border h-100">
+                        <i class="bi bi-camera-video-fill fs-4 text-warning mb-2"></i>
+                        <h3 class="h5 fw-bold">Video & Foto produkce</h3>
+                        <p class="small text-muted mb-0">Reality, svatby, promo videa, kulturní akce a eventy.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="p-4 rounded-3 border h-100">
+                        <i class="bi bi-tools fs-4 text-warning mb-2"></i>
+                        <h3 class="h5 fw-bold">Technické inspekce</h3>
+                        <p class="small text-muted mb-0">Kontrola střech, fasád, komínů, větrných turbín a fotovoltaických panelů.</p>
+                    </div>
+                </div>
+                <div class="col-lg-4 col-md-6">
+                    <div class="p-4 rounded-3 border h-100">
+                        <i class="bi bi-map-fill fs-4 text-warning mb-2"></i>
+                        <h3 class="h5 fw-bold">Geodetické práce a mapování</h3>
+                        <p class="small text-muted mb-0">Ortofoto, 3D modely terénu, monitoring staveb a dokumentace.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="ucet" class="section-spaced bg-light">
+        <div class="container">
+            <div class="text-center mb-5">
+                <h2 class="fw-bold">Vyber si členství, které odpovídá tvým cílům</h2>
+                <p class="lead text-muted">Vždy začínáš s 30 dny Basic zdarma. <b>Žádný automatický poplatek!</b></p>
+            </div>
+
+            <div class="row g-4 justify-content-center">
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card h-100 p-4">
+                        <h3 class="h5 fw-bold mb-3">Free</h3>
+                        <div class="mb-4"><span class="price">0 Kč</span> <span class="period">/ navždy</span></div>
+                        
+                        <ul class="list-unstyled check-list small mb-4">
+                            <li><i class="bi bi-check-circle-fill text-secondary"></i> Základní výpis na mapě</li>
+                            <li><i class="bi bi-check-circle-fill text-secondary"></i> Max. 1 specializace / 1 dron</li>
+                            <li class="text-muted"><i class="bi bi-x-circle"></i> Bez přímého kontaktu s klientem</li>
+                            <li class="text-muted"><i class="bi bi-x-circle"></i> Bez odkazu na tvé portfolio</li>
+                        </ul>
+                        
+                        <a href="/register.html" class="btn btn-outline-dark w-100 mt-auto">Přejít na Free po Basic trialu</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card highlight h-100 p-4">
+                        <div class="position-absolute top-0 end-0 bg-warning text-dark px-3 py-1 small fw-bold" style="border-bottom-left-radius: 10px;">
+                            30 dní zdarma
+                        </div>
+                        
+                        <h3 class="h5 fw-bold mb-3 text-warning text-dark">Basic</h3>
+                        <div class="mb-1"><span class="price">79 Kč</span> <span class="period">/ měsíc </span></div>
+                        <p class="small text-muted mb-4">Nejlepší poměr cena/výkon. Po 30 dnech se přepne na Free.</p>
+                        
+                        <ul class="list-unstyled check-list small mb-4">
+                            <li><i class="bi bi-check-circle-fill text-warning"></i><b> Interní chat - Napsat pilotovi</b></li>
+                            <li><i class="bi bi-check-circle-fill text-warning"></i> Odkaz na tvůj web/portfolio</li>
+                            <li><i class="bi bi-check-circle-fill text-warning"></i> Odznak "Ověřený pilot"</li>
+                            <li><i class="bi bi-check-circle-fill text-warning"></i> Až 2 specializace / 2 drony</li>
+                        </ul>
+                        
+                        <a href="/register.html" class="btn btn-warning w-100 mt-auto">Začít s Basic na 30 dní ZDARMA</a>
+                    </div>
+                </div>
+
+                <div class="col-lg-4 col-md-6">
+                    <div class="pricing-card h-100 p-4">
+                        <h3 class="h5 fw-bold mb-3">Premium</h3>
+                        <div class="mb-1"><span class="price">149 Kč</span> <span class="period">/ měsíc </span></div>
+                        <p class="small text-muted mb-4">Pro maximální vytížení a největší projekty.</p>
+                        
+                        <ul class="list-unstyled check-list small mb-4">
+                            <li><i class="bi bi-check-circle-fill text-success"></i> Vše z Basic tarifu</li>
+                            <li><i class="bi bi-award-fill text-success"></i><b> Nejvyšší priorita zobrazení</b></li>
+                            <li><i class="bi bi-telephone-fill text-success"></i> Veřejný telefon a e-mail</li>
+                            <li><i class="bi bi-infinity text-success"></i><b> Až 10 specializací / 5 dronů</li>
+                            <li><i class="bi bi-bell-fill text-success"></i> Okamžité notifikace o poptávkách</li>
+                        </ul>
+                        
+                        <a href="/register.html" class="btn btn-outline-dark w-100 mt-auto">Vybrat Premium</a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center small text-muted mt-5">
+                <a href="/subscription.html" class="text-decoration-none text-dark">Detailní porovnání všech výhod členství &rarr;</a>
+            </div>
+        </div>
+    </section>
+
+    <section id="faq" class="section-spaced">
+        <div class="container col-lg-8">
+            <h2 class="fw-bold text-center mb-5">Nejčastější otázky</h2>
+            
+            <div class="accordion" id="faqPilot">
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faq1">
+                            Je 30 dní Basic účtu zdarma opravdu bez platební karty?
+                        </button>
+                    </h3>
+                    <div id="faq1" class="accordion-collapse collapse show" data-bs-parent="#faqPilot">
+                        <div class="accordion-body">
+                            Ano. K vyzkoušení Basic účtu kartu nepotřebuješ. Po 30 dnech se účet automaticky přepne na tarif Free, takže nevznikají žádné skryté poplatky.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq2">
+                            Jak se liší Basic a Premium v získávání zakázek?
+                        </button>
+                    </h3>
+                    <div id="faq2" class="accordion-collapse collapse" data-bs-parent="#faqPilot">
+                        <div class="accordion-body">
+                            **Basic** ti umožní kontakt přes kontaktní formulář (email). **Premium** ti navíc zajistí nejvyšší pozici ve výsledcích, zobrazí tvůj veřejný telefon a nejdůležitější je **okamžité e-mailové upozornění** na nově vložené poptávky, které odpovídají tvé lokalitě.
+                        </div>
+                    </div>
+                </div>
+
+                <div class="accordion-item">
+                    <h3 class="accordion-header">
+                        <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faq3">
+                            Jsou pro registraci nutné všechny licence ÚCL?
+                        </button>
+                    </h3>
+                    <div id="faq3" class="accordion-collapse collapse" data-bs-parent="#faqPilot">
+                        <div class="accordion-body">
+                            Pro registraci není nutné doložení licencí, ale pro komerční lety doporučujeme mít vše v pořádku (A1/A3, pojištění, ideálně A2/Specific pro pokročilejší práce). Vyplnění licencí zvyšuje tvou důvěryhodnost a odlišuje tě od konkurence.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section class="cta-blue text-white text-center">
+    <div class="container py-4">
+        <h2 class="fw-bold mb-3">Začni vidět výsledky hned teď.</h2>
+        <p class="lead text-white-50 mb-4">
+            Využij 30 dní Basic účtu a získej první poptávky.
+        </p>
+        <a href="/register.html"
+           class="btn btn-warning btn-lg px-5 py-3 fw-bold rounded-pill">
+            Registrovat se a začít zdarma
+        </a>
+    </div>
+</section>
+
+
+</main>
+
+<footer class="footer mt-5 pt-4 pb-4 bg-light border-top">
+  <div class="container">
+    <div class="row gy-3 justify-content-between">
+      
+      <!-- Logo a popis -->
+      <div class="col-md-4">
+        <a href="/" class="d-flex align-items-center mb-2 text-decoration-none text-dark">
+          <img src="/icons/logo.png" alt="Logo NajdiPilota" height="40" class="me-2" />
+          <span class="fw-bold fs-5">NajdiPilota.cz</span>
+        </a>
+        <p class="small text-muted">Spojujeme zákazníky s ověřenými piloty dronů po celé ČR. Rychlé spojení bez prostředníků.</p>
+      </div>
+
+      <!-- Navigace -->
+      <div display="no" class="col-md-2">
+        <h6 class="fw-bold">Navigace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/index.html" class="text-decoration-none text-muted">Mapa pilotů</a></li>
+          <li><a href="/o-projektu.html" class="text-decoration-none text-muted">O projektu</a></li>
+          <li><a href="/kontakt.html" class="text-decoration-none text-muted">Kontakt</a></li>
+        <li><a href="/blog.html" class="text-decoration-none text-muted">Blog</a></li>
+        </ul>
+      </div>
+
+      <!-- Právní -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Informace</h6>
+        <ul class="list-unstyled">
+          <li><a href="/gdpr.html" class="text-decoration-none text-muted">Zpracování osobních údajů</a></li>
+          <li><a href="/obchodni-podminky.html" class="text-decoration-none text-muted">Obchodní podmínky</a></li>
+          <li><a href="mailto:dronadmin@seznam.cz?subject=Chyba na webu" class="text-decoration-none text-muted">Nahlásit chybu</a></li>
+        </ul>
+      </div>
+
+      <!-- Kontakt -->
+      <div class="col-md-3">
+        <h6 class="fw-bold">Provozovatel</h6>
+        <p class="small text-muted mb-1">Ing. Bohuslav Vladyka<br>IČO: 08578591<br>Praha, Česká republika</p>
+        <p class="small text-muted mb-0">📧 <a href="mailto:dronadmin@seznam.cz" class="text-muted">dronadmin@seznam.cz</a></p>
+      </div>
+
+    </div>
+
+
+    <p class="visually-hidden">
+      Pilot dronu Praha, pilot dronu Brno, letecké snímky dronem, dronové natáčení, inspekce dronem, dronové služby v celé ČR.
+    </p>
+
+    <hr class="my-4">
+
+    <div class="d-flex justify-content-between align-items-center small text-muted">
+      <span>&copy; <span id="year"></span> NajdiPilota.cz</span>
+
+      <div>
+      <a href="https://www.facebook.com/profile.php?id=61583356353382" class="text-muted me-3"><i class="bi bi-facebook"></i></a>
+        <a href="https://www.instagram.com/najdipilota/" class="text-muted me-3"><i class="bi bi-instagram"></i></a>
+
+        
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -556,6 +556,7 @@ router.post(
 module.exports = {
   router,
   initBlogRoutes
+  getNewBlogPosts
 };
 
 router.get(

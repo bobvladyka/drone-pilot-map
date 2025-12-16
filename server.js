@@ -9,7 +9,7 @@ const fs = require("fs");
 
 
 // --- BLOG NASTAVENÍ CESTY
-const { router: blogRoutes, initBlogRoutes } = require("./routes/blog");
+const { router: blogRoutes, initBlogRoutes, getNewBlogPosts } = require("./routes/blog");
 
 
 const prerender = require('prerender-node');

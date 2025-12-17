@@ -4710,6 +4710,11 @@ function buildWeeklyNewsletterEmail(blogPosts, instagramPosts) {
     <p style="font-size:15px;">
         S pozdravem,<br><strong>Tým NajdiPilota.cz</strong>
     </p>
+
+<p style="font-size:14px; color:#888; margin-top:30px; text-align:center;">
+        <i>Nechcete dostávat naše newslettery? Váš odběr můžete zrušit v nastavení profilu na NajdiPilota.cz.</i>
+    </p>
+
   `;
 
   return wrapEmailContent(content, "Týdenní novinky – NajdiPilota.cz");
@@ -5574,10 +5579,10 @@ await transporter.sendMail({
 
 
 // ──────────────────────────────────────────────────────────────
-// CRON: Každé úterý v 09:00 (Praha) – Týdenní Newsletter (PRODUKČNÍ REŽIM)
+// CRON: Každá středa v 14:00 (Praha) – Týdenní Newsletter (PRODUKČNÍ REŽIM)
 // ──────────────────────────────────────────────────────────────
 cron.schedule(
-  '0 9 * * 2', // Každé úterý v 9:00
+  '0 2 * * 3', // Každé úterý v 9:00
   async () => {
     console.log('⏰ CRON: týdenní newsletter s novinkami (PROD)…');
 

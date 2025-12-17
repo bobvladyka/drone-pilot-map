@@ -547,18 +547,13 @@ router.post(
       res.json({ success: true });
 
     } catch (err) {
-      res.status(500).json({ error: err.message });
+    res.status(500).json({ error: err.message });
     }
   }
 );
 
 
-module.exports = {
-  router,
-  initBlogRoutes
-  getNewBlogPosts
-};
-
+// 1. Cesta pro admin seznam článků
 router.get(
   "/admin-blog-list.html",
   (req, res, next) => requireAdminLogin(req, res, next),
@@ -567,3 +562,9 @@ router.get(
   }
 );
 
+// 2. Exporty (vždy až na úplném konci)
+module.exports = {
+  router,
+  initBlogRoutes,
+  getNewBlogPosts
+};

@@ -5582,7 +5582,7 @@ await transporter.sendMail({
 // CRON: Každá středa v 14:00 (Praha) – Týdenní Newsletter (PRODUKČNÍ REŽIM)
 // ──────────────────────────────────────────────────────────────
 cron.schedule(
-  '0 2 * * 3', // Každé úterý v 9:00
+  '0 15 * * 3', // Každé úterý v 9:00
   async () => {
     console.log('⏰ CRON: týdenní newsletter s novinkami (PROD)…');
 

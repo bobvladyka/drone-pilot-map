@@ -110,7 +110,7 @@ fetch('/check-admin-session')
     <th>E-mail</th>
     <th>GPS</th>
     <th>Typ účtu</th>
-    <th>Viditelný do</th>
+    <th>Platnost členství</th>
     <th>Akce</th>
   </tr>
 </thead>
@@ -248,7 +248,7 @@ if (p.latitude && p.longitude) {
   <td style="text-align:center;">${gpsStatus}</td>
   <td>${p.type_account || ''}</td>
   <td class="${getVisibilityClass(p.visible_valid)}">
-    ${p.visible_valid ? `Viditelný do: ${daysLeft} dní` : 'NE'}
+    ${p.visible_valid ? `Platné do: ${daysLeft} dní` : 'NE'}
   </td>
   <td>
     <button class="edit-btn" onclick="sendMembershipEmail(${p.id}, '1m')">+1M</button>

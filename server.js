@@ -5144,9 +5144,12 @@ cron.schedule(
 
       const ids = expiring.map(r => r.id);
       await pool.query(
-        `UPDATE pilots SET type_account = 'Free' WHERE id = ANY($1::int[])`,
-        [ids]
-      );
+  `UPDATE pilots
+   SET type_account = 'Free',
+       visible_valid = NULL
+   WHERE id = ANY($1::int[])`,
+  [ids]
+);
 
       let sent = 0;
       for (const p of expiring) {

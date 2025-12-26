@@ -169,7 +169,32 @@
                 <button type="button" class="btn btn-sm btn-white border shadow-sm" onclick="insertSocialButtons()">
                     📱 Tlačítka sdílení
                 </button>
+
+                <button type="button"
+  class="btn btn-sm btn-white border shadow-sm"
+  onclick="insertImageTextLeft()">
+  🖼 Obrázek + text
+</button>
+
+<button type="button"
+  class="btn btn-sm btn-white border shadow-sm"
+  onclick="insertTwoColumnsText()">
+  📐 2 sloupce
+</button>
+
+<button type="button"
+  class="btn btn-sm btn-white border shadow-sm"
+  onclick="insertYouTube()">
+  ▶️ YouTube video
+</button>
+
             </div>
+<input
+  type="file"
+  id="inlineImageInput"
+  accept="image/*"
+  style="display:none">
+
 
             <div class="mb-4">
                 <div id="editor-container"></div>
@@ -206,6 +231,27 @@
 <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
 
 <script>
+const BlockEmbed = Quill.import('blots/block/embed');
+
+class HtmlBlock extends BlockEmbed {
+  static create(value) {
+    const node = super.create();
+    node.innerHTML = value;
+    return node;
+  }
+  static value(node) {
+    return node.innerHTML;
+  }
+}
+
+HtmlBlock.blotName = 'htmlblock';
+HtmlBlock.tagName = 'div';
+
+Quill.register(HtmlBlock);
+</script>
+
+
+<script>
     // 1. Nastavení Quillu
     var quill = new Quill('#editor-container', {
         theme: 'snow',
@@ -223,6 +269,7 @@
     });
 
     // 2. Funkce pro rychlé vložení (SEO Shortcuts)
+    // ⚠️ pouze pro inline text, ne layout
     function insertHtmlAtCursor(html) {
         const range = quill.getSelection(true);
         if (range) {
@@ -233,6 +280,13 @@
             quill.clipboard.dangerouslyPasteHTML(length - 1, html);
         }
     }
+
+    function insertHtmlBlock(html) {
+  const range = quill.getSelection(true);
+  quill.insertEmbed(range.index, 'htmlblock', html);
+  quill.setSelection(range.index + 1);
+}
+
 
     function insertMapLink() {
         insertHtmlAtCursor(' <a href="/index.html" title="Mapa pilotů dronů">mapě pilotů NajdiPilota.cz</a> ');
@@ -413,6 +467,52 @@
     document.addEventListener('DOMContentLoaded', function() {
         attachShareButtonListeners();
     });
+
+function insertImageTextLeft() {
+  document.getElementById("inlineImageInput").click();
+}
+
+
+
+function insertTwoColumnsText() {
+  insertHtmlBlock(`
+<div class="row my-4">
+  <div class="col-md-6">
+    <h4>Sloupec 1</h4>
+    <p>Text 1</p>
+  </div>
+  <div class="col-md-6">
+    <h4>Sloupec 2</h4>
+    <p>Text 2</p>
+  </div>
+</div>
+`);
+}
+
+
+function insertYouTube() {
+  const url = prompt("Vlož YouTube odkaz:");
+  if (!url) return;
+
+  const match = url.match(/(youtu\.be\/|v=)([^&]+)/);
+  if (!match) {
+    alert("Neplatný YouTube odkaz");
+    return;
+  }
+
+  const videoId = match[2];
+
+  insertHtmlBlock(`
+<div class="ratio ratio-16x9 my-4">
+  <iframe
+    src="https://www.youtube.com/embed/${videoId}"
+    allowfullscreen>
+  </iframe>
+</div>
+`);
+}
+
+
 </script>
 
 <script>
@@ -432,6 +532,51 @@ document.addEventListener('DOMContentLoaded', function () {
   statusSelect.addEventListener('change', togglePublishDate);
   togglePublishDate(); // ✅ zavolá se hned při načtení
 });
+
+
+document
+  .getElementById("inlineImageInput")
+  .addEventListener("change", async function () {
+
+    if (!this.files.length) return;
+
+    const file = this.files[0];
+    const slug = document.getElementById("inputSlug").value || "article";
+
+    const formData = new FormData();
+    formData.append("image", file);
+    formData.append("slug", slug);
+
+    // 🔄 volání serveru
+    const res = await fetch("/api/admin/upload-inline-image", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      alert("❌ Chyba při nahrávání obrázku");
+      return;
+    }
+
+    // ✅ vložení layout bloku s reálným obrázkem
+    insertHtmlBlock(`
+<div class="row align-items-center my-4">
+  <div class="col-md-5">
+    <img src="${data.url}" class="img-fluid rounded">
+  </div>
+  <div class="col-md-7">
+    <h3>Nadpis sekce</h3>
+    <p>Zde napište text.</p>
+  </div>
+</div>
+`);
+
+    // reset inputu (aby šel vybrat stejný soubor znovu)
+    this.value = "";
+});
+
 </script>
 
 

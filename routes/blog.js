@@ -552,6 +552,35 @@ router.post(
   }
 );
 
+// =======================================================
+// ✅ UPLOAD OBRÁZKU Z EDITORU
+// =======================================================
+router.post(
+  "/api/admin/upload-inline-image",
+  (req, res, next) => requireAdminLogin(req, res, next),
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const slug = req.body.slug || "inline";
+      const filename = `${slug}-${Date.now()}.webp`;
+      const outputPath = path.join(IMG_DIR, filename);
+
+      await sharp(req.file.buffer)
+        .resize({ width: 900, withoutEnlargement: true })
+        .webp({ quality: 80 })
+        .toFile(outputPath);
+
+      res.json({
+        success: true,
+        url: `/blogposts_img/${filename}`
+      });
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+);
+
+
 
 // 1. Cesta pro admin seznam článků
 router.get(

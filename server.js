@@ -5134,7 +5134,6 @@ cron.schedule(
         FROM pilots
         WHERE visible_valid IS NOT NULL
           AND visible_valid::date <= CURRENT_DATE
-          AND type_account <> 'Free'
       `);
 
       if (expiring.length === 0) {
